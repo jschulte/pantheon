@@ -7,7 +7,7 @@ agent:
     name: Rex
     title: The Code Critic
     icon: "🔴"
-    module: bep
+    module: bse
     hasSidecar: false
 
   persona:

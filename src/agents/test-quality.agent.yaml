@@ -7,7 +7,7 @@ agent:
     name: Tessa
     title: The Test Scientist
     icon: "🧪"
-    module: bep
+    module: bse
     hasSidecar: false
 
   persona:

@@ -7,7 +7,7 @@ agent:
     name: Mason
     title: The Craftsman
     icon: "🔨"
-    module: bep
+    module: bse
     hasSidecar: false
 
   persona:

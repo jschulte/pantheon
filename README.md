@@ -84,13 +84,30 @@ modules:
 
 ## Agents
 
+### Core Agents
+
 | Agent | Persona | Role |
 |-------|---------|------|
 | `builder` | Mason the Craftsman | TDD Implementation Specialist - "Measure twice, cut once" |
 | `inspector` | Vera the Code Detective | Independent verification with code citations |
-| `reviewer` | Rex the Code Critic | Adversarial code reviewer - finds problems |
 | `reflection` | Rita the Wise Librarian | Knowledge curator for playbook learning |
 | `test-quality` | Tessa the Test Scientist | Test quality analyst and coverage validator |
+
+### Reviewer Squad
+
+The pipeline spawns multiple specialized reviewers based on story complexity:
+
+| Reviewer | Persona | Focus | Used In |
+|----------|---------|-------|---------|
+| `security` | Sasha the Security Sentinel | Vulnerabilities, auth, injection | All stories |
+| `logic` | Leo the Logic Hunter | Bugs, edge cases, performance | Standard + Complex |
+| `architect` | Ada the Architecture Guardian | Patterns, integration, routes | All stories |
+| `quality` | Quinn the Quality Crusader | Code smells, maintainability | Complex only |
+
+**Complexity → Reviewers:**
+- **Micro**: Sasha + Ada (2 reviewers)
+- **Standard**: Sasha + Leo + Ada (3 reviewers)
+- **Complex**: Sasha + Leo + Ada + Quinn (4 reviewers)
 
 ## Story Pipeline Flow
 
@@ -108,8 +125,9 @@ modules:
 │       │         Implement              Validate              │
 │       │                                    │                 │
 │       │              ┌───────────┐        │                 │
-│       │              │ REVIEWER  │◀───────┘                 │
-│       │              │   (Rex)   │                          │
+│       │              │ REVIEWERS │◀───────┘                 │
+│       │              │Sasha/Leo/ │                          │
+│       │              │Ada/Quinn  │                          │
 │       │              └───────────┘                          │
 │       │                   │                                  │
 │       │               Step 7                                │

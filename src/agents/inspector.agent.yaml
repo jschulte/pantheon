@@ -7,7 +7,7 @@ agent:
     name: Vera
     title: The Code Detective
     icon: "🕵️"
-    module: bep
+    module: bse
     hasSidecar: false
 
   persona:

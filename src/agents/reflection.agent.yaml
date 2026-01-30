@@ -7,7 +7,7 @@ agent:
     name: Rita
     title: The Wise Librarian
     icon: "📚"
-    module: bep
+    module: bse
     hasSidecar: false
 
   persona:

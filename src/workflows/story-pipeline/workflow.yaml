@@ -32,7 +32,7 @@ agents:
     description: "Implementation agent - writes code and tests"
     steps: [1, 2, 3, 4]
     subagent_type: "general-purpose"
-    bmad_agent: "{project-root}/_bmad/bse/agents/builder.md" # Bob the Builder - TDD Implementation Specialist
+    bmad_agent: "{project-root}/_bmad/bse/agents/builder.md" # Mason the Craftsman - TDD Implementation Specialist
     prompt_file: "{agents_path}/builder.md"
     trust_level: "low" # Assumes agent will cut corners
     timeout: 3600 # 1 hour
@@ -62,27 +62,26 @@ agents:
     description: "Adversarial code review - finds problems"
     steps: [7]
     subagent_type: "multi-agent-review" # Spawns multiple reviewers
-    bmad_agent: "{project-root}/_bmad/bse/agents/reviewer.md" # Rex - Adversarial Reviewer
-    prompt_file: "{agents_path}/reviewer.md"
+    prompt_file: "{agents_path}/security-reviewer.md" # Default to Sasha for single-reviewer mode
     fresh_context: true
     adversarial: true # Goal: find issues
     trust_level: "high" # Wants to find problems
     timeout: 1800 # 30 minutes
     review_agent_count:
-      micro: 2 # Security + Architect (v3.2.0+)
-      standard: 3 # Security + Logic + Architect (v3.2.0+)
-      complex: 4 # Security + Logic + Architect + Quality (v3.2.0+)
+      micro: 2 # Sasha (Security) + Ada (Architect)
+      standard: 3 # Sasha (Security) + Leo (Logic) + Ada (Architect)
+      complex: 4 # Sasha (Security) + Leo (Logic) + Ada (Architect) + Quinn (Quality)
     review_types:
-      security: "{agents_path}/reviewer.md" # Security focus
-      logic: "{agents_path}/reviewer.md" # Logic/performance focus
-      architect: "{agents_path}/architect-integration-reviewer.md" # Architecture/routing/integration (v3.2.0+)
-      quality: "{agents_path}/reviewer.md" # Code quality (complex only)
+      security: "{agents_path}/security-reviewer.md" # Sasha the Security Sentinel
+      logic: "{agents_path}/logic-reviewer.md" # Leo the Logic Hunter
+      architect: "{agents_path}/architect-integration-reviewer.md" # Ada the Architecture Guardian
+      quality: "{agents_path}/quality-reviewer.md" # Quinn the Quality Crusader
 
   fixer:
-    description: "Issue resolution - Bob resumes to fix critical/high issues"
+    description: "Issue resolution - Mason resumes to fix critical/high issues"
     steps: [8, 9]
     subagent_type: "general-purpose"
-    bmad_agent: "{project-root}/_bmad/bse/agents/builder.md" # Bob resumes - "Can we fix it? Yes we can!"
+    bmad_agent: "{project-root}/_bmad/bse/agents/builder.md" # Mason resumes - "Measure twice, cut once"
     resume_builder: true # IMPORTANT: Resume Builder agent instead of spawning fresh
     prompt_file: "{agents_path}/fixer.md"
     trust_level: "medium" # Incentive to minimize work
