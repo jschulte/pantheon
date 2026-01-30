@@ -1,5 +1,5 @@
 {
-  "name": "bmad-story-engine",
+  "name": "@jonahschulte/bmad-story-engine",
   "version": "1.0.0",
   "description": "Multi-agent story development engine for BMAD-METHOD with gap analysis, batch processing, playbook learning, and quality gates",
   "keywords": [

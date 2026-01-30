@@ -171,8 +171,6 @@ For parallel: proceed to `execute_parallel`
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📦 SEQUENTIAL PROCESSING - VISIBLE AGENTS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Each phase spawns as a TOP-LEVEL Task you can see!
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
 For each selected story:
@@ -254,7 +252,7 @@ Phase 0: Playbook Query (orchestrator does this, no Task)
 Phase 1: Task({ description: "🔨 Mason building {{story_key}}", ... })  ← VISIBLE
 Phase 2: Task({ description: "🕵️ Vera validating {{story_key}}", ... })   ← VISIBLE
          Task({ description: "🧪 Tessa testing {{story_key}}", ... })     ← VISIBLE
-         Task({ description: "🔴 Rex reviewing {{story_key}}", ... })     ← VISIBLE (x N)
+         Task({ description: "🔴 Sasha/Leo/Rosie/Quinn reviewing {{story_key}}", ... })  ← VISIBLE (x N)
 Phase 3: Task({ description: "🔨 Mason refining {{story_key}}", resume: ID }) ← VISIBLE
 Phase 4: Task({ description: "🕵️ Vera re-checking {{story_key}}", ... }) ← VISIBLE
 Phase 5: Reconciliation (orchestrator does this, no Task)

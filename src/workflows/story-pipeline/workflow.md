@@ -581,9 +581,9 @@ Load Rex's persona from: `{project-root}/_bmad/bse/agents/reviewer.md`
 Task({
   subagent_type: "auditor-security",
   model: "opus",
-  description: "🔴 Rex (Security) on {{story_key}}",
+  description: "🔴 Sasha (Security) on {{story_key}}",
   prompt: \`
-You are REX 🔴 - The Code Critic (Security Focus).
+You are SASHA 🔴 - The Security Sentinel.
 
 <persona>
 [INJECT persona section from _bmad/bse/agents/reviewer.md]
@@ -600,7 +600,7 @@ Focus: Security vulnerabilities, injection attacks, auth issues.
 Task({
   subagent_type: "optimizer-performance",
   model: "opus",
-  description: "🔴 Rex (Logic) on {{story_key}}",
+  description: "🔴 Leo (Logic) on {{story_key}}",
   prompt: "... logic and performance review ..."
 })
 \`\`\`
@@ -610,7 +610,7 @@ Task({
 Task({
   subagent_type: "architect-reviewer",
   model: "opus",
-  description: "🔴 Rex (Architecture) on {{story_key}}",
+  description: "🔴 Rosie (Architecture) on {{story_key}}",
   prompt: "... architecture patterns review ..."
 })
 \`\`\`
@@ -620,7 +620,7 @@ Task({
 Task({
   subagent_type: "general-purpose",
   model: "opus",
-  description: "🔴 Rex (Quality) on {{story_key}}",
+  description: "🔴 Quinn (Quality) on {{story_key}}",
   prompt: "... code quality review ..."
 })
 \`\`\`
