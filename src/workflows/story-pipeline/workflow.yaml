@@ -1,7 +1,25 @@
 name: story-pipeline
 description: "Enhanced multi-agent pipeline with playbook learning, code citation evidence, test quality validation, and resume-builder fixes"
 author: "BMAD Method"
-version: "4.0.0" # Added playbook learning, test quality, coverage gates, Inspector code citations
+version: "4.1.0" # Added execution discipline documentation
+
+# ============================================================================
+# CRITICAL: EXECUTION DISCIPLINE
+# ============================================================================
+# This workflow MUST be invoked via the Skill tool (/bmad_bse_story-pipeline)
+# The orchestrator (main Claude context) follows workflow.md phases.
+#
+# Task subagent_types listed below are ONLY for phases defined in workflow.md:
+#   - Phase 1: builder (Mason)
+#   - Phase 2: inspector, test_quality, reviewers (Vera, Tessa, Rex)
+#   - Phase 3: fixer (Mason resumed)
+#   - Phase 4: inspector (Vera re-check)
+#   - Phase 6: reflection (Rita)
+#
+# DO NOT use Task tool outside the workflow phases!
+# DO NOT spawn ad-hoc Task agents to "implement" stories directly!
+# The workflow structure exists to ensure proper verification.
+# ============================================================================
 
 # Execution mode
 execution_mode: "multi_agent" # multi_agent | single_agent (fallback)

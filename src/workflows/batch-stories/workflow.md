@@ -19,7 +19,7 @@ Orchestrator coordinates. Agents do implementation. Orchestrator does reconcilia
 
 <config>
 name: batch-stories
-version: 3.1.0
+version: 3.2.0
 
 modes:
   sequential: {description: "Process one-by-one in this session", recommended_for: "gap analysis"}
@@ -39,6 +39,37 @@ defaults:
 @patterns/agent-completion.md
 @story-pipeline/workflow.md
 </execution_context>
+
+<execution_discipline>
+**CRITICAL: Understand the Execution Model**
+
+This workflow runs in the **main Claude context** (the orchestrator). The orchestrator is NOT a Task agent - it's the primary assistant context that receives user messages.
+
+**What the Orchestrator DOES:**
+- Parse sprint-status.yaml (Read tool)
+- Display stories and get user selection (AskUserQuestion tool)
+- Check prerequisites (Read tool, Bash tool)
+- Execute story-pipeline phases directly (spawning Task agents as defined in workflow phases)
+- Reconcile results after each story (Edit tool)
+- Update sprint-status.yaml (Edit tool)
+
+**What the Orchestrator MUST NOT DO:**
+- ❌ Spawn ad-hoc Task agents to "implement a story" outside workflow phases
+- ❌ Use Task tool with prompts like "implement story X" that bypass the pipeline
+- ❌ Delegate story implementation to a general-purpose agent
+- ❌ Skip the story-pipeline phases defined in story-pipeline/workflow.md
+
+**When spawning Task agents:**
+- Only spawn Tasks for phases explicitly defined in story-pipeline/workflow.md
+- Phase 1: builder agent (Mason)
+- Phase 2: inspector, test_quality, reviewers (Vera, Tessa, Rex, etc.)
+- Phase 3: fixer (Mason resumed)
+- Phase 4: inspector (Vera re-check)
+- Phase 6: reflection (Rita)
+
+**Why this matters:**
+The story-pipeline ensures proper verification, testing, and quality gates. Spawning ad-hoc "implementation" agents bypasses these safeguards and leads to incomplete or untested implementations.
+</execution_discipline>
 
 <process>
 

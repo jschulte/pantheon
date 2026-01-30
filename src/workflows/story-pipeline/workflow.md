@@ -22,6 +22,42 @@ Builder fixes issues in its own context (50-70% token savings).
 Measure twice, cut once. Trust but verify. Evidence-based validation. Self-improving system.
 </philosophy>
 
+<execution_discipline>
+**CRITICAL: How This Workflow Executes**
+
+This workflow is designed to run in the **main Claude context** (the orchestrator).
+It is invoked via `/bmad_bse_story-pipeline` (a Skill), NOT as a Task subagent.
+
+**Correct Execution Flow:**
+1. User invokes `/bmad_bse_story-pipeline {story-key}`
+2. Orchestrator (main context) loads this workflow.md
+3. Orchestrator executes phases sequentially, spawning Task agents ONLY as defined below
+4. Task agents return artifacts; orchestrator continues with next phase
+
+**Task Agents Are ONLY Used For:**
+- Phase 1: `Task(subagent_type: "general-purpose")` → Mason (Builder)
+- Phase 2: `Task(subagent_type: ...)` → Vera (Inspector), Tessa (Test Quality), Rex (Reviewers) - in parallel
+- Phase 3: `Task(resume: builder_id)` → Mason fixes issues
+- Phase 4: `Task(subagent_type: ...)` → Vera re-check
+- Phase 6: `Task(subagent_type: ...)` → Rita (Reflection)
+
+**NEVER DO THIS:**
+- Spawn a `dev-typescript` or other Task agent to implement a story outside this workflow
+- Use Task tool to bypass the multi-agent verification structure
+- Let the orchestrator write implementation code directly (delegate to Mason)
+
+**WHY:**
+Ad-hoc Task agents lack:
+- Playbook knowledge (Phase 0.5)
+- Independent verification (Phase 2)
+- Code citation evidence (Inspector)
+- Test quality validation (Tessa)
+- Security/architecture review (Rex)
+- Coverage gates (Phase 2.5)
+
+The workflow structure EXISTS to prevent bugs that slip through when a single agent implements and self-certifies.
+</execution_discipline>
+
 <config>
 name: story-pipeline
 version: 4.2.0
