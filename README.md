@@ -55,20 +55,14 @@ Wave 3 (depends on Wave 2):
 ### Progress Artifacts & Wave Summaries
 Each pipeline writes progress at every phase, enabling detailed wave summaries:
 
-```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🌊 WAVE 1 COMPLETE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+> **🌊 WAVE 1 COMPLETE**
 
 | Story | Status | Tests | Coverage | Issues | Commit |
 |-------|--------|-------|----------|--------|--------|
-| 5-1 | ✅ done | 25 | 97.6% | 4→0 | 8a1a0f0 |
-| 5-3 | ✅ done | 18 | 100% | 2→0 | 481c7fd |
+| 5-1 | ✅ done | 25 | 97.6% | 4→0 | `8a1a0f0` |
+| 5-3 | ✅ done | 18 | 100% | 2→0 | `481c7fd` |
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Wave Summary: 2/2 succeeded
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
+> **Wave Summary:** 2/2 succeeded
 
 The **Issues** column shows "found→remaining" (e.g., "4→0" means 4 issues found, all fixed).
 
