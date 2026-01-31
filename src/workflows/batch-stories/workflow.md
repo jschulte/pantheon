@@ -19,11 +19,16 @@ Orchestrator coordinates. Agents do implementation. Orchestrator does reconcilia
 
 <config>
 name: batch-stories
-version: 3.4.0
+version: 3.5.0
 
 modes:
   sequential: {description: "Process one-by-one in this session", recommended_for: "gap analysis"}
   parallel: {description: "Spawn concurrent Task agents", recommended_for: "greenfield batch"}
+
+parallel_config:
+  max_concurrent: 3          # Max stories per wave (can override via user prompt)
+  smart_ordering: true       # Analyze dependencies and order waves intelligently
+  respect_epic_order: true   # Within an epic, lower story numbers go first
 
 complexity_routing:
   # 6-tier scale - see story-pipeline/workflow.md for full details
@@ -37,6 +42,50 @@ complexity_routing:
 defaults:
   auto_create_missing: true  # Automatically create missing story files using greenfield workflow
 </config>
+
+<story_dependencies>
+## Story Dependency Declaration
+
+Stories can declare dependencies on other stories using the `depends_on` field.
+This enables smart wave ordering in parallel execution.
+
+**Format in story file:**
+
+```markdown
+## Story Metadata
+<!-- Optional: declare dependencies for smart parallel execution -->
+depends_on: [5-1, 5-2]
+```
+
+**Or in a Dependencies section:**
+
+```markdown
+## Dependencies
+- **5-1**: Uses the CatchList component created in this story
+- **5-2**: Extends the detail view patterns established here
+```
+
+**Dependency detection methods (in priority order):**
+
+1. **Explicit `depends_on`** - Highest priority, always respected
+2. **File-based inference** - If Story A creates a file that Story B references
+3. **Keyword scanning** - Phrases like "uses component from 5-1"
+4. **Epic ordering** - Lower story numbers first (fallback)
+
+**Example dependency graph:**
+```
+5-1 ──┬──► 5-2 ──► 5-6
+      │
+      └──► 5-4 ──► 5-5
+
+5-3 (independent)
+```
+
+**Resulting waves:**
+- Wave 1: 5-1, 5-3 (no deps)
+- Wave 2: 5-2, 5-4 (deps satisfied by Wave 1)
+- Wave 3: 5-5, 5-6 (deps satisfied by Wave 2)
+</story_dependencies>
 
 <execution_context>
 @patterns/hospital-grade.md
@@ -196,7 +245,113 @@ Options:
 ```
 
 For sequential: proceed to `execute_sequential`
-For parallel: proceed to `execute_parallel`
+For parallel: proceed to `analyze_dependencies`
+</step>
+
+<step name="analyze_dependencies" if="mode == parallel">
+**Dependency Analysis & Smart Wave Planning**
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔗 ANALYZING DEPENDENCIES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+### Step 1: Extract Dependencies from Each Story
+
+For each selected story, read the story file and look for:
+
+**1.1 Explicit dependencies (highest priority):**
+```bash
+# Look for depends_on in story frontmatter or metadata
+grep -E "depends_on:|dependencies:|requires:" "$STORY_FILE"
+```
+
+Example in story file:
+```markdown
+## Dependencies
+depends_on: [5-1, 5-2]
+```
+
+**1.2 File-based inference (medium priority):**
+```bash
+# Extract file paths mentioned in tasks
+grep -oE "(src|components|lib|api|services)/[a-zA-Z0-9/_.-]+" "$STORY_FILE" | sort -u
+```
+
+Cross-reference: If Story B creates `src/components/PhotoUpload.tsx` and Story C references it, C depends on B.
+
+**1.3 Keyword scanning (low priority):**
+```bash
+# Look for references to other stories
+grep -oE "(story |from |uses |extends |builds on )[0-9]+-[0-9]+" "$STORY_FILE"
+```
+
+**1.4 Epic ordering (fallback):**
+Within the same epic, assume lower story numbers should complete first unless contradicted by explicit dependencies.
+
+### Step 2: Build Dependency Graph
+
+```
+Dependencies found:
+  5-1: []                    # No dependencies
+  5-2: [5-1]                 # Depends on 5-1
+  5-3: []                    # No dependencies
+  5-4: [5-1]                 # Depends on 5-1
+  5-5: [5-4]                 # Depends on 5-4
+  5-6: [5-2]                 # Depends on 5-2
+```
+
+### Step 3: Detect Circular Dependencies
+
+```bash
+# If circular dependency detected:
+echo "⚠️ CIRCULAR DEPENDENCY: 5-1 → 5-3 → 5-1"
+echo "Falling back to epic order for these stories"
+```
+
+### Step 4: Build Smart Waves
+
+**Algorithm:**
+1. Start with stories that have no unmet dependencies → Wave 1
+2. After Wave 1 completes, stories whose dependencies are now met → Wave 2
+3. Repeat until all stories are assigned
+4. Respect `max_concurrent` limit per wave
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 WAVE PLAN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Wave 1 (no dependencies):
+  • 5-1 Polish Catch List View
+  • 5-3 Polish Manual Catch Entry Form
+
+Wave 2 (depends on Wave 1):
+  • 5-2 Polish Catch Detail View (← 5-1)
+  • 5-4 Fix Offline Photo Handling (← 5-1)
+
+Wave 3 (depends on Wave 2):
+  • 5-5 Improve Photo Upload Widget (← 5-4)
+  • 5-6 Add Catch Edit Functionality (← 5-2)
+
+Total: 6 stories in 3 waves
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+### Step 5: User Confirmation
+
+Use AskUserQuestion:
+```
+Smart wave plan created based on dependency analysis.
+
+Options:
+1. Proceed with smart ordering (recommended)
+2. Override: Process in selection order (ignore dependencies)
+3. Adjust max concurrent (currently {{max_concurrent}})
+```
+
+**Store wave plan for execute_parallel step.**
 </step>
 
 <step name="execute_sequential" if="mode == sequential">
@@ -364,26 +519,30 @@ Use Edit tool: `"{{story_key}}: ready-for-dev"` → `"{{story_key}}: done"`
 </step>
 
 <step name="execute_parallel" if="mode == parallel">
-**Parallel Processing with Wave Pattern**
+**Parallel Processing with Smart Wave Pattern**
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📦 PARALLEL PROCESSING
+📦 PARALLEL PROCESSING (SMART WAVES)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
+
+**Uses wave plan from dependency analysis step.**
 
 **Wave Configuration:**
-- Max concurrent: 3 agents
+- Max concurrent: `{{max_concurrent}}` (default 3, user can override)
+- Smart ordering: Dependencies respected
 - Wait for wave completion before next wave
 
-**For each wave:**
+**For each wave in wave_plan:**
 
 ### Step 1: Display Wave Header
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🌊 WAVE {{wave_number}}: {{story_keys}}
+🌊 WAVE {{wave_number}}/{{total_waves}}: {{story_keys}}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Dependencies satisfied: {{deps_from_previous_waves}}
 Spawning {{count}} parallel pipeline agents...
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
