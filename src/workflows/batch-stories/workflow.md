@@ -378,7 +378,18 @@ Use Edit tool: `"{{story_key}}: ready-for-dev"` → `"{{story_key}}: done"`
 
 **For each wave:**
 
-1. Spawn Task agents (up to 3 parallel):
+### Step 1: Display Wave Header
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🌊 WAVE {{wave_number}}: {{story_keys}}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Spawning {{count}} parallel pipeline agents...
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+### Step 2: Spawn Task agents (up to 3 parallel)
+
 ```
 Task({
   subagent_type: "general-purpose",
@@ -398,22 +409,73 @@ Complexity: {{complexity_level}}
 <success_criteria>
 - [ ] All pipeline phases complete
 - [ ] Git commit created
+- [ ] Progress artifact updated at each phase
 - [ ] Return ## AGENT COMPLETE with summary
 </success_criteria>
 `
 })
 ```
 
-2. Wait for all agents in wave to complete
+### Step 3: Wait for all agents in wave to complete
 
-3. **Orchestrator reconciles each completed story:**
-   - Get git diff
-   - Check off tasks
-   - Fill Dev Agent Record
-   - Verify updates
-   - Update sprint-status
+### Step 4: Display Wave Summary
 
-4. Continue to next wave or summary
+After all agents complete, read progress artifacts and display detailed summary:
+
+```bash
+# Read progress files for this wave
+for story in {{wave_stories}}; do
+  PROGRESS="docs/sprint-artifacts/completions/${story}-progress.json"
+  if [ -f "$PROGRESS" ]; then
+    cat "$PROGRESS"
+  fi
+done
+```
+
+**Display format:**
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🌊 WAVE {{wave_number}} COMPLETE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+{{story_key_1}}:
+  ✓ PREPARE: {{complexity}}, {{playbook_count}} playbooks
+  ✓ BUILD: {{files_created}} files, {{lines_added}} lines
+  ✓ VERIFY: {{agent_count}} reviewers, {{issues_found}} issues
+  ✓ ASSESS: {{must_fix}} MUST_FIX, {{should_fix}} logged
+  ✓ REFINE: {{iterations}} iterations
+  ✓ COMMIT: {{git_commit}}
+  ✓ REFLECT: {{playbook_action}}
+
+{{story_key_2}}:
+  ✓ PREPARE: ...
+  ✓ BUILD: ...
+  ...
+
+{{story_key_3}}:
+  ⚠ BUILD: ...
+  ✗ VERIFY: Failed - {{error}}
+  ⏳ Remaining phases skipped
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Wave Summary: {{success}}/{{total}} succeeded
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+**Status icons:**
+- ✓ = Complete
+- ⚠ = Completed with warnings
+- ✗ = Failed
+- ⏳ = Pending/Skipped
+
+### Step 5: Orchestrator reconciles each completed story
+
+For each successful story:
+- Check off tasks in story file
+- Fill Dev Agent Record
+- Update sprint-status to done
+
+### Step 6: Continue to next wave or summary
 </step>
 
 <step name="summary">

@@ -174,6 +174,59 @@ These are friendly status updates - not verbose, just enough to orient the user.
 **Implementation:** Orchestrator outputs these as regular text messages between Task spawns.
 </orchestrator_narrative>
 
+<progress_artifact>
+## Progress Tracking for Parallel Execution
+
+When running in parallel (batch mode), each pipeline writes progress to a JSON file.
+This allows the batch orchestrator to report detailed wave summaries.
+
+**File:** `docs/sprint-artifacts/completions/{{story_key}}-progress.json`
+
+**Structure:**
+```json
+{
+  "story_key": "{{story_key}}",
+  "started_at": "ISO timestamp",
+  "current_phase": "BUILD",
+  "phases": {
+    "PREPARE": { "status": "complete", "details": "2 playbooks loaded" },
+    "BUILD": { "status": "in_progress", "details": "implementing..." },
+    "VERIFY": { "status": "pending" },
+    "ASSESS": { "status": "pending" },
+    "REFINE": { "status": "pending" },
+    "COMMIT": { "status": "pending" },
+    "REFLECT": { "status": "pending" }
+  },
+  "metrics": {
+    "files_changed": 0,
+    "lines_added": 0,
+    "issues_found": 0,
+    "must_fix": 0,
+    "iterations": 0
+  }
+}
+```
+
+**Update Points:**
+- After Phase 1: PREPARE complete, playbooks loaded
+- After Phase 2: BUILD complete, files/lines counts
+- After Phase 3: VERIFY complete, issues found
+- After Phase 4: ASSESS complete, triage results
+- After Phase 5: REFINE complete (or each iteration)
+- After Phase 6: COMMIT complete
+- After Phase 7: REFLECT complete, final status
+
+**Write with:**
+```bash
+PROGRESS_FILE="docs/sprint-artifacts/completions/{{story_key}}-progress.json"
+cat > "$PROGRESS_FILE" << 'EOF'
+{ ... updated JSON ... }
+EOF
+```
+
+Or use the Write tool to update the file.
+</progress_artifact>
+
 <process>
 
 <step name="phase_1_prepare">
@@ -303,6 +356,32 @@ Use Grep tool on `docs/playbooks/implementation-playbooks/` to find matching pla
 
 Store playbook content for Metis.
 
+### 1.5 Update Progress
+
+```bash
+cat > "docs/sprint-artifacts/completions/{{story_key}}-progress.json" << EOF
+{
+  "story_key": "{{story_key}}",
+  "started_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "current_phase": "BUILD",
+  "phases": {
+    "PREPARE": { "status": "complete", "details": "{{playbook_count}} playbooks loaded, complexity: {{COMPLEXITY}}" },
+    "BUILD": { "status": "pending" },
+    "VERIFY": { "status": "pending" },
+    "ASSESS": { "status": "pending" },
+    "REFINE": { "status": "pending" },
+    "COMMIT": { "status": "pending" },
+    "REFLECT": { "status": "pending" }
+  },
+  "metrics": {
+    "complexity": "{{COMPLEXITY}}",
+    "task_count": {{TASK_COUNT}},
+    "playbooks_loaded": {{playbook_count}}
+  }
+}
+EOF
+```
+
 **📢 Orchestrator says:**
 > "Story looks good! Found {{playbook_count}} relevant playbooks. Now I'll hand off to **Metis** to build the implementation. She'll write tests first (TDD), then implement. This is usually the longest phase."
 
@@ -385,6 +464,26 @@ BUILDER_AGENT_ID = {{extract agent_id from Task result}}
 ```
 
 **Store Metis agent ID for resume later.**
+
+### Update Progress
+
+Use Write tool to update `docs/sprint-artifacts/completions/{{story_key}}-progress.json`:
+```json
+{
+  "current_phase": "VERIFY",
+  "phases": {
+    "PREPARE": { "status": "complete", "details": "..." },
+    "BUILD": { "status": "complete", "details": "{{files_created}} files, {{lines_added}} lines, {{tests_added}} tests" },
+    "VERIFY": { "status": "in_progress", "details": "{{AGENT_COUNT}} reviewers" },
+    ...
+  },
+  "metrics": {
+    "files_changed": {{files_created + files_modified}},
+    "lines_added": {{lines_added}},
+    "tests_added": {{tests_added}}
+  }
+}
+```
 
 **📢 Orchestrator says:**
 > "Metis has finished building! She created {{files_created}} files and {{tests_added}} tests. Now I'm sending in the review squad - **{{AGENT_COUNT}} agents** will verify the work in parallel. This goes fast since they run simultaneously."
@@ -572,6 +671,26 @@ Save to: docs/sprint-artifacts/completions/{{story_key}}-arete.json
 
 Collect completion artifacts and store agent_ids for potential resume.
 
+### Update Progress
+
+Update `docs/sprint-artifacts/completions/{{story_key}}-progress.json`:
+```json
+{
+  "current_phase": "ASSESS",
+  "phases": {
+    "PREPARE": { "status": "complete", "details": "..." },
+    "BUILD": { "status": "complete", "details": "..." },
+    "VERIFY": { "status": "complete", "details": "{{AGENT_COUNT}} reviewers, {{total_issues}} issues found" },
+    "ASSESS": { "status": "in_progress", "details": "Themis triaging" },
+    ...
+  },
+  "metrics": {
+    "issues_found": {{total_issues}},
+    "reviewers": {{AGENT_COUNT}}
+  }
+}
+```
+
 **📢 Orchestrator says:**
 > "All {{AGENT_COUNT}} reviewers are back! They found {{total_issues}} potential issues. Now **Themis** will weigh each one - she'll separate the real problems from the gold-plating."
 
@@ -718,6 +837,28 @@ Triage:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
+### Update Progress
+
+Update `docs/sprint-artifacts/completions/{{story_key}}-progress.json`:
+```json
+{
+  "current_phase": "REFINE",
+  "phases": {
+    "PREPARE": { "status": "complete", "details": "..." },
+    "BUILD": { "status": "complete", "details": "..." },
+    "VERIFY": { "status": "complete", "details": "..." },
+    "ASSESS": { "status": "complete", "details": "{{must_fix}} MUST_FIX, {{should_fix}} SHOULD_FIX, {{style}} STYLE" },
+    "REFINE": { "status": "{{must_fix > 0 ? 'in_progress' : 'skipped'}}", "details": "{{must_fix}} issues to fix" },
+    ...
+  },
+  "metrics": {
+    "must_fix": {{must_fix}},
+    "should_fix": {{should_fix}},
+    "style": {{style}}
+  }
+}
+```
+
 **📢 Orchestrator says (if issues remain):**
 > "Themis has triaged **{{total_count}} issues**. **{{must_fix}} need fixing** (including quick fixes we can knock out fast). {{should_fix}} logged as tech debt for later. Sending Metis to handle the MUST_FIX list."
 
@@ -811,6 +952,25 @@ On iteration 2+, add ONE fresh reviewer (possibly Iris if frontend files).
 - If max iterations reached, escalate to user
 - Log SHOULD_FIX and STYLE as tech debt
 
+### Update Progress
+
+Update `docs/sprint-artifacts/completions/{{story_key}}-progress.json`:
+```json
+{
+  "current_phase": "COMMIT",
+  "phases": {
+    ...
+    "REFINE": { "status": "complete", "details": "{{iterations}} iterations, {{fixes_applied}} fixes" },
+    "COMMIT": { "status": "in_progress" },
+    ...
+  },
+  "metrics": {
+    "iterations": {{iterations}},
+    "fixes_applied": {{fixes_applied}}
+  }
+}
+```
+
 **📢 Orchestrator says (after successful fix):**
 > "Metis fixed the issues and the reviewers confirmed the fixes look good. **Zero MUST_FIX remaining!** Now I'll reconcile the story file and commit everything."
 
@@ -884,6 +1044,24 @@ chore({{story_key}}): reconcile story completion
 - Update sprint-status to done
 EOF
 )"
+```
+
+### Update Progress
+
+Update `docs/sprint-artifacts/completions/{{story_key}}-progress.json`:
+```json
+{
+  "current_phase": "REFLECT",
+  "phases": {
+    ...
+    "COMMIT": { "status": "complete", "details": "Committed: {{git_commit}}" },
+    "REFLECT": { "status": "in_progress" }
+  },
+  "metrics": {
+    "git_commit": "{{git_commit}}",
+    "tasks_completed": {{checked_tasks}}
+  }
+}
 ```
 
 **📢 Orchestrator says:**
@@ -965,6 +1143,35 @@ Save to: docs/sprint-artifacts/completions/{{story_key}}-mnemosyne.json
 </completion_format>
 `
 })
+```
+
+### Final Progress Update
+
+Update `docs/sprint-artifacts/completions/{{story_key}}-progress.json`:
+```json
+{
+  "current_phase": "COMPLETE",
+  "completed_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "status": "success",
+  "phases": {
+    "PREPARE": { "status": "complete", "details": "..." },
+    "BUILD": { "status": "complete", "details": "{{files_created}} files, {{lines_added}} lines" },
+    "VERIFY": { "status": "complete", "details": "{{AGENT_COUNT}} reviewers, {{total_issues}} issues" },
+    "ASSESS": { "status": "complete", "details": "{{must_fix}} MUST_FIX, {{should_fix}} SHOULD_FIX" },
+    "REFINE": { "status": "complete", "details": "{{iterations}} iterations" },
+    "COMMIT": { "status": "complete", "details": "Committed: {{git_commit}}" },
+    "REFLECT": { "status": "complete", "details": "{{playbook_action}}" }
+  },
+  "metrics": {
+    "files_changed": {{files_created + files_modified}},
+    "lines_added": {{lines_added}},
+    "tests_added": {{tests_added}},
+    "issues_found": {{total_issues}},
+    "must_fix": {{must_fix}},
+    "iterations": {{iterations}},
+    "coverage": "{{coverage}}%"
+  }
+}
 ```
 
 **📢 Orchestrator says (completion):**
