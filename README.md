@@ -34,16 +34,16 @@ When running stories in parallel, the engine analyzes dependencies and builds sm
 Stories selected: 5-1, 5-2, 5-3, 5-4, 5-5, 5-6
 
 Wave 1 (no dependencies):
-  • 5-1 Polish Catch List View
-  • 5-3 Polish Manual Catch Entry Form
+  • 5-1 Create shared UI components
+  • 5-3 Add form validation helpers
 
 Wave 2 (depends on Wave 1):
-  • 5-2 Polish Catch Detail View (← 5-1)
-  • 5-4 Fix Offline Photo Handling (← 5-1)
+  • 5-2 Build list view using components (← 5-1)
+  • 5-4 Add image upload service (← 5-1)
 
 Wave 3 (depends on Wave 2):
-  • 5-5 Improve Photo Upload Widget (← 5-4)
-  • 5-6 Add Catch Edit Functionality (← 5-2)
+  • 5-5 Enhance upload with preview (← 5-4)
+  • 5-6 Add detail view with editing (← 5-2)
 ```
 
 **Dependency detection:**
@@ -63,13 +63,14 @@ Each pipeline writes progress at every phase, enabling detailed wave summaries:
 | Story | Status | Tests | Coverage | Issues | Commit |
 |-------|--------|-------|----------|--------|--------|
 | 5-1 | ✅ done | 25 | 97.6% | 4→0 | 8a1a0f0 |
-| 5-2 | ✅ done | 22 | 100% | 2→0 | 481c7fd |
-| 5-3 | ✅ done | 32 | 89.2% | 6→0 | e94460c |
+| 5-3 | ✅ done | 18 | 100% | 2→0 | 481c7fd |
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Wave Summary: 3/3 succeeded
+Wave Summary: 2/2 succeeded
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
+
+The **Issues** column shows "found→remaining" (e.g., "4→0" means 4 issues found, all fixed).
 
 ### Playbook Consolidation
 Mnemosyne now searches existing playbooks before creating new ones - consolidating knowledge rather than scattering it across many files.
