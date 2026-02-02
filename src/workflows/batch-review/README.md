@@ -100,8 +100,87 @@ You can (and should) run again with different focus to find other issue types.
 | Verification Reviewer | Confirms fixes work |
 | Hardening Reporter | Generates summary |
 
+## Real-World Examples
+
+### Security Hardening
+
+```bash
+/batch-review epic=17 focus="security vulnerabilities, auth bypass, injection"
+```
+
+**Findings (Pass 1):**
+- SQL injection in user search (MUST_FIX)
+- XSS in comment rendering (MUST_FIX)
+- Auth token in localStorage (MUST_FIX)
+- Missing rate limiting (MUST_FIX)
+- Weak password validation (SHOULD_FIX)
+
+**Result:** 4 security issues fixed, 1 logged as tech debt
+**Time:** 90 minutes
+**vs Manual Security Audit:** 1-2 weeks
+
+### UX Consistency Sweep
+
+```bash
+/batch-review epic=17 focus="styling, button placement, context menus, visual consistency"
+```
+
+**Findings:**
+- Button styles inconsistent (primary vs accent)
+- Context menus positioned differently
+- Modal close buttons on left vs right
+- Loading states missing in 3 components
+
+**Result:** Unified UX patterns across all 10 stories
+**Time:** 2 hours
+**vs Manual UX Review:** 3-5 days
+
+### Performance Optimization
+
+```bash
+/batch-review path="src/api" focus="N+1 queries, caching, performance"
+```
+
+**Findings:**
+- 5 N+1 query patterns in user relationships
+- Missing database indexes
+- No response caching on expensive queries
+- Inefficient JSON parsing
+
+**Result:** 40% API response time improvement
+**Time:** 90 minutes
+**vs Manual Performance Audit:** 1-2 weeks
+
+### Accessibility Compliance
+
+```bash
+/batch-review path="src/components" focus="WCAG AA, keyboard nav, screen reader"
+```
+
+**Findings:**
+- 15 missing aria-labels
+- 8 components with poor focus management
+- 3 color contrast violations
+- No keyboard shortcuts for power users
+
+**Result:** Full WCAG AA compliance
+**Time:** 2.5 hours
+**vs Manual A11y Audit:** 1 week + remediation
+
 ## Philosophy
 
 > "The code works until it doesn't. Find the 'doesn't' before production does."
 
 This workflow assumes bugs exist and systematically finds them. Each pass makes the code more robust, more secure, and more reliable.
+
+## Why Run Multiple Passes?
+
+Each pass with a different focus finds different issue types:
+
+**Pass 1 (general):** Obvious bugs, missing null checks, basic issues
+**Pass 2 (security):** Subtle vulnerabilities, auth edge cases, injection vectors
+**Pass 3 (accessibility):** Screen reader issues, keyboard nav, WCAG
+**Pass 4 (performance):** N+1s, caching opportunities, bottlenecks
+**Pass 5 (consistency):** Pattern mismatches, naming inconsistencies
+
+**Result:** Progressively more robust code with each iteration.
