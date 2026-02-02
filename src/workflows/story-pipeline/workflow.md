@@ -1086,8 +1086,34 @@ Update `docs/sprint-artifacts/completions/{{story_key}}-progress.json`:
 }
 ```
 
+### 5.4 Commit Implementation
+
+After all MUST_FIX issues are resolved, commit the implementation:
+
+```bash
+git add .
+
+git commit -m "$(cat <<'EOF'
+feat({{story_key}}): {{story_title}}
+
+Implementation complete:
+- {{files_created}} files created
+- {{files_modified}} files modified
+- {{tests_added}} tests added
+- Coverage: {{coverage}}%
+
+All review issues resolved ({{iterations}} iteration{{s}}).
+EOF
+)"
+```
+
+**Save the commit SHA:**
+```bash
+GIT_IMPLEMENTATION_COMMIT=$(git rev-parse HEAD)
+```
+
 **📢 Orchestrator says (after successful fix):**
-> "Metis fixed the issues and the reviewers confirmed the fixes look good. **Zero MUST_FIX remaining!** Now I'll reconcile the story file and commit everything."
+> "Metis fixed the issues and the reviewers confirmed the fixes look good. **Zero MUST_FIX remaining!** Implementation committed ({{git_commit}}). Now I'll reconcile the story file."
 
 **📢 Orchestrator says (if max iterations reached):**
 > "We've gone through {{max_iterations}} fix cycles and there are still {{remaining}} issues. I'll need your input on whether to proceed anyway or address these manually."
@@ -1122,8 +1148,8 @@ For each task in `argus.task_verification`:
 ```text
 **Dev Agent Record**
 **Implementation Date:** {{timestamp}}
-**Agent Model:** Claude (Greek Pantheon Pipeline v6.0)
-**Git Commit:** {{git_commit}}
+**Agent Model:** Claude (Greek Pantheon Pipeline v6.1)
+**Git Commit:** {{GIT_IMPLEMENTATION_COMMIT}}
 
 **Pipeline Phases:**
 - Phase 1 PREPARE: {{playbooks_loaded}} playbooks loaded

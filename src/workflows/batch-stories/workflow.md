@@ -435,7 +435,11 @@ Execute the pipeline phases directly so each agent is a visible top-level Task.
 Read: `{project-root}/_bmad/bse/workflows/story-pipeline/workflow.md`
 
 **B.2: Execute each phase as described in workflow.md:**
-The workflow describes spawning these Tasks - spawn them DIRECTLY:
+The workflow describes spawning these Tasks - spawn them DIRECTLY.
+
+**CRITICAL - Ensure commits happen:**
+- After Phase 5 (REFINE): Implementation commit with all code changes
+- After Phase 6 (COMMIT): Reconciliation commit with story checkboxes + sprint-status
 
 ```
 Phase 1: PREPARE - Story quality gate + playbook query (orchestrator, no Task)
@@ -967,6 +971,65 @@ following the template structure in `session-reporter.md`.
 
 **Display terminal summary:**
 Output the quick summary format shown above.
+</step>
+
+<step name="epic_completion_check">
+### Check Epic Completion
+
+After session completes, check if the epic is now fully done:
+
+```bash
+# If this was an epic batch, check if all stories are done
+IF epic provided (e.g., epic=17):
+  EPIC_KEY="epic-{{epic}}"
+
+  # Get all stories in this epic from sprint-status.yaml
+  EPIC_STORIES=$(grep "^  {{epic}}-" docs/sprint-artifacts/sprint-status.yaml | cut -d: -f1 | tr -d ' ')
+
+  # Check if ALL stories are "done"
+  ALL_DONE=true
+  for story in $EPIC_STORIES; do
+    STATUS=$(grep "^  $story:" docs/sprint-artifacts/sprint-status.yaml | cut -d: -f2 | tr -d ' ')
+    if [ "$STATUS" != "done" ]; then
+      ALL_DONE=false
+      break
+    fi
+  done
+
+  IF ALL_DONE:
+    # Mark epic as done
+    Use Edit tool on sprint-status.yaml:
+    "{{EPIC_KEY}}: in-progress" → "{{EPIC_KEY}}: done"
+
+    **📢 Orchestrator says:**
+    > "🎉 **EPIC {{epic}} COMPLETE!** All {{story_count}} stories are done and the epic is now marked as complete in sprint-status.yaml."
+  ELSE:
+    REMAINING=$(echo "$EPIC_STORIES" | wc -l) - {{completed_count}}
+    **📢 Orchestrator says:**
+    > "📊 **Epic {{epic}} Progress:** {{completed_count}}/{{total_stories}} stories done. {{REMAINING}} stories remaining."
+  ENDIF
+ENDIF
+```
+
+### Commit Epic Completion (if applicable)
+
+```bash
+IF epic marked as done:
+  git add docs/sprint-artifacts/sprint-status.yaml
+
+  git commit -m "$(cat <<'EOF'
+chore(epic-{{epic}}): mark epic as complete
+
+All {{story_count}} stories in epic {{epic}} have been implemented,
+reviewed, and verified. Epic marked as done.
+EOF
+)"
+
+  **📢 Orchestrator says:**
+  > "Epic completion committed: {{git_commit}}"
+ENDIF
+```
+
 </step>
 
 </process>
