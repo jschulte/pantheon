@@ -1,7 +1,7 @@
 name: story-pipeline
-description: "Enhanced multi-agent pipeline with playbook learning, code citation evidence, test quality validation, and resume-builder fixes"
+description: "Enhanced multi-agent pipeline with smart builder spawning, playbook learning, code citation evidence, test quality validation, resume-builder fixes, and per-story completion reports"
 author: "BMAD Method"
-version: "4.1.0" # Added execution discipline documentation
+version: "5.0.0" # Added smart builder spawning from agent-routing.yaml
 
 # ============================================================================
 # CRITICAL: EXECUTION DISCIPLINE
@@ -10,11 +10,12 @@ version: "4.1.0" # Added execution discipline documentation
 # The orchestrator (main Claude context) follows workflow.md phases.
 #
 # Task subagent_types listed below are ONLY for phases defined in workflow.md:
-#   - Phase 1: builder (Mason)
-#   - Phase 2: inspector, test_quality, reviewers (Vera, Tessa, Rex)
-#   - Phase 3: fixer (Mason resumed)
-#   - Phase 4: inspector (Vera re-check)
-#   - Phase 6: reflection (Rita)
+#   - Phase 2 BUILD: builder (Metis)
+#   - Phase 3 VERIFY: inspector, test_quality, reviewers (Argus, Nemesis, etc.)
+#   - Phase 4 ASSESS: arbiter (Themis)
+#   - Phase 5 REFINE: builder resumed, reviewers resumed
+#   - Phase 7 REFLECT: reflection (Mnemosyne)
+#   - Phase 7 REPORT: story_reporter (Hermes) - generates completion summary
 #
 # DO NOT use Task tool outside the workflow phases!
 # DO NOT spawn ad-hoc Task agents to "implement" stories directly!
@@ -36,6 +37,45 @@ installed_path: "{project-root}/_bmad/bse/workflows/story-pipeline"
 instructions: "{installed_path}/workflow.md"
 agents_path: "{installed_path}/agents"
 
+# =============================================================================
+# SMART BUILDER SPAWNING (v5.0)
+# =============================================================================
+# Agent routing configuration determines which specialized builder to spawn
+# based on story content, file patterns, and project configuration.
+agent_routing:
+  config_file: "{project-root}/_bmad/bse/agent-routing.yaml"
+  builders_path: "{project-root}/_bmad/bse/agents/builders"
+  reviewers_path: "{project-root}/_bmad/bse/agents/reviewers"
+  validators_path: "{project-root}/_bmad/bse/agents/validators"
+
+  # Project-level override (set in project's _bmad/_config/bse.yaml)
+  # If set, always use this builder regardless of detection
+  project_default_builder: null  # e.g., "frontend-react"
+
+  # Available specialized builders (matched via agent-routing.yaml rules)
+  available_builders:
+    - id: frontend-react
+      agent: "agents/builders/frontend-react.md"
+      persona: { name: "Apollo", emoji: "⚛️" }
+    - id: frontend-vue
+      agent: "agents/builders/frontend-vue.md"
+      persona: { name: "Verdant", emoji: "🌿" }
+    - id: backend-typescript
+      agent: "agents/builders/backend-typescript.md"
+      persona: { name: "Hephaestus", emoji: "🔥" }
+    - id: backend-python
+      agent: "agents/builders/backend-python.md"
+      persona: { name: "Pythia", emoji: "🐍" }
+    - id: database-prisma
+      agent: "agents/builders/database-prisma.md"
+      persona: { name: "Athena", emoji: "🦉" }
+    - id: infrastructure
+      agent: "agents/builders/infrastructure.md"
+      persona: { name: "Atlas", emoji: "🌍" }
+    - id: general
+      agent: "agents/builders/general.md"
+      persona: { name: "Metis", emoji: "🔨" }
+
 # Agent tracking (from GSD)
 agent_history: "{sprint_artifacts}/agent-history.json"
 current_agent_id: "{sprint_artifacts}/current-agent-id.txt"
@@ -47,19 +87,30 @@ audit_trail: "{sprint_artifacts}/audit-story-pipeline-{{story_id}}-{{date}}.yaml
 # Multi-agent configuration
 agents:
   builder:
-    description: "Implementation agent - writes code and tests"
+    description: "Implementation agent - writes code and tests (SMART SPAWNING)"
     steps: [1, 2, 3, 4]
-    subagent_type: "general-purpose"
-    bmad_agent: "{project-root}/_bmad/bse/agents/builder.md" # Mason the Craftsman - TDD Implementation Specialist
-    prompt_file: "{agents_path}/builder.md"
+    subagent_type: "general-purpose"  # Always general-purpose, specialized via prompt
+    model: "opus"  # Builder gets full capability model
+    # NOTE: bmad_agent is DYNAMICALLY SELECTED based on agent-routing.yaml rules
+    # The workflow.md Phase 2 (BUILD) will:
+    #   1. Load agent-routing.yaml
+    #   2. Analyze story for file patterns and keywords
+    #   3. Match against builder_routing rules (first match wins)
+    #   4. Load the matched specialized builder prompt
+    #   5. Spawn with specialized instructions
+    smart_spawn: true
+    routing_config: "{agent_routing.config_file}"
+    fallback_agent: "agents/builders/general.md"  # Metis if no rules match
+    prompt_file: "{agents_path}/builder.md"  # Legacy fallback only
     trust_level: "low" # Assumes agent will cut corners
     timeout: 3600 # 1 hour
 
   inspector:
     description: "Validation agent - independent verification with code citations"
     steps: [5, 6]
-    subagent_type: "testing-suite:test-engineer" # Specialized for test/verification tasks
-    bmad_agent: "{project-root}/_bmad/bse/agents/inspector.md" # BMAD Inspector persona
+    subagent_type: "general-purpose"  # Self-contained, no external plugin dependency
+    model: "opus"
+    bmad_agent: "{validators_path}/inspector.md"  # Vera - The Verification Inspector
     prompt_file: "{agents_path}/inspector.md"
     fresh_context: true # No knowledge of builder agent
     trust_level: "medium" # No conflict of interest
@@ -69,18 +120,23 @@ agents:
   test_quality:
     description: "Test quality validation - verifies test coverage and quality"
     steps: [5.5]
-    subagent_type: "testing-suite:test-engineer" # Specialized for test quality analysis
-    bmad_agent: "{project-root}/_bmad/bse/agents/test-quality.md" # Tessa - Test Quality Analyst
+    subagent_type: "general-purpose"  # Self-contained, no external plugin dependency
+    model: "opus"
+    bmad_agent: "{validators_path}/test-quality.md"  # Tessa - Test Quality Analyst
     prompt_file: "{agents_path}/test-quality.md"
     fresh_context: true
     trust_level: "medium"
     timeout: 1200 # 20 minutes
 
   reviewer:
-    description: "Adversarial code review - finds problems"
+    description: "Adversarial code review - finds problems (SMART ROUTING)"
     steps: [7]
-    subagent_type: "multi-agent-review" # Spawns multiple reviewers
-    prompt_file: "{agents_path}/security-reviewer.md" # Default to Sasha for single-reviewer mode
+    subagent_type: "general-purpose"  # Self-contained, specialized via prompt
+    model: "opus"
+    # Reviewers are selected via agent-routing.yaml reviewer_routing section
+    # Based on complexity and file patterns touched
+    smart_spawn: true
+    routing_config: "{agent_routing.config_file}"
     fresh_context: true
     adversarial: true # Goal: find issues
     trust_level: "high" # Wants to find problems
@@ -92,12 +148,14 @@ agents:
       standard: 3 # Sasha (Security) + Leo (Logic) + Rosie (Architect)
       complex: 4 # Sasha (Security) + Leo (Logic) + Rosie (Architect) + Quinn (Quality)
 
-    # Always-included reviewers (based on complexity)
+    # Reviewers are loaded from agents/reviewers/ directory
+    # See agent-routing.yaml reviewer_routing section for match rules
     review_types:
-      security: "{agents_path}/security-reviewer.md" # Sasha the Security Sentinel - ALWAYS
-      logic: "{agents_path}/logic-reviewer.md" # Leo the Logic Hunter - standard+
-      architect: "{agents_path}/architect-integration-reviewer.md" # Rosie the Architecture Guardian - ALWAYS
-      quality: "{agents_path}/quality-reviewer.md" # Quinn the Quality Crusader - complex only
+      security: "{reviewers_path}/security.md"      # Sasha the Security Sentinel - ALWAYS
+      architecture: "{reviewers_path}/architecture.md"  # Rosie the Architecture Guardian - ALWAYS
+      performance: "{reviewers_path}/performance.md"    # Leo the Logic Hunter - standard+
+      accessibility: "{reviewers_path}/accessibility.md" # Ada the Accessibility Advocate - frontend
+      quality: "{reviewers_path}/quality.md"        # Quinn the Quality Crusader - complex only
 
     # Conditional reviewers (based on file patterns)
     # These are ADDED to the base count when triggered
@@ -151,14 +209,43 @@ agents:
     timeout: 2400 # 40 minutes
 
   reflection:
-    description: "Playbook learning - extracts patterns for future agents"
+    description: "Playbook learning - extracts patterns for future agents (DEPRECATED - use reflection_reporter)"
     steps: [10]
     subagent_type: "general-purpose"
-    bmad_agent: "{project-root}/_bmad/bse/agents/reflection.md" # Rita - Knowledge Curator
+    bmad_agent: "{project-root}/_bmad/bse/agents/reflection.md" # Mnemosyne - Titan of Memory
     prompt_file: "{agents_path}/reflection.md"
     timeout: 900 # 15 minutes
+    deprecated: true # Use reflection_reporter instead
 
-# Reconciliation: orchestrator does this directly (see workflow.md Phase 5)
+  reflection_reporter:
+    description: "Combined reflection + reporting - extracts learnings, updates playbooks, generates completion report"
+    steps: [10, 11]
+    subagent_type: "general-purpose"
+    model: "sonnet" # Faster model sufficient for synthesis
+    prompt_file: "{agents_path}/reflection-reporter.md" # Mnemosyne-Hermes combined
+    timeout: 900 # 15 minutes
+    outputs:
+      - "{sprint_artifacts}/completions/{{story_key}}-mnemosyne.json"
+      - "{sprint_artifacts}/completions/{{story_key}}-summary.md"
+      - "{sprint_artifacts}/completions/{{story_key}}-hermes.json"
+    token_savings: "~5-8K tokens vs separate agents"
+
+  multi_reviewer:
+    description: "Consolidated multi-perspective review - Argus + Nemesis + Cerberus + Hestia in one pass"
+    steps: [5, 6, 7]
+    subagent_type: "general-purpose"
+    model: "opus" # Need full capability for thorough review
+    prompt_file: "{agents_path}/multi-reviewer.md"
+    timeout: 2400 # 40 minutes (doing work of 4 agents)
+    output_file: "{sprint_artifacts}/completions/{{story_key}}-review.json"
+    token_savings: "~60-70% reduction vs parallel reviewers"
+    use_when:
+      - "trivial"
+      - "micro"
+      - "light"
+      - "standard"
+
+# Reconciliation: orchestrator does this directly (see workflow.md Phase 6)
 
 # Playbook configuration (v4.0)
 playbooks:
@@ -181,23 +268,44 @@ quality_gates:
 # Complexity level (determines which steps to execute)
 complexity_level: "standard" # micro | standard | complex
 
-# Complexity routing
+# Complexity routing (v4.2 - token-optimized)
 complexity_routing:
+  trivial:
+    review_mode: "consolidated" # Use multi_reviewer
+    description: "Minimal review for static/config changes"
+    examples: ["README update", "config change", "copy fix"]
+
   micro:
-    skip_agents: [] # Full pipeline (v4.0: micro gets security scan)
+    review_mode: "consolidated" # Use multi_reviewer
     description: "Lightweight path for low-risk stories"
     examples: ["UI tweaks", "text changes", "simple CRUD"]
 
+  light:
+    review_mode: "consolidated" # Use multi_reviewer
+    description: "Standard path with consolidated review"
+    examples: ["Simple component", "basic form"]
+
   standard:
-    skip_agents: [] # Full pipeline
-    description: "Balanced path for medium-risk stories"
+    review_mode: "consolidated" # Use multi_reviewer (saves ~25K tokens)
+    description: "Balanced path - consolidated review sufficient"
     examples: ["API endpoints", "business logic"]
 
   complex:
-    skip_agents: [] # Full pipeline + enhanced review
-    description: "Enhanced validation for high-risk stories"
+    review_mode: "parallel" # Use separate parallel reviewers
+    description: "Enhanced validation - parallel reviewers for thoroughness"
     examples: ["Auth", "payments", "security", "migrations"]
-    review_focus: ["security", "performance", "architecture"]
+    agents: ["argus", "nemesis", "cerberus", "apollo", "hestia"]
+
+  critical:
+    review_mode: "parallel" # Use separate parallel reviewers + extras
+    description: "Maximum scrutiny - full parallel review team"
+    examples: ["Payment processing", "encryption", "PII handling"]
+    agents: ["argus", "nemesis", "cerberus", "apollo", "hestia", "arete"]
+
+# Token efficiency summary (v4.2):
+# - trivial/micro/light/standard: Use multi_reviewer (saves ~60-70% of Phase 3 tokens)
+# - complex/critical: Use parallel reviewers (thoroughness > efficiency)
+# - All tiers: Use reflection_reporter instead of separate Mnemosyne + Hermes (saves ~5-8K)
 
 # Final verification checklist (main orchestrator)
 final_verification:

@@ -497,10 +497,81 @@ Use Write tool to update `docs/sprint-artifacts/completions/{{story_key}}-progre
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 👁️ PHASE 3: VERIFY (3/7)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Argus + Nemesis + reviewers in parallel
-Total agents: {{AGENT_COUNT}}
+Review Mode: {{REVIEW_MODE}}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
+
+### Review Mode Selection (Token Optimization v4.2)
+
+**Based on complexity, choose review mode:**
+
+```
+IF COMPLEXITY in [trivial, micro, light, standard]:
+  REVIEW_MODE = "consolidated"
+  → Use Multi-Reviewer (single agent, 4 perspectives)
+  → Saves ~60-70% tokens vs parallel reviewers
+
+ELIF COMPLEXITY in [complex, critical]:
+  REVIEW_MODE = "parallel"
+  → Use separate parallel reviewers
+  → Maximum thoroughness for high-risk stories
+```
+
+---
+
+### Option A: Consolidated Review (trivial/micro/light/standard)
+
+**Single agent reviews from 4 perspectives. Saves ~25K tokens.**
+
+```
+Task({
+  subagent_type: "general-purpose",
+  model: "opus",
+  description: "👁️🧪🔐🏛️ Multi-Review {{story_key}}",
+  prompt: `
+You are the REVIEW COUNCIL - four perspectives, one thorough review.
+
+Review this implementation from 4 perspectives:
+
+1. **Argus (Inspector)** 👁️
+   - Verify EVERY task with file:line evidence
+   - Run quality checks (type-check, lint, build, tests)
+
+2. **Nemesis (Test Quality)** 🧪
+   - Check test coverage and quality
+   - Happy paths, edge cases, error conditions
+
+3. **Cerberus (Security)** 🔐
+   - Scan for injection, auth issues, data exposure
+   - Security issues are almost always MUST_FIX
+
+4. **Hestia (Architecture)** 🏛️
+   - Check patterns, integration, migrations
+   - Verify routes registered, env vars documented
+
+<story>
+[inline story content]
+</story>
+
+<files_to_review>
+[list from metis.json]
+</files_to_review>
+
+For EACH issue, classify as: MUST_FIX / SHOULD_FIX / STYLE
+
+Save consolidated findings to:
+docs/sprint-artifacts/completions/{{story_key}}-review.json
+`
+})
+```
+
+**After consolidated review, SKIP to Phase 4 (ASSESS).**
+
+---
+
+### Option B: Parallel Reviewers (complex/critical)
+
+**Multiple specialized agents for maximum thoroughness.**
 
 **CRITICAL: Spawn ALL agents in ONE message (parallel execution)**
 
@@ -1071,7 +1142,7 @@ Update `docs/sprint-artifacts/completions/{{story_key}}-progress.json`:
 ```
 
 **📢 Orchestrator says:**
-> "Story reconciled and committed! One last step - **Mnemosyne** will review what happened and update the playbooks so future stories benefit from what we learned."
+> "Story reconciled and committed! One last step - **Mnemosyne-Hermes** will review what happened, update playbooks, and generate the completion report."
 
 </step>
 
@@ -1080,21 +1151,29 @@ Update `docs/sprint-artifacts/completions/{{story_key}}-progress.json`:
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📚 PHASE 7: REFLECT (7/7)
+📚📜 PHASE 7: REFLECT (7/7)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Mnemosyne updates playbooks
+Mnemosyne-Hermes: Reflection + Report
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
+
+### Combined Reflection & Report (Token Optimized v4.2)
+
+**Why combined?** Both Mnemosyne (reflection) and Hermes (reporting) read the same artifacts. Combining them saves ~5-8K tokens per story while producing identical outputs.
+
+**Spawn Mnemosyne-Hermes (Combined Agent):**
 
 ```
 Task({
   subagent_type: "general-purpose",
-  model: "opus",
-  description: "📚 Mnemosyne reflecting on {{story_key}}",
+  model: "sonnet",  # Faster model sufficient for synthesis
+  description: "📚📜 Mnemosyne-Hermes: reflect + report {{story_key}}",
   prompt: `
-You are MNEMOSYNE 📚 - Titan of Memory.
+You are MNEMOSYNE-HERMES 📚📜 - Memory & Messenger Combined.
 
-**Philosophy:** Consolidate, don't scatter. One good playbook beats five scattered ones.
+Perform TWO roles in sequence for {{story_key}}:
+
+## ROLE 1: Mnemosyne (Reflection)
 
 <context>
 Story: [inline story file]
@@ -1102,7 +1181,6 @@ All review findings: [inline all artifacts]
 Themis judgments: [inline triage]
 </context>
 
-<process>
 **Step 1: Extract learnings**
 - What issues were found?
 - What did Metis miss initially?
@@ -1125,28 +1203,48 @@ grep -r "{{keyword}}" docs/playbooks/implementation-playbooks/
 **Step 4: WRITE the changes**
 - If updating: Read existing, use Edit tool to add sections
 - If creating: Use Write tool (only if truly new domain)
-- Always update "Last updated" and "Related Stories"
-</process>
+
+Save reflection artifact to: docs/sprint-artifacts/completions/{{story_key}}-mnemosyne.json
+
+---
+
+## ROLE 2: Hermes (Report)
+
+Now generate a comprehensive Story Completion Report.
+
+<artifacts>
+Progress: [{{story_key}}-progress.json]
+Builder: [{{story_key}}-metis.json]
+Review: [{{story_key}}-review.json OR individual argus/nemesis/cerberus/hestia files]
+Triage: [{{story_key}}-themis.json]
+Reflection: [{{story_key}}-mnemosyne.json - just created above]
+</artifacts>
+
+<git_commits>
+[Recent commits for this story]
+</git_commits>
+
+Generate report including:
+
+1. **TL;DR** - One paragraph summary (used in batch aggregation)
+2. **What Was Built** - Features and acceptance criteria status
+3. **Technical Changes** - Files created/modified tables
+4. **Quality Summary** - Issues found and fixed
+5. **Verification Guide** - Manual testing checklist with specific steps
+6. **Learnings Captured** - Playbook updates from Mnemosyne role
+
+Save report to: docs/sprint-artifacts/completions/{{story_key}}-summary.md
+Save hermes artifact to: docs/sprint-artifacts/completions/{{story_key}}-hermes.json
+
+---
 
 <critical>
-- SEARCH FIRST - don't create duplicates
+- SEARCH playbooks FIRST - don't create duplicates
 - PREFER UPDATE over CREATE
-- ACTUALLY WRITE - don't just propose
-- SKIP if trivial - don't create noise
+- ACTUALLY WRITE playbook changes - don't just propose
+- SKIP reflection if trivial - don't create noise
+- TL;DR must be concise - used in batch aggregation
 </critical>
-
-<completion_format>
-{
-  "learnings": [...],
-  "playbook_action": {
-    "action": "updated" | "created" | "skipped",
-    "path": "docs/playbooks/implementation-playbooks/{{name}}.md",
-    "reason": "Why this action"
-  }
-}
-
-Save to: docs/sprint-artifacts/completions/{{story_key}}-mnemosyne.json
-</completion_format>
 `
 })
 ```
@@ -1180,16 +1278,35 @@ Update `docs/sprint-artifacts/completions/{{story_key}}-progress.json`:
 }
 ```
 
+### Display Final Summary
+
 **📢 Orchestrator says (completion):**
-> "**Story {{story_key}} complete!** 🎉
->
-> Here's the summary:
-> - **Built:** {{files_created}} files, {{tests_added}} tests
-> - **Reviewed by:** {{AGENT_COUNT}} agents
-> - **Issues found:** {{total_issues}} → **{{upheld_must_fix}} fixed**, {{downgraded_count}} logged as tech debt
-> - **Coverage:** {{coverage}}%
-> - **Commits:** Implementation + Reconciliation
-> - **Playbook:** {{playbook_status}} (Mnemosyne)"
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ STORY COMPLETE: {{story_key}}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+{{story_title}}
+
+📊 Quick Stats:
+   • Files: {{files_created + files_modified}} changed
+   • Lines: {{lines_added}} added
+   • Tests: {{tests_added}} added
+   • Coverage: {{coverage}}%
+   • Issues: {{total_issues}} found → {{upheld_must_fix}} fixed
+
+✅ Features Delivered:
+   {{From TL;DR in hermes artifact}}
+
+📋 Verification:
+   {{verification_items}} items in manual testing checklist
+
+📄 Full Report:
+   docs/sprint-artifacts/completions/{{story_key}}-summary.md
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
 
 </step>
 
@@ -1207,37 +1324,40 @@ Update `docs/sprint-artifacts/completions/{{story_key}}-progress.json`:
 </failure_handling>
 
 <complexity_routing>
-| Complexity | Agents | Who | Triggers |
-|------------|--------|-----|----------|
-| trivial | 1 | Argus | Static pages, copy, config, 1 task |
-| micro | 2 | Argus + Hestia | 2 tasks, no API, no user input |
-| light | 3 | Argus + Nemesis + Hestia | 3-4 tasks, basic CRUD |
-| standard | 4 | Argus + Nemesis + Cerberus + Hestia | 5-10 tasks, API, user input |
-| complex | 5 | Argus + Nemesis + Cerberus + Apollo + Hestia | 11-15 tasks, auth, migrations |
-| critical | 6 | Argus + Nemesis + Cerberus + Apollo + Hestia + Arete | 16+ tasks, payment, encryption, PII |
+| Complexity | Review Mode | Agents | Triggers |
+|------------|-------------|--------|----------|
+| trivial | consolidated | Multi-Reviewer (4 perspectives) | Static pages, copy, config, 1 task |
+| micro | consolidated | Multi-Reviewer (4 perspectives) | 2 tasks, no API, no user input |
+| light | consolidated | Multi-Reviewer (4 perspectives) | 3-4 tasks, basic CRUD |
+| standard | consolidated | Multi-Reviewer (4 perspectives) | 5-10 tasks, API, user input |
+| complex | parallel | Argus + Nemesis + Cerberus + Apollo + Hestia | 11-15 tasks, auth, migrations |
+| critical | parallel | Argus + Nemesis + Cerberus + Apollo + Hestia + Arete | 16+ tasks, payment, encryption, PII |
+
+**Review Modes (Token Optimization v4.2):**
+- **Consolidated** - Single Multi-Reviewer agent covers all 4 perspectives (Argus, Nemesis, Cerberus, Hestia). Saves ~60-70% tokens. Use for trivial→standard.
+- **Parallel** - Separate agents spawn in parallel for maximum independence. Use for complex/critical.
 
 **Agent roles:**
-- **Argus** 👁️ (Inspector) - Always present. Verifies tasks with code citations.
-- **Nemesis** 🧪 (Test Quality) - Reviews test coverage and quality. Skipped for trivial/micro.
+- **Argus** 👁️ (Inspector) - Verifies tasks with code citations.
+- **Nemesis** 🧪 (Test Quality) - Reviews test coverage and quality.
 - **Cerberus** 🔐 (Security) - Security vulnerabilities, injection, auth issues.
 - **Apollo** ⚡ (Logic/Performance) - Logic bugs, performance issues, edge cases.
 - **Hestia** 🏛️ (Architecture) - Patterns, integration, route structure.
 - **Arete** ✨ (Code Quality) - Maintainability, readability, best practices.
+- **Multi-Reviewer** 👁️🧪🔐🏛️ (Consolidated) - All 4 perspectives in one pass. Token-efficient.
 - **Themis** ⚖️ (Arbiter) - Triages issues with pragmatic judgment.
-- **Mnemosyne** 📚 (Reflection) - Updates playbooks for future.
+- **Mnemosyne-Hermes** 📚📜 (Reflect+Report) - Updates playbooks AND generates completion report.
 - **Iris** 🌈 (Accessibility) - WCAG, ARIA, a11y (conditional, frontend only).
-
-**All Phase 3 agents spawn in parallel (single message)**
 </complexity_routing>
 
 <success_criteria>
 - [ ] Phase 1 PREPARE: Story validated, playbooks loaded
 - [ ] Phase 2 BUILD: Metis spawned, agent_id saved
-- [ ] Phase 3 VERIFY: All agents completed with issue classification
+- [ ] Phase 3 VERIFY: Review completed (consolidated OR parallel based on complexity)
 - [ ] Phase 4 ASSESS: Coverage passed, Themis triaged issues
 - [ ] Phase 5 REFINE: Zero MUST_FIX remaining (or user accepted)
 - [ ] Phase 6 COMMIT: Story reconciled, sprint status updated
-- [ ] Phase 7 REFLECT: Mnemosyne proposed playbook updates
+- [ ] Phase 7 REFLECT: Mnemosyne-Hermes generated playbook updates + completion report
 - [ ] Implementation commit exists
 - [ ] Reconciliation commit exists
 - [ ] Coverage ≥ {{coverage_threshold}}%
@@ -1245,6 +1365,12 @@ Update `docs/sprint-artifacts/completions/{{story_key}}-progress.json`:
 </success_criteria>
 
 <version_history>
+**v6.1 - Token Optimization Edition**
+1. ✅ Combined Mnemosyne + Hermes into Mnemosyne-Hermes (saves ~5-8K tokens/story)
+2. ✅ Added Multi-Reviewer consolidated agent (saves ~60-70% Phase 3 tokens)
+3. ✅ Complexity-based review mode routing (consolidated for trivial→standard, parallel for complex+)
+4. ✅ Both optimizations maintain quality while reducing token overhead
+
 **v6.0 - Greek Pantheon Edition**
 1. ✅ Renamed all agents to Greek mythology (Metis, Argus, Nemesis, etc.)
 2. ✅ Restructured to 7 named phases (PREPARE, BUILD, VERIFY, ASSESS, REFINE, COMMIT, REFLECT)

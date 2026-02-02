@@ -1,0 +1,456 @@
+# Agent Routing Configuration
+# Determines which specialized agent to spawn based on story/file patterns
+#
+# This file enables "smart spawning" - the workflow analyzes each story
+# and automatically selects the most appropriate specialized builder agent.
+
+version: "1.0.0"
+
+# =============================================================================
+# PROJECT-LEVEL CONFIGURATION
+# =============================================================================
+# These can be overridden in project's _bmad/_config/bse.yaml
+
+defaults:
+  # Default model for all agents (can be overridden per-agent)
+  model: "opus"
+
+  # Fallback builder if no rules match
+  fallback_builder: "general"
+
+  # Whether to log routing decisions
+  log_routing: true
+
+# =============================================================================
+# BUILDER ROUTING RULES
+# =============================================================================
+# Evaluated in order - first match wins
+# Each rule specifies:
+#   - id: unique identifier
+#   - agent: path to agent prompt file (relative to src/)
+#   - model: override model for this agent (optional)
+#   - persona: agent persona name and emoji
+#   - match: conditions that trigger this builder
+
+builder_routing:
+
+  # ---------------------------------------------------------------------------
+  # FRONTEND BUILDERS
+  # ---------------------------------------------------------------------------
+
+  - id: frontend-react
+    agent: "agents/builders/frontend-react.md"
+    persona:
+      name: "Apollo"
+      title: "God of Light & Frontend Craft"
+      emoji: "⚛️"
+    match:
+      # Match if story touches these file patterns
+      file_patterns:
+        - "*.tsx"
+        - "*.jsx"
+        - "components/**"
+        - "app/**/page.tsx"
+        - "app/**/layout.tsx"
+        - "pages/**/*.tsx"
+        - "src/components/**"
+        - "src/features/**/*.tsx"
+      # Match if story contains these keywords (case-insensitive)
+      story_keywords:
+        - "component"
+        - "React"
+        - "Next.js"
+        - "UI"
+        - "form"
+        - "modal"
+        - "dialog"
+        - "button"
+        - "layout"
+        - "page"
+        - "client component"
+        - "server component"
+      # Match if package.json has these dependencies
+      package_indicators:
+        - "react"
+        - "next"
+        - "@types/react"
+
+  - id: frontend-vue
+    agent: "agents/builders/frontend-vue.md"
+    persona:
+      name: "Verdant"
+      title: "Spirit of Progressive Enhancement"
+      emoji: "🌿"
+    match:
+      file_patterns:
+        - "*.vue"
+        - "components/**/*.vue"
+        - "pages/**/*.vue"
+        - "composables/**"
+      story_keywords:
+        - "Vue"
+        - "Nuxt"
+        - "composable"
+        - "Pinia"
+      package_indicators:
+        - "vue"
+        - "nuxt"
+
+  # ---------------------------------------------------------------------------
+  # BACKEND BUILDERS
+  # ---------------------------------------------------------------------------
+
+  - id: backend-typescript
+    agent: "agents/builders/backend-typescript.md"
+    persona:
+      name: "Hephaestus"
+      title: "God of the Forge & Backend Craft"
+      emoji: "🔥"
+    match:
+      file_patterns:
+        - "api/**/*.ts"
+        - "app/api/**/*.ts"
+        - "server/**/*.ts"
+        - "services/**/*.ts"
+        - "lib/services/**/*.ts"
+        - "lib/api/**/*.ts"
+        - "src/server/**"
+        - "src/api/**"
+      story_keywords:
+        - "API"
+        - "endpoint"
+        - "route"
+        - "handler"
+        - "middleware"
+        - "service"
+        - "controller"
+        - "REST"
+        - "server"
+      # Don't match if these patterns are present (prefer frontend-react)
+      exclude_patterns:
+        - "components/**/*.tsx"
+        - "app/**/page.tsx"
+
+  - id: backend-python
+    agent: "agents/builders/backend-python.md"
+    persona:
+      name: "Pythia"
+      title: "Oracle of Pythonic Wisdom"
+      emoji: "🐍"
+    match:
+      file_patterns:
+        - "*.py"
+        - "**/*.py"
+        - "app/**/*.py"
+        - "src/**/*.py"
+      story_keywords:
+        - "Python"
+        - "Django"
+        - "FastAPI"
+        - "Flask"
+        - "Celery"
+        - "asyncio"
+      package_indicators:
+        - "fastapi"
+        - "django"
+        - "flask"
+
+  - id: backend-go
+    agent: "agents/builders/backend-go.md"
+    persona:
+      name: "Gopher"
+      title: "Master of Concurrent Simplicity"
+      emoji: "🦫"
+    match:
+      file_patterns:
+        - "*.go"
+        - "**/*.go"
+        - "cmd/**"
+        - "pkg/**"
+        - "internal/**"
+      story_keywords:
+        - "Go"
+        - "Golang"
+        - "goroutine"
+        - "channel"
+
+  # ---------------------------------------------------------------------------
+  # DATABASE BUILDERS
+  # ---------------------------------------------------------------------------
+
+  - id: database-prisma
+    agent: "agents/builders/database-prisma.md"
+    persona:
+      name: "Athena"
+      title: "Goddess of Wisdom & Data Architecture"
+      emoji: "🦉"
+    match:
+      file_patterns:
+        - "prisma/**"
+        - "**/schema.prisma"
+        - "**/migrations/**"
+        - "prisma/schema.prisma"
+      story_keywords:
+        - "migration"
+        - "database"
+        - "schema"
+        - "Prisma"
+        - "model"
+        - "relation"
+        - "table"
+        - "column"
+        - "index"
+        - "enum"
+      # High priority - if story mentions database, use this builder
+      priority_keywords:
+        - "migration"
+        - "schema change"
+        - "add column"
+        - "create table"
+
+  - id: database-sql
+    agent: "agents/builders/database-sql.md"
+    persona:
+      name: "Oracle"
+      title: "Keeper of Relational Truth"
+      emoji: "📊"
+    match:
+      file_patterns:
+        - "*.sql"
+        - "migrations/**/*.sql"
+        - "db/**/*.sql"
+      story_keywords:
+        - "SQL"
+        - "PostgreSQL"
+        - "MySQL"
+        - "query"
+        - "stored procedure"
+
+  # ---------------------------------------------------------------------------
+  # API BUILDERS
+  # ---------------------------------------------------------------------------
+
+  - id: api-graphql
+    agent: "agents/builders/api-graphql.md"
+    persona:
+      name: "Hermes"
+      title: "Messenger of Typed Queries"
+      emoji: "⚡"
+    match:
+      file_patterns:
+        - "*.graphql"
+        - "**/*.graphql"
+        - "resolvers/**"
+        - "schema/**/*.graphql"
+      story_keywords:
+        - "GraphQL"
+        - "resolver"
+        - "mutation"
+        - "subscription"
+        - "schema"
+        - "type"
+
+  # ---------------------------------------------------------------------------
+  # INFRASTRUCTURE BUILDERS
+  # ---------------------------------------------------------------------------
+
+  - id: infrastructure
+    agent: "agents/builders/infrastructure.md"
+    persona:
+      name: "Atlas"
+      title: "Titan of Infrastructure"
+      emoji: "🌍"
+    match:
+      file_patterns:
+        - "*.tf"
+        - "terraform/**"
+        - "Dockerfile"
+        - "docker-compose*.yml"
+        - ".github/workflows/**"
+        - "k8s/**"
+        - "helm/**"
+      story_keywords:
+        - "deploy"
+        - "CI/CD"
+        - "Docker"
+        - "Terraform"
+        - "infrastructure"
+        - "Kubernetes"
+        - "pipeline"
+        - "GitHub Actions"
+
+  # ---------------------------------------------------------------------------
+  # TESTING BUILDERS
+  # ---------------------------------------------------------------------------
+
+  - id: testing
+    agent: "agents/builders/testing.md"
+    persona:
+      name: "Nemesis"
+      title: "Goddess of Quality Assurance"
+      emoji: "🎯"
+    match:
+      file_patterns:
+        - "**/*.test.ts"
+        - "**/*.test.tsx"
+        - "**/*.spec.ts"
+        - "__tests__/**"
+        - "e2e/**"
+        - "cypress/**"
+        - "playwright/**"
+      story_keywords:
+        - "test"
+        - "testing"
+        - "coverage"
+        - "e2e"
+        - "integration test"
+        - "unit test"
+      # Only match if story is primarily about testing
+      require_primary_match: true
+
+  # ---------------------------------------------------------------------------
+  # FALLBACK - GENERAL BUILDER
+  # ---------------------------------------------------------------------------
+
+  - id: general
+    agent: "agents/builders/general.md"
+    persona:
+      name: "Metis"
+      title: "Titaness of Wisdom & Craft"
+      emoji: "🔨"
+    match:
+      always: true  # Catch-all fallback
+
+# =============================================================================
+# REVIEWER ROUTING
+# =============================================================================
+# Determines which reviewers to spawn based on files touched
+
+reviewer_routing:
+
+  # Security review - ALWAYS included
+  security:
+    agent: "agents/reviewers/security.md"
+    persona:
+      name: "Sasha"
+      title: "The Security Sentinel"
+      emoji: "🛡️"
+    always_include: true
+    priority: 1
+
+  # Architecture review - ALWAYS included
+  architecture:
+    agent: "agents/reviewers/architecture.md"
+    persona:
+      name: "Rosie"
+      title: "The Architecture Guardian"
+      emoji: "🏛️"
+    always_include: true
+    priority: 2
+
+  # Performance review - included for backend/API work
+  performance:
+    agent: "agents/reviewers/performance.md"
+    persona:
+      name: "Leo"
+      title: "The Logic Hunter"
+      emoji: "⚡"
+    match:
+      file_patterns:
+        - "api/**"
+        - "services/**"
+        - "lib/**"
+        - "server/**"
+      story_keywords:
+        - "performance"
+        - "optimization"
+        - "cache"
+        - "query"
+        - "N+1"
+    priority: 3
+
+  # Accessibility review - included for frontend work
+  accessibility:
+    agent: "agents/reviewers/accessibility.md"
+    persona:
+      name: "Ada"
+      title: "The Accessibility Advocate"
+      emoji: "♿"
+    match:
+      file_patterns:
+        - "*.tsx"
+        - "*.jsx"
+        - "*.vue"
+        - "*.css"
+        - "*.scss"
+        - "components/**"
+        - "pages/**"
+      story_keywords:
+        - "UI"
+        - "form"
+        - "button"
+        - "modal"
+        - "accessibility"
+        - "a11y"
+        - "ARIA"
+    priority: 4
+
+  # Quality review - included for complex stories
+  quality:
+    agent: "agents/reviewers/quality.md"
+    persona:
+      name: "Quinn"
+      title: "The Quality Crusader"
+      emoji: "✨"
+    match:
+      complexity: "complex"  # Only for complex stories
+    priority: 5
+
+# =============================================================================
+# VALIDATOR ROUTING
+# =============================================================================
+
+validator_routing:
+
+  inspector:
+    agent: "agents/validators/inspector.md"
+    persona:
+      name: "Vera"
+      title: "The Verification Inspector"
+      emoji: "🔍"
+    always_include: true
+
+  test_quality:
+    agent: "agents/validators/test-quality.md"
+    persona:
+      name: "Tessa"
+      title: "The Test Quality Analyst"
+      emoji: "🧪"
+    always_include: true
+
+# =============================================================================
+# SUPPORT AGENT ROUTING
+# =============================================================================
+
+support_routing:
+
+  reflection:
+    agent: "agents/support/reflection.md"
+    persona:
+      name: "Rita"
+      title: "The Knowledge Curator"
+      emoji: "📚"
+
+  arbiter:
+    agent: "agents/support/arbiter.md"
+    persona:
+      name: "Solomon"
+      title: "The Wise Arbiter"
+      emoji: "⚖️"
+
+  reporter:
+    agent: "agents/support/reporter.md"
+    persona:
+      name: "Herald"
+      title: "The Story Reporter"
+      emoji: "📋"
