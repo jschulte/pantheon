@@ -1,8 +1,8 @@
 # Batch Super-Dev Workflow
 
-**Version:** 1.3.1 (Agent Limitations Documentation)
+**Version:** 4.0.0 (TeammateTool Swarm Mode)
 **Created:** 2026-01-06
-**Updated:** 2026-01-08
+**Updated:** 2026-02-03
 **Author:** BMad
 
 ---
@@ -72,6 +72,33 @@ Required sections:
 
 See: `AGENT-LIMITATIONS.md` for full documentation on what agents can and cannot do.
 
+### 4. Swarm Mode Prerequisites (Parallel Mode)
+
+> **NEW in v4.0.0:** Parallel mode now uses TeammateTool swarm coordination instead of wave-based Task polling.
+
+**Required:** A swarm-patched Claude Code variant that enables TeammateTool features.
+
+**How to get swarm mode:**
+1. Install [claude-sneakpeek](https://github.com/anthropics/claude-sneakpeek) (or equivalent)
+2. Create a variant: `npx claude-sneakpeek create --provider <provider> --name <name>`
+3. The variant automatically patches Claude Code to enable swarm features
+4. Run batch-stories using the variant command (e.g., `claudesp`) instead of `claude`
+
+**What swarm mode enables:**
+- `TeammateTool` — Create/manage teams (`spawnTeam`, `cleanup`)
+- `SendMessage` — Direct messaging between agents (completion reports, failure alerts)
+- `TaskCreate/TaskUpdate/TaskList` — Shared task list with dependency constraints
+- `Task` with `team_name` param — Spawn teammates that join the swarm
+
+**Verify swarm mode is active:**
+```bash
+# Check if cli.js is patched
+grep "function sU(){return" ~/.claude-sneakpeek/<variant>/npm/node_modules/@anthropic-ai/claude-code/cli.js
+# Should show: function sU(){return!0}  (enabled)
+```
+
+**Sequential mode does NOT require swarm mode** — it runs in the main Claude context.
+
 ---
 
 ## Overview
@@ -104,8 +131,8 @@ Interactive batch workflow for processing multiple `ready-for-dev` stories seque
 
 3. **Execution Modes**
    - **Sequential:** Process stories one-by-one in current session (easier monitoring)
-   - **Parallel:** Spawn Task agents to process stories concurrently (faster, autonomous)
-   - Configurable parallelism: 2, 4, or all stories at once
+   - **Parallel (Swarm Mode):** Spawn Heracles teammates via TeammateTool that self-schedule from a shared task list. Workers dynamically claim unblocked stories — no wave planning needed. Requires swarm-patched Claude Code.
+   - Configurable worker count: default 3 (set via `swarm_config.max_workers` in workflow.yaml)
 
 4. **Full Quality Gates** (from story-pipeline)
    - Pre-gap analysis (validate story completeness)
@@ -434,11 +461,13 @@ All: all (processes all ready-for-dev stories)
 - Lower resource usage
 - Can pause/cancel between stories
 
-**Parallel (Recommended for >5 stories):**
-- Spawns autonomous Task agents
-- Much faster (2-4x speedup)
-- Choose parallelism: 2 (conservative), 4 (moderate), all (aggressive)
-- Requires more system resources
+**Parallel / Swarm Mode (Recommended for >5 stories):**
+- Spawns Heracles teammates via TeammateTool swarm
+- Workers self-schedule: claim unblocked tasks, execute pipeline, report results, claim next
+- Dependencies enforced via task graph constraints (no rigid waves)
+- Zero idle time — workers grab the next available story immediately
+- Requires swarm-patched Claude Code (e.g., `claudesp` from claude-sneakpeek)
+- Configure worker count in `workflow.yaml` → `swarm_config.max_workers` (default: 3)
 
 ---
 
@@ -508,20 +537,21 @@ reconciliation:
   - Report results
   - Pause between stories
 
-**Parallel Mode (Semaphore Pattern - NEW v1.3.0):**
-- Initialize worker pool with N slots (user-selected concurrency)
-- Fill initial N slots with first N stories
-- Poll workers continuously (non-blocking)
-- As soon as worker completes → immediately refill slot with next story
-- Maintain constant N concurrent agents until queue empty
-- Execute reconciliation after each story completes
+**Parallel Mode (TeammateTool Swarm - v4.0.0):**
+- Orchestrator creates a swarm team via `Teammate.spawnTeam()`
+- Creates shared task list with `TaskCreate` per story, dependencies via `addBlockedBy`
+- Spawns N Heracles teammates (default 3) that join the team
+- Workers self-schedule: `TaskList` → claim unblocked task → execute pipeline → report → repeat
+- No wave planning, no polling loops — workers get notified via `SendMessage`
+- Dependencies enforced by task graph: workers skip blocked tasks automatically
 - **Commit Queue:** File-based locking prevents git lock conflicts
   - Workers acquire `.git/bmad-commit.lock` before committing
   - Automatic retry with exponential backoff (1s → 30s)
   - Stale lock cleanup (>5 min)
   - Serialized commits, parallel implementation
-- No idle time waiting for batch synchronization
-- **20-40% faster** than old batch-and-wait pattern
+- Orchestrator reconciles stories as completion messages arrive
+- Workers shut down gracefully when no tasks remain
+- Team cleaned up via `Teammate.cleanup()` at end
 
 ### 4.5. Smart Story Reconciliation (NEW)
 **Executed after each story completes:**
@@ -656,6 +686,25 @@ See: `step-4.5-reconcile-story-status.md` for detailed algorithm
 
 ## Version History
 
+### v4.0.0 (2026-02-03)
+- **BREAKING:** Parallel mode rewritten to use TeammateTool swarm coordination
+  - Replaces wave-based Task polling with self-scheduling Heracles teammates
+  - Dependencies expressed as task graph constraints (`addBlockedBy`) instead of computed waves
+  - Workers dynamically claim unblocked stories — zero idle time between stories
+  - Progress via `SendMessage` notifications instead of 30-second artifact polling
+  - Requires swarm-patched Claude Code (e.g., `claudesp` variant from claude-sneakpeek)
+- **NEW:** `heracles.md` teammate persona in `agents/`
+  - Autonomous pipeline executor with self-scheduling loop
+  - Git commit queue protocol (file-based locking with exponential backoff)
+  - Structured communication protocol (success/failure/blocker messages)
+  - Completion artifact generation for batch aggregation
+- **NEW:** `swarm_config` section in `workflow.yaml`
+  - `team_prefix`, `max_workers`, `worker_model`, `worker_persona` settings
+  - `requires.swarm_mode: true` flag for variant validation
+- Sequential mode unchanged (no swarm dependency)
+- Story-pipeline phases unchanged
+- Reconciliation logic unchanged
+
 ### v1.3.0 (2026-01-07)
 - **NEW:** Complexity-Based Routing (Step 2.6)
   - Automatic story complexity scoring (micro/standard/complex)
@@ -737,6 +786,6 @@ See: `step-4.5-reconcile-story-status.md` for detailed algorithm
 
 ---
 
-**Last Updated:** 2026-01-07
-**Status:** Active - Production-ready with semaphore pattern and continuous tracking
+**Last Updated:** 2026-02-03
+**Status:** Active - Production-ready with TeammateTool swarm parallel mode
 **Maintained By:** BMad

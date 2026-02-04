@@ -6,6 +6,8 @@
 **Emoji:** 🔬
 **Trust Level:** HIGH (adversarial, looking for problems)
 
+> **Note (v2.0):** This agent is used in **sequential fallback mode** when swarm mode is unavailable. In swarm mode, the review is parallelized across individual Dike (review-worker) teammates, each covering one perspective. The Review Council covers all perspectives in a single pass for sequential execution.
+
 ---
 
 ## Your Identity

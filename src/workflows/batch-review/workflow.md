@@ -1,7 +1,7 @@
 # Batch Review - Hardening Sweep Workflow
 
-**Version:** 1.0.0
-**Purpose:** Deep code review and hardening - run repeatedly until bulletproof
+**Version:** 2.0.0
+**Purpose:** Deep code review and hardening with swarm parallelism + Pygmalion persona forging
 
 ---
 
@@ -14,6 +14,8 @@ This workflow performs deep code review on existing implementations to find and 
 - **Focus-able** - Provide guidance to target specific concerns
 - **Comprehensive** - Multi-perspective review from security, correctness, architecture, tests
 - **Action-oriented** - Finds issues AND fixes them
+- **Swarm Parallel** (v2.0) - Reviewers, fixers, and verifiers run as parallel swarm teammates
+- **Pygmalion Forging** (v2.0) - Domain-specific specialist reviewers forged on-the-fly
 
 ---
 
@@ -47,22 +49,25 @@ This workflow performs deep code review on existing implementations to find and 
 Phase 1: SCOPE ─────────────────────────────────────────
          Analyze scope, identify files to review
          ↓
+Phase 1.5: FORGE (Pygmalion) ───────────────────────────
+         Forge domain-specific specialist personas (if enabled)
+         ↓
 Phase 2: REVIEW ────────────────────────────────────────
-         Deep multi-perspective review (with focus if provided)
+         Multi-perspective review (swarm: parallel workers)
          ↓
 Phase 3: ASSESS ────────────────────────────────────────
-         Themis triages findings (MUST_FIX / SHOULD_FIX / STYLE)
+         Themis triages + deduplicates findings
          ↓
 Phase 4: FIX ───────────────────────────────────────────
-         Builder fixes MUST_FIX issues
+         Category-partitioned fixers (swarm: parallel workers)
          ↓
 Phase 5: VERIFY ────────────────────────────────────────
-         Re-review fixes, check for regressions
+         Independent fix verification (swarm: parallel workers)
          ↓
-         ↓ (loop if new issues found)
+         ↓ (loop if new issues found, max iterations)
          ↓
 Phase 6: REPORT ────────────────────────────────────────
-         Generate hardening summary
+         Generate hardening summary + cleanup swarm
 ```
 
 ---
@@ -183,6 +188,63 @@ Save to: docs/sprint-artifacts/hardening/{{scope_id}}-scope.json
 
 </step>
 
+<step name="phase_1_5_forge">
+## Phase 1.5: FORGE (Pygmalion)
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🗿 PHASE 1.5: FORGE (Pygmalion)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Forging domain-specific specialist personas
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+### Invoke Pygmalion
+
+Pygmalion analyzes the scoped code to identify domain-specific expertise gaps in the standard Pantheon reviewers.
+
+```
+IF persona_forging.enabled AND estimated_complexity >= "light":
+
+  Task({
+    subagent_type: "general-purpose",
+    model: "opus",
+    description: "🗿 Pygmalion forging specialists for {{scope_id}}",
+    prompt: `
+  <agent_persona>
+  [INLINE: Content from story-pipeline/agents/pygmalion.md]
+  </agent_persona>
+
+  Analyze this code scope and forge specialist personas if the Pantheon leaves coverage gaps.
+
+  <scope>
+  Files: {{scoped_files}}
+  Focus: {{FOCUS_PROMPT or "standard hardening"}}
+  </scope>
+
+  <project_context>
+  [INLINE: package.json dependencies, project structure]
+  </project_context>
+
+  Output your analysis as the Pygmalion JSON artifact.
+  Save to: docs/sprint-artifacts/hardening/{{scope_id}}-pygmalion.json
+  `
+  })
+
+  FORGED_SPECS = read("docs/sprint-artifacts/hardening/{{scope_id}}-pygmalion.json")
+
+ELSE:
+  FORGED_SPECS = { forged_specialists: [], skipped: true }
+```
+
+**📢 Orchestrator says (if specialists forged):**
+> "Pygmalion forged **{{count}} specialist(s)** to augment the review team."
+
+**📢 Orchestrator says (if no specialists):**
+> "Pygmalion confirmed Pantheon coverage is sufficient. Proceeding with standard reviewers."
+
+</step>
+
 <step name="phase_2_review">
 ## Phase 2: REVIEW (2/6)
 
@@ -190,14 +252,93 @@ Save to: docs/sprint-artifacts/hardening/{{scope_id}}-scope.json
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🔬 PHASE 2: REVIEW (2/6)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Deep multi-perspective review
+Multi-perspective review
+Mode: {{SWARM or SEQUENTIAL}}
 {{IF FOCUS_ENABLED}}Focus: {{FOCUS_PROMPT}}{{ENDIF}}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-### 2.1 Deep Review
+### Mode Selection
 
-Spawn deep reviewer with all perspectives + optional focus:
+```
+IF swarm_config.enabled AND swarm mode available:
+  → Use SWARM MODE (parallel review workers)
+ELSE:
+  → Use SEQUENTIAL MODE (single deep reviewer — fallback)
+```
+
+---
+
+### SWARM MODE: Parallel Review Workers
+
+**Step 1: Create team and review tasks**
+
+```
+Teammate.spawnTeam("review-{{scope_id}}")
+
+# Create one task per standard perspective
+FOR EACH perspective IN [security, correctness, architecture, test_quality]:
+  TaskCreate(
+    subject="Review: {{perspective}}",
+    description=`
+      perspective: {{perspective}}
+      scope_id: {{scope_id}}
+      scoped_files: {{all_files}}
+      {{IF FOCUS_ENABLED}}focus: {{FOCUS_PROMPT}}{{ENDIF}}
+    `
+  )
+
+# Add accessibility if frontend files present
+IF has_frontend_files:
+  TaskCreate(subject="Review: accessibility", description="...")
+
+# Add forged specialist tasks
+FOR EACH spec IN FORGED_SPECS.forged_specialists:
+  TaskCreate(
+    subject="Review: {{spec.id}} ({{spec.name}})",
+    description=`
+      perspective: {{spec.id}}
+      scope_id: {{scope_id}}
+      scoped_files: {{all_files}}
+      forged_spec: {{JSON.stringify(spec)}}
+    `
+  )
+```
+
+**Step 2: Spawn review workers (Dike)**
+
+```
+# Spawn workers — one per perspective (all in one message for parallel launch)
+worker_count = min(total_perspectives, swarm_config.review_workers.max_workers)
+
+Task(subagent_type="general-purpose", team_name="review-{{scope_id}}", name="dike-1",
+     model="opus", prompt="[INLINE: review-worker.md] Claim and review.", run_in_background=True)
+Task(subagent_type="general-purpose", team_name="review-{{scope_id}}", name="dike-2",
+     model="opus", prompt="[INLINE: review-worker.md] Claim and review.", run_in_background=True)
+Task(subagent_type="general-purpose", team_name="review-{{scope_id}}", name="dike-3",
+     model="opus", prompt="[INLINE: review-worker.md] Claim and review.", run_in_background=True)
+# ... up to max_workers
+```
+
+**Step 3: Wait for all workers to complete**
+
+Workers self-schedule from the shared task list. Each claims one perspective, reviews all scoped files from that angle, saves findings, and claims the next available perspective.
+
+Idle notifications arrive automatically as workers finish.
+
+**Step 4: Collect all findings**
+
+```
+all_findings = []
+FOR EACH perspective_artifact IN docs/sprint-artifacts/reviews/{{scope_id}}-*.json:
+  all_findings.extend(artifact.issues)
+```
+
+---
+
+### SEQUENTIAL MODE: Single Deep Reviewer (Fallback)
+
+When swarm mode is unavailable, fall back to single deep reviewer (identical to v1.0):
 
 ```
 Task({
@@ -205,108 +346,37 @@ Task({
   model: "opus",
   description: "🔬 Deep review of {{scope_id}}",
   prompt: `
-You are conducting a **DEEP HARDENING REVIEW**.
+[INLINE: deep-reviewer.md persona]
 
-This is not a quick pass - you are looking for every issue that could cause problems.
-Take your time. Read every file carefully. Think about edge cases.
-
-<scope>
-{{List all files to review}}
-</scope>
+<scope>{{List all files to review}}</scope>
 
 {{IF FOCUS_ENABLED}}
 <special_focus>
-**USER-REQUESTED FOCUS:**
-{{FOCUS_PROMPT}}
-
-In addition to standard review, dig deep into these specific concerns.
-Look for patterns, inconsistencies, and issues related to this focus.
+**USER-REQUESTED FOCUS:** {{FOCUS_PROMPT}}
 </special_focus>
 {{ENDIF}}
 
-<review_perspectives>
-
-## 1. Security (Cerberus) 🔐
-- SQL injection, XSS, command injection
-- Authentication bypass, authorization flaws
-- Secrets exposure, insecure storage
-- CSRF, session handling
-- Input validation gaps
-
-## 2. Correctness (Apollo) ⚡
-- Logic errors, off-by-one
-- Null/undefined handling
-- Edge cases not handled
-- Race conditions
-- Error handling gaps
-- State management issues
-
-## 3. Architecture (Hestia) 🏛️
-- Pattern violations
-- Coupling issues
-- Integration problems
-- API contract mismatches
-- Migration issues
-
-## 4. Test Quality (Nemesis) 🧪
-- Missing test cases
-- Inadequate coverage
-- Flaky tests
-- Missing edge case tests
-- Integration test gaps
-
-{{IF accessibility in reviewers_needed}}
-## 5. Accessibility (Iris) 🌈
-- WCAG AA compliance
-- Keyboard navigation
-- Screen reader support
-- Color contrast
-- Focus management
+{{IF FORGED_SPECS.forged_specialists.length > 0}}
+<additional_perspectives>
+In addition to standard perspectives, also review from these domain-specific angles:
+{{FOR EACH spec IN FORGED_SPECS.forged_specialists:}}
+## {{spec.name}} ({{spec.emoji}}) — {{spec.title}}
+Focus: {{spec.review_focus}}
+Checklist: {{spec.technology_checklist}}
+Gotchas: {{spec.known_gotchas}}
+{{END}}
+</additional_perspectives>
 {{ENDIF}}
 
-</review_perspectives>
-
-<output_format>
-For EVERY issue found:
-
-{
-  "issues": [
-    {
-      "id": "{{scope_id}}-001",
-      "perspective": "security|correctness|architecture|test_quality|accessibility|focus",
-      "severity": "critical|high|medium|low",
-      "file": "path/to/file.ts",
-      "line": 45,
-      "title": "Short description",
-      "description": "Detailed explanation of the issue",
-      "evidence": "Code snippet showing the problem",
-      "suggested_fix": "How to fix it",
-      "classification": "MUST_FIX|SHOULD_FIX|STYLE"
-    }
-  ],
-  "summary": {
-    "total_issues": N,
-    "by_perspective": { "security": 2, "correctness": 5, ... },
-    "by_severity": { "critical": 1, "high": 3, ... },
-    "by_classification": { "MUST_FIX": 8, "SHOULD_FIX": 2, "STYLE": 0 }
-  }
-}
-
 Save to: docs/sprint-artifacts/hardening/{{scope_id}}-review.json
-</output_format>
-
-**IMPORTANT:**
-- Read every file completely
-- Think about edge cases
-- Consider how components interact
-- Look for subtle bugs, not just obvious ones
-- If focus was provided, dedicate extra attention to those concerns
 `
 })
 ```
 
+---
+
 **📢 Orchestrator says:**
-> "Deep review complete. Found **{{total_issues}} issues** across {{perspectives}}. Sending to Themis for triage..."
+> "Review complete. **{{total_issues}} issues** found across {{perspective_count}} perspectives. Sending to Themis for triage..."
 
 </step>
 
@@ -321,9 +391,9 @@ Themis triaging findings
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-### 3.1 Themis Triage
+### 3.1 Themis Triage + Deduplication
 
-Same triage logic as story-pipeline - err on the side of fixing.
+Same triage logic as story-pipeline — err on the side of fixing. Additionally, when multiple reviewers (Pantheon + forged specialists) find the same issue, Themis merges duplicates.
 
 ```
 Task({
@@ -336,7 +406,7 @@ You are THEMIS ⚖️ - Titan of Justice.
 Triage these hardening findings. **ERR ON THE SIDE OF FIXING.**
 
 <all_issues>
-{{Issues from Phase 2}}
+{{ALL issues from Phase 2 — from all reviewers (Pantheon + forged specialists)}}
 </all_issues>
 
 <triage_rules>
@@ -347,6 +417,15 @@ Triage these hardening findings. **ERR ON THE SIDE OF FIXING.**
 If uncertain → MUST_FIX.
 </triage_rules>
 
+<deduplication_rules>
+Multiple reviewers may find the same underlying issue. Merge duplicates:
+- Same file + within 5 lines + same root cause = ONE issue
+- Keep the most detailed finding
+- Note all reviewers who found it (consensus increases confidence)
+- Add "reviewers_agreed" field listing who found it
+- Higher consensus = higher confidence the issue is real
+</deduplication_rules>
+
 <output>
 {
   "triage": [
@@ -354,13 +433,16 @@ If uncertain → MUST_FIX.
       "issue_id": "epic-17-pass-1-001",
       "original_classification": "MUST_FIX",
       "final_classification": "MUST_FIX",
-      "justification": "Real security issue - input not sanitized"
+      "justification": "Real security issue - input not sanitized",
+      "reviewers_agreed": ["security", "stripe-webhook-integrity"],
+      "duplicates_merged": 1
     }
   ],
   "summary": {
     "must_fix": N,
     "should_fix": N,
-    "style": N
+    "style": N,
+    "duplicates_merged": N
   }
 }
 
@@ -388,29 +470,68 @@ Save to: docs/sprint-artifacts/hardening/{{scope_id}}-triage.json
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔨 PHASE 4: FIX (4/6)
+💊 PHASE 4: FIX (4/6)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Fixing {{must_fix_count}} issues
+Mode: {{SWARM or SEQUENTIAL}}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-### 4.1 Group Issues by Category
+### 4.1 Group Issues by File Category
 
-Group MUST_FIX issues by file category for efficient fixing:
+Group MUST_FIX issues into non-overlapping file categories:
 
 ```
-frontend_issues = issues where file category is "frontend"
-backend_issues = issues where file category is "backend"
-database_issues = issues where file category is "database"
+frontend_issues = issues where file matches: *.tsx, *.jsx, *.css, components/, pages/
+backend_issues = issues where file matches: api/, services/, middleware/, *.ts (non-frontend)
+database_issues = issues where file matches: prisma/, migrations/, *.sql, models/
 ```
 
-### 4.2 Fix Issues
+**CRITICAL:** File categories must NOT overlap. Each file belongs to exactly one category. This enables safe parallel fixing.
 
-Spawn appropriate fixer for each category:
+---
+
+### SWARM MODE: Parallel Category Fixers
+
+**Step 1: Create fix tasks (one per category with issues)**
+
+```
+FOR EACH category IN [frontend, backend, database] WHERE category HAS issues:
+  TaskCreate(
+    subject="Fix: {{category}}",
+    description=`
+      category: {{category}}
+      scope_id: {{scope_id}}
+      issues: {{JSON.stringify(category_issues)}}
+      file_boundaries: {{list of files in this category}}
+    `
+  )
+```
+
+**Step 2: Spawn fixer workers (Asclepius)**
+
+```
+# Spawn one worker per category (all in one message)
+Task(subagent_type="general-purpose", team_name="review-{{scope_id}}", name="asclepius-frontend",
+     model="opus", prompt="[INLINE: fixer-worker.md] Claim and fix.", run_in_background=True)
+Task(subagent_type="general-purpose", team_name="review-{{scope_id}}", name="asclepius-backend",
+     model="opus", prompt="[INLINE: fixer-worker.md] Claim and fix.", run_in_background=True)
+Task(subagent_type="general-purpose", team_name="review-{{scope_id}}", name="asclepius-database",
+     model="opus", prompt="[INLINE: fixer-worker.md] Claim and fix.", run_in_background=True)
+```
+
+**Step 3: Wait for all fixers to complete**
+
+Workers fix only files within their assigned category. No file conflicts possible.
+
+---
+
+### SEQUENTIAL MODE: Single Fixer (Fallback)
+
+When swarm mode is unavailable, fix sequentially by category:
 
 ```
 FOR EACH category WITH issues:
-
   subagent = SELECT based on category:
     frontend → "dev-frontend"
     backend → "dev-typescript"
@@ -420,44 +541,23 @@ FOR EACH category WITH issues:
   Task({
     subagent_type: subagent,
     model: "opus",
-    description: "🔨 Fixing {{category}} issues",
+    description: "💊 Fixing {{category}} issues",
     prompt: `
-  You are fixing issues found during hardening review.
+  [INLINE: issue-fixer.md persona]
 
   <issues_to_fix>
   {{List of MUST_FIX issues for this category}}
   </issues_to_fix>
 
-  For each issue:
-  1. Read the file and understand the context
-  2. Implement the fix as suggested (or better)
-  3. Run tests to verify the fix
-  4. Ensure no regressions
-
-  <output>
-  {
-    "fixes_applied": [
-      {
-        "issue_id": "epic-17-pass-1-001",
-        "file": "path/to/file.ts",
-        "fix_description": "Added input sanitization",
-        "lines_changed": "45-52",
-        "tests_run": true,
-        "tests_passed": true
-      }
-    ],
-    "issues_remaining": [],
-    "notes": "Any complications or decisions made"
-  }
-
   Save to: docs/sprint-artifacts/hardening/{{scope_id}}-fixes-{{category}}.json
-  </output>
   `
   })
 ```
 
+---
+
 **📢 Orchestrator says:**
-> "Fixed **{{fixed_count}}/{{must_fix_count}}** issues. Running verification..."
+> "Fixed **{{fixed_count}}/{{must_fix_count}}** issues across {{category_count}} categories. Running verification..."
 
 </step>
 
@@ -466,9 +566,10 @@ FOR EACH category WITH issues:
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✅ PHASE 5: VERIFY (5/6)
+🔍 PHASE 5: VERIFY (5/6)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Verifying fixes and checking for regressions
+Mode: {{SWARM or SEQUENTIAL}}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
@@ -478,13 +579,48 @@ Verifying fixes and checking for regressions
 npm test 2>&1 | tee test-output.txt
 ```
 
-### 5.2 Verify Fixes
+---
+
+### SWARM MODE: Parallel Verification Workers
+
+**Step 1: Create verification tasks (one per category that was fixed)**
+
+```
+FOR EACH category THAT had fixes applied:
+  TaskCreate(
+    subject="Verify: {{category}}",
+    description=`
+      category: {{category}}
+      scope_id: {{scope_id}}
+      fixes_artifact: {{scope_id}}-fixes-{{category}}.json
+      original_issues: {{issues for this category}}
+    `
+  )
+```
+
+**Step 2: Spawn verification workers (Aletheia)**
+
+```
+Task(subagent_type="general-purpose", team_name="review-{{scope_id}}", name="aletheia-1",
+     model="opus", prompt="[INLINE: verification-worker.md] Claim and verify.", run_in_background=True)
+Task(subagent_type="general-purpose", team_name="review-{{scope_id}}", name="aletheia-2",
+     model="opus", prompt="[INLINE: verification-worker.md] Claim and verify.", run_in_background=True)
+# ... up to max_workers
+```
+
+**Step 3: Wait for all verifiers to complete**
+
+Collect verification results. Check for new issues or regressions.
+
+---
+
+### SEQUENTIAL MODE: Single Verifier (Fallback)
 
 ```
 Task({
   subagent_type: "testing-suite:test-engineer",
   model: "opus",
-  description: "✅ Verifying hardening fixes",
+  description: "🔍 Verifying hardening fixes",
   prompt: `
 Verify that all fixes were correctly applied and no regressions introduced.
 
@@ -500,41 +636,23 @@ Verify that all fixes were correctly applied and no regressions introduced.
 {{test-output.txt}}
 </test_output>
 
-**Verification Tasks:**
-1. Confirm each issue is actually fixed (not just patched over)
-2. Check that tests pass
-3. Look for any regressions introduced by the fixes
-4. Identify any new issues in the modified code
-
-<output>
-{
-  "verification_results": [
-    {
-      "issue_id": "epic-17-pass-1-001",
-      "verified": true,
-      "evidence": "Input now sanitized with DOMPurify at line 48"
-    }
-  ],
-  "regressions_found": [],
-  "new_issues_found": [],
-  "tests_passed": true,
-  "all_verified": true
-}
-
 Save to: docs/sprint-artifacts/hardening/{{scope_id}}-verification.json
-</output>
 `
 })
 ```
 
-**If new issues or regressions found:**
-```
-ITERATION += 1
+---
 
-IF ITERATION > MAX_ITERATIONS:
-  → Log remaining issues and continue to REPORT
-ELSE:
-  → Return to Phase 4: FIX with new issues
+### Iteration Logic
+
+```
+IF new_issues_found OR regressions_found:
+  ITERATION += 1
+
+  IF ITERATION > MAX_ITERATIONS:
+    → Log remaining issues and continue to REPORT
+  ELSE:
+    → Return to Phase 4: FIX with new issues
 ```
 
 **If all verified:**
@@ -672,7 +790,19 @@ Track passes for this scope:
 }
 ```
 
-### 6.3 Display Summary
+### 6.3 Cleanup Swarm (if applicable)
+
+```
+IF swarm_config.enabled AND team was created:
+  # Shutdown all workers
+  FOR EACH worker IN active_workers:
+    SendMessage(type="request", subtype="shutdown", recipient=worker)
+
+  # Wait for shutdown confirmations, then cleanup
+  Teammate.cleanup()
+```
+
+### 6.4 Display Summary
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -762,3 +892,24 @@ For maximum hardening, run multiple passes with different focuses:
 5. **Pass 5:** Consistency focus - unify patterns
 
 Each pass builds on the previous, resulting in thoroughly hardened code.
+
+---
+
+## Version History
+
+**v2.0.0 - Swarm + Pygmalion Edition**
+1. Phase 1.5 FORGE: Pygmalion forges domain-specific specialist personas
+2. Phase 2 REVIEW: Parallel review workers (Dike) via TeammateTool swarm
+3. Phase 3 ASSESS: Themis deduplicates findings from multiple parallel reviewers
+4. Phase 4 FIX: Parallel category fixers (Asclepius) with non-overlapping file sets
+5. Phase 5 VERIFY: Parallel verification workers (Aletheia)
+6. Phase 6 REPORT: Swarm cleanup added
+7. Sequential fallback mode preserved for environments without swarm support
+8. Forged specialist reviewers integrated alongside Pantheon perspectives
+
+**v1.0.0 - Initial Release**
+- Sequential deep review with single multi-perspective reviewer
+- Themis triage
+- Category-based sequential fixing
+- Verification and iteration loop
+- Hardening report generation

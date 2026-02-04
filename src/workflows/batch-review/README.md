@@ -1,9 +1,9 @@
 # Batch Review - Hardening Sweep Workflow
 
 **Author:** Jonah Schulte (leveraging BMAD Method)
-**Version:** 1.0.0
+**Version:** 2.0.0
 
-Deep code review and hardening workflow - run repeatedly until bulletproof.
+Deep code review and hardening workflow with swarm parallelism and Pygmalion persona forging. Run repeatedly until bulletproof.
 
 ## What It Does
 
@@ -43,21 +43,33 @@ The optional `focus` parameter tells reviewers to pay special attention to speci
 | `"error handling, API consistency"` | Pattern consistency |
 | `"test coverage, edge cases"` | Test quality improvement |
 
+## Prerequisites
+
+### Swarm Mode (Parallel Execution)
+
+For parallel execution with TeammateTool swarm:
+
+- **Swarm-patched Claude Code** — e.g., `claudesp` variant from claude-sneakpeek
+- **Required features:** TeammateTool, SendMessage, TaskCreate/TaskUpdate/TaskList, Task with `team_name`
+
+Without swarm mode, the workflow falls back to sequential execution (v1.0 behavior).
+
 ## Workflow Phases
 
 ```
-SCOPE → REVIEW → ASSESS → FIX → VERIFY → REPORT
-           ↑                      ↓
-           └──────────────────────┘
-           (loop until clean or max iterations)
+SCOPE → FORGE → REVIEW → ASSESS → FIX → VERIFY → REPORT
+                  ↑                        ↓
+                  └────────────────────────┘
+                  (loop until clean or max iterations)
 ```
 
 1. **SCOPE** - Identify files to review
-2. **REVIEW** - Deep multi-perspective analysis (+ focus if provided)
-3. **ASSESS** - Triage findings (MUST_FIX/SHOULD_FIX/STYLE)
-4. **FIX** - Resolve MUST_FIX issues
-5. **VERIFY** - Confirm fixes, check for regressions
-6. **REPORT** - Generate hardening summary
+2. **FORGE** (Pygmalion) - Forge domain-specific specialist personas
+3. **REVIEW** - Multi-perspective analysis (swarm: parallel workers)
+4. **ASSESS** - Triage + deduplicate findings
+5. **FIX** - Resolve MUST_FIX issues (swarm: parallel category fixers)
+6. **VERIFY** - Confirm fixes, check regressions (swarm: parallel verifiers)
+7. **REPORT** - Generate hardening summary + cleanup swarm
 
 ## Hardening Strategy
 
@@ -91,12 +103,26 @@ You can (and should) run again with different focus to find other issue types.
 
 ## Agents
 
+### Swarm Mode (v2.0)
+
+| Agent | Name | Role |
+|-------|------|------|
+| Scope Analyzer | — | Identifies files to review |
+| Pygmalion | 🗿 | Forges domain-specific specialist personas |
+| Dike (Review Worker) | 🔎 | Claims a perspective, deeply reviews all scoped files |
+| Themis (Arbiter) | ⚖️ | Triages + deduplicates findings from all reviewers |
+| Asclepius (Fixer Worker) | 💊 | Claims a file category, fixes MUST_FIX issues |
+| Aletheia (Verify Worker) | 🔍 | Claims a category, verifies fixes are correct |
+| Hardening Reporter | — | Generates summary |
+
+### Sequential Mode (Fallback)
+
 | Agent | Role |
 |-------|------|
 | Scope Analyzer | Identifies files to review |
-| Deep Reviewer | Multi-perspective code analysis |
+| Deep Reviewer (Review Council) | Multi-perspective code analysis (all perspectives in one pass) |
 | Themis (Arbiter) | Triages findings |
-| Issue Fixer | Applies minimal, targeted fixes |
+| Issue Fixer (The Mender) | Applies minimal, targeted fixes |
 | Verification Reviewer | Confirms fixes work |
 | Hardening Reporter | Generates summary |
 
@@ -184,3 +210,23 @@ Each pass with a different focus finds different issue types:
 **Pass 5 (consistency):** Pattern mismatches, naming inconsistencies
 
 **Result:** Progressively more robust code with each iteration.
+
+---
+
+## Changelog
+
+### v2.0.0 — Swarm + Pygmalion Edition
+
+- **Swarm parallel execution** — Reviewers (Dike), fixers (Asclepius), and verifiers (Aletheia) run as parallel swarm teammates via TeammateTool
+- **Pygmalion persona forging** — Domain-specific specialist reviewers forged on-the-fly to fill Pantheon coverage gaps
+- **Deduplication** — Themis merges duplicate findings when multiple reviewers identify the same issue
+- **File-category partitioning** — Parallel fixers assigned non-overlapping file sets (frontend/backend/database) to prevent conflicts
+- **Sequential fallback** — Full backward compatibility when swarm mode is unavailable
+- **New agents:** Dike (review-worker), Asclepius (fixer-worker), Aletheia (verification-worker)
+
+### v1.0.0 — Initial Release
+
+- Sequential deep review with single multi-perspective reviewer
+- Themis triage, category-based fixing, verification loop
+- Focus-based targeted review
+- Hardening report generation

@@ -1,7 +1,7 @@
 name: story-pipeline
 description: "Enhanced multi-agent pipeline with smart builder spawning, playbook learning, code citation evidence, test quality validation, resume-builder fixes, and per-story completion reports"
 author: "Jonah Schulte (leveraging BMAD Method)"
-version: "5.1.0" # Hybrid agent mapping - Claude Code specialized agents + BSE personas
+version: "7.0.0" # Hybrid agent mapping + Pygmalion persona forging
 
 # ============================================================================
 # CRITICAL: EXECUTION DISCIPLINE
@@ -76,6 +76,26 @@ agent_routing:
       agent: "agents/builders/general.md"
       persona: { name: "Metis", emoji: "🔨" }
 
+# =============================================================================
+# PERSONA FORGING — Pygmalion (v7.0)
+# =============================================================================
+# Pygmalion analyzes code, stories, and playbooks to forge domain-specific
+# specialist personas on-the-fly. Forged specialists augment (never replace)
+# the fixed Pantheon reviewers.
+persona_forging:
+  enabled: true
+  complexity_gate:
+    skip_below: "light"          # trivial/micro use fixed Pantheon only
+  max_specialists:
+    light: 1
+    standard: 2
+    complex: 3
+    critical: 4
+  allow_forged_builder: false    # Only for complex+ when enabled
+  model: "opus"                  # Needs deep analysis capability
+  timeout: 600                   # 10 minutes max
+  output_dir: "{sprint_artifacts}/completions"
+
 # Agent tracking (from GSD)
 agent_history: "{sprint_artifacts}/agent-history.json"
 current_agent_id: "{sprint_artifacts}/current-agent-id.txt"
@@ -91,6 +111,18 @@ agents:
   # Strategy: Use Claude Code's specialized agents + layer BSE persona on top
   # See agent-type-mapping.md for full documentation
   # ==========================================================================
+
+  pygmalion:
+    description: "Persona Forge - analyzes domain, forges specialist personas on-the-fly"
+    steps: [1.5]
+    subagent_type: "general-purpose"
+    model: "opus"
+    prompt_file: "{agents_path}/pygmalion.md"
+    fresh_context: true
+    trust_level: "high"
+    timeout: 600
+    output_file: "{sprint_artifacts}/completions/{{story_key}}-pygmalion.json"
+    complexity_gate: "light"  # Skip for trivial/micro
 
   builder:
     description: "Implementation agent - writes code and tests (SMART SPAWNING)"

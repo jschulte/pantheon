@@ -1,7 +1,7 @@
 name: batch-stories
 description: "Interactive batch selector for story-pipeline with complexity-based routing, smart wave ordering, and comprehensive session reporting."
 author: "Jonah Schulte (leveraging BMAD Method)"
-version: "1.4.0"
+version: "4.0.0"
 
 # Critical variables from config
 config_source: "{project-root}/_bmad/bmm/config.yaml"
@@ -111,5 +111,23 @@ session_reporting:
     prompt_file: "{installed_path}/agents/session-reporter.md"
     subagent_type: "general-purpose"
     model: "sonnet"
+
+# Swarm mode configuration (NEW in v4.0.0)
+# Replaces wave-based parallel execution with TeammateTool swarm coordination.
+# Requires: swarm-patched Claude Code (e.g., claudesp variant from claude-sneakpeek)
+swarm_config:
+  enabled: true                 # Use TeammateTool swarm for parallel mode
+  team_prefix: "batch"          # Team name: batch-{epic} or batch-{timestamp}
+  max_workers: 3                # Number of Heracles worker teammates to spawn
+  worker_model: "sonnet"        # Model for Heracles worker agents
+  worker_persona: "{installed_path}/agents/heracles.md"
+
+  # Swarm requires these Claude Code features (enabled by swarm patch):
+  # - TeammateTool (spawnTeam, cleanup)
+  # - SendMessage (inter-agent messaging)
+  # - TaskCreate/TaskUpdate/TaskList (shared task list)
+  # - Task with team_name param (teammate spawning)
+  requires:
+    swarm_mode: true            # Variant must have swarm mode enabled
 
 standalone: true

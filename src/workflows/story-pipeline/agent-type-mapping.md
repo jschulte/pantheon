@@ -49,6 +49,26 @@ For trivial→standard complexity, use a single agent with all perspectives:
 |------|-------------------|-------------|----------------|
 | Consolidated | `architect-reviewer` | `multi-reviewer.md` | 4 perspectives in one pass |
 
+## Persona Forge (Phase 1.5: FORGE)
+
+| Role | Claude Code Agent | BSE Persona | Combined Power |
+|------|-------------------|-------------|----------------|
+| Pygmalion | `general-purpose` | `agents/pygmalion.md` | Domain analysis + specialist forging |
+
+## Forged Specialists (Phase 3: VERIFY — dynamic)
+
+Forged specialists are created on-the-fly by Pygmalion based on story domain analysis.
+They use the same artifact format as Pantheon reviewers, so Themis triages them identically.
+
+| Role | Claude Code Agent | BSE Persona | Combined Power |
+|------|-------------------|-------------|----------------|
+| *Dynamic* | `spec.suggested_claude_agent_type` | *Constructed from Pygmalion spec* | Domain-specific gap coverage |
+
+**Examples of forged specialists:**
+- Stripe Webhook Integrity → `auditor-security` + Pygmalion-generated checklist
+- GraphQL Schema Design → `architect-reviewer` + Pygmalion-generated checklist
+- OAuth 2.0 PKCE Flow → `auditor-security` + Pygmalion-generated checklist
+
 ## Implementation Notes
 
 1. **Always layer the persona** - Even when using specialized agents, include the BSE persona for:

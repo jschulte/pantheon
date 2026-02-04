@@ -1,7 +1,7 @@
 name: batch-review
 description: "Deep code review and hardening workflow - run repeatedly until bulletproof"
 author: "Jonah Schulte (leveraging BMAD Method)"
-version: "1.0.0"
+version: "2.0.0"  # Swarm mode + Pygmalion persona forging
 
 # ============================================================================
 # BATCH-REVIEW: Hardening Sweep Workflow
@@ -23,7 +23,7 @@ version: "1.0.0"
 # ============================================================================
 
 # Execution parameters
-execution_mode: "multi_agent"
+execution_mode: "multi_agent"  # multi_agent (sequential) | swarm (parallel TeammateTool)
 max_iterations: 5  # Max fix/verify cycles per run
 
 # Paths
@@ -118,6 +118,56 @@ agents:
     model: "sonnet"
     prompt_file: "{agents_path}/hardening-reporter.md"
     timeout: 600
+
+# =============================================================================
+# SWARM MODE (v2.0)
+# =============================================================================
+# When swarm mode is available, Phases 2, 4, and 5 use TeammateTool for
+# true parallel execution with non-overlapping file assignments.
+swarm_config:
+  enabled: true
+  team_prefix: "review"              # Team name: review-{scope_id}
+  review_workers:
+    perspectives: [security, correctness, architecture, test_quality, accessibility]
+    model: "opus"
+    persona: "{agents_path}/review-worker.md"    # Dike
+    max_workers: 5                   # One per perspective (+ forged specialists)
+  fixer_workers:
+    categories: [frontend, backend, database]
+    model: "opus"
+    persona: "{agents_path}/fixer-worker.md"     # Asclepius
+    max_workers: 3                   # One per category
+  verify_workers:
+    model: "opus"
+    persona: "{agents_path}/verification-worker.md"  # Aletheia
+    max_workers: 3                   # One per category
+  requires:
+    swarm_mode: true                 # Variant must have swarm mode enabled
+
+# =============================================================================
+# PERSONA FORGING — Pygmalion (v2.0)
+# =============================================================================
+persona_forging:
+  enabled: true
+  complexity_gate:
+    skip_below: "light"              # Skip forging for trivial/micro scopes
+  max_specialists: 3
+  model: "opus"
+  timeout: 600
+  pygmalion_prompt: "{project-root}/_bmad/bse/workflows/story-pipeline/agents/pygmalion.md"
+
+# =============================================================================
+# DEDUPLICATION (v2.0)
+# =============================================================================
+# When multiple reviewers (Pantheon + forged) find the same issue,
+# Themis deduplicates during triage.
+deduplication:
+  enabled: true
+  strategy: "themis_merge"           # Themis merges duplicates during triage
+  merge_criteria:
+    same_file: true                  # Must be in same file
+    line_proximity: 5                # Within 5 lines counts as same location
+    same_root_cause: true            # Must describe same underlying problem
 
 # Issue classification (same as story-pipeline)
 issue_classification:

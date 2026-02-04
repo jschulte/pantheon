@@ -1,17 +1,19 @@
-# Story Pipeline v6.0 - Greek Pantheon Edition
+# Story Pipeline v7.0 - Pygmalion Edition
 
 <purpose>
 Implement a story using parallel verification agents with Builder context reuse.
-Enhanced with playbook learning, code citation evidence, test quality validation, pragmatic triage, and automated coverage gates.
+Enhanced with playbook learning, code citation evidence, test quality validation, pragmatic triage, automated coverage gates, and on-the-fly persona forging via Pygmalion.
 Builder fixes issues in its own context (50-70% token savings).
+Pygmalion forges domain-specific specialist reviewers to fill Pantheon coverage gaps.
 </purpose>
 
 <philosophy>
 **Quality Through Discipline, Continuous Learning**
 
 - Phase 1 PREPARE: Validate story quality, load playbooks
+- Phase 1.5 FORGE: Pygmalion analyzes domain, forges specialist personas (if complexity >= light)
 - Phase 2 BUILD: Metis implements with TDD
-- Phase 3 VERIFY: Argus + Nemesis + reviewers validate in parallel
+- Phase 3 VERIFY: Argus + Nemesis + reviewers + forged specialists validate in parallel
 - Phase 4 ASSESS: Coverage gate + Themis triages issues pragmatically
 - Phase 5 REFINE: Metis fixes real issues, iterate until clean
 - Phase 6 COMMIT: Reconcile story, update status
@@ -35,6 +37,8 @@ Measure twice, cut once. Trust but verify. Evidence-based validation. Self-impro
 | Arbiter | **Themis** | Titan of justice and fair judgment | ⚖️ |
 | Reflection | **Mnemosyne** | Titan of memory | 📚 |
 | Accessibility | **Iris** | Goddess of the rainbow, bridges realms | 🌈 |
+| Persona Forge | **Pygmalion** | The sculptor who brought the perfect being to life | 🗿 |
+| *Forged Specialists* | *Dynamic* | *Domain-specific experts created by Pygmalion* | *Varies* |
 </agents>
 
 <execution_discipline>
@@ -50,8 +54,9 @@ It is invoked via `/bmad_bse_story-pipeline` (a Skill), NOT as a Task subagent.
 4. Task agents return artifacts; orchestrator continues with next phase
 
 **Task Agents Are ONLY Used For:**
+- Phase 1.5 FORGE: `Task(subagent_type: "general-purpose")` → Pygmalion (Persona Forge) — complexity >= light only
 - Phase 2 BUILD: `Task(subagent_type: "general-purpose")` → Metis (Builder)
-- Phase 3 VERIFY: `Task(subagent_type: ...)` → Argus + Nemesis + Cerberus/Apollo/Hestia/Arete - in parallel
+- Phase 3 VERIFY: `Task(subagent_type: ...)` → Argus + Nemesis + Cerberus/Apollo/Hestia/Arete + forged specialists - in parallel
 - Phase 4 ASSESS: `Task(subagent_type: ...)` → Themis (triage arbiter)
 - Phase 5 REFINE: Iterative loop:
   - `Task(resume: builder_id)` → Metis fixes MUST_FIX
@@ -81,13 +86,14 @@ The workflow structure EXISTS to prevent bugs that slip through when a single ag
 
 <config>
 name: story-pipeline
-version: 6.0.0
+version: 7.0.0
 execution_mode: multi_agent
 
 phases:
   phase_1: PREPARE (story quality gate + playbook query)
+  phase_1_5: FORGE (Pygmalion forges specialist personas — complexity >= light)
   phase_2: BUILD (Metis implements with TDD)
-  phase_3: VERIFY (Argus + Nemesis + reviewers in parallel)
+  phase_3: VERIFY (Argus + Nemesis + reviewers + forged specialists in parallel)
   phase_4: ASSESS (coverage gate + Themis triage)
   phase_5: REFINE (Metis fixes + iterate until clean)
   phase_6: COMMIT (reconcile story, update status)
@@ -387,6 +393,88 @@ EOF
 
 </step>
 
+<step name="phase_1_5_forge">
+## Phase 1.5: FORGE (Pygmalion)
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🗿 PHASE 1.5: FORGE (Pygmalion)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Domain analysis + specialist persona forging
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+### Complexity Gate
+
+```
+IF COMPLEXITY in [trivial, micro]:
+  FORGED_SPECS = { forged_specialists: [], skipped: true }
+  → Skip Pygmalion entirely. Pantheon coverage is sufficient.
+  → Proceed to Phase 2.
+
+ELSE:
+  → Invoke Pygmalion to analyze domain and forge specialists.
+```
+
+### Invoke Pygmalion
+
+```
+PYGMALION_TASK = Task({
+  subagent_type: "general-purpose",
+  model: "opus",
+  description: "🗿 Pygmalion forging specialists for {{story_key}}",
+  prompt: `
+<agent_persona>
+[INLINE: Content from agents/pygmalion.md]
+</agent_persona>
+
+Analyze this story and its domain context. Forge specialist personas if the fixed Pantheon leaves coverage gaps.
+
+<story>
+[INLINE: Full story file content]
+</story>
+
+<complexity>
+Tier: {{COMPLEXITY}}
+Max specialists: {{max_specialists_for_tier}}
+</complexity>
+
+<playbooks>
+[INLINE: Playbook content loaded in Phase 1]
+</playbooks>
+
+<project_context>
+[INLINE: package.json dependencies, project structure summary]
+</project_context>
+
+Output your analysis as the Pygmalion JSON artifact.
+Save to: docs/sprint-artifacts/completions/{{story_key}}-pygmalion.json
+`
+})
+```
+
+### Process Pygmalion Output
+
+```
+FORGED_SPECS = read("docs/sprint-artifacts/completions/{{story_key}}-pygmalion.json")
+
+IF FORGED_SPECS.forged_specialists.length > 0:
+  echo "🗿 Pygmalion forged {{count}} specialist(s):"
+  FOR EACH spec IN FORGED_SPECS.forged_specialists:
+    echo "  {{spec.emoji}} {{spec.name}} — {{spec.title}}"
+
+ELSE:
+  echo "🗿 Pygmalion: No gaps identified — Pantheon coverage sufficient."
+```
+
+**📢 Orchestrator says (if specialists forged):**
+> "Pygmalion has studied the domain and forged **{{count}} specialist(s)** to augment the review team. These specialists will join the Pantheon reviewers in Phase 3."
+
+**📢 Orchestrator says (if no specialists):**
+> "Pygmalion analyzed the domain and confirmed the Pantheon reviewers have full coverage. No additional specialists needed."
+
+</step>
+
 <step name="phase_2_build">
 ## Phase 2: BUILD (2/7)
 
@@ -600,7 +688,43 @@ docs/sprint-artifacts/completions/{{story_key}}-review.json
 })
 ```
 
-**After consolidated review, SKIP to Phase 4 (ASSESS).**
+**After consolidated review, also spawn any forged specialists (if Pygmalion produced them):**
+
+```
+IF FORGED_SPECS.forged_specialists.length > 0:
+  # Spawn forged specialists in parallel alongside or after consolidated review
+  FOR EACH spec IN FORGED_SPECS.forged_specialists:
+    Task({
+      subagent_type: "{{spec.suggested_claude_agent_type}}",
+      model: "opus",
+      description: "{{spec.emoji}} {{spec.name}} reviewing {{story_key}}",
+      prompt: `
+You are {{spec.name}} ({{spec.emoji}}) — {{spec.title}}.
+
+{{spec.domain_expertise}}
+
+Review the following code changes for this story. Focus specifically on:
+{{spec.review_focus — as bullet list}}
+
+Technology Checklist — verify each item:
+{{spec.technology_checklist — as numbered list}}
+
+Known Gotchas to watch for:
+{{spec.known_gotchas — as bullet list}}
+
+Issue Classification:
+{{spec.issue_classification_guidance}}
+
+<story>[INLINE: story content]</story>
+<files_to_review>[list from metis.json]</files_to_review>
+
+Output your findings in standard reviewer JSON format.
+Save to: docs/sprint-artifacts/completions/{{story_key}}-{{spec.id}}.json
+`
+    })
+```
+
+**After all reviews complete (consolidated + forged), proceed to Phase 4 (ASSESS).**
 
 ---
 
@@ -771,9 +895,47 @@ Save to: docs/sprint-artifacts/completions/{{story_key}}-arete.json
 })
 ```
 
+### Forged Specialists (from Pygmalion) — spawned in same parallel batch
+
+```
+IF FORGED_SPECS.forged_specialists.length > 0:
+  # Include these in the SAME message as Pantheon reviewers above
+  FOR EACH spec IN FORGED_SPECS.forged_specialists:
+    Task({
+      subagent_type: "{{spec.suggested_claude_agent_type}}",
+      model: "opus",
+      description: "{{spec.emoji}} {{spec.name}} reviewing {{story_key}}",
+      prompt: `
+You are {{spec.name}} ({{spec.emoji}}) — {{spec.title}}.
+
+{{spec.domain_expertise}}
+
+Review the following code changes for this story. Focus specifically on:
+{{spec.review_focus — as bullet list}}
+
+Technology Checklist — verify each item:
+{{spec.technology_checklist — as numbered list}}
+
+Known Gotchas to watch for:
+{{spec.known_gotchas — as bullet list}}
+
+Issue Classification:
+{{spec.issue_classification_guidance}}
+
+<story>[INLINE: story content]</story>
+<files_to_review>[list from metis.json]</files_to_review>
+
+Output your findings in standard reviewer JSON format.
+Save to: docs/sprint-artifacts/completions/{{story_key}}-{{spec.id}}.json
+`
+    })
+```
+
+**CRITICAL: Forged specialist Task calls MUST be in the SAME message as Pantheon reviewer Task calls above. This ensures true parallel execution.**
+
 ---
 
-**Wait for ALL agents to complete.**
+**Wait for ALL agents to complete (Pantheon + forged specialists).**
 
 Collect completion artifacts and store agent_ids for potential resume.
 
@@ -847,8 +1009,11 @@ Story type: {{story_type}}
 </story_context>
 
 <all_issues>
-{{ALL issues from Phase 3}}
+{{ALL issues from Phase 3 — Pantheon reviewers AND forged specialists}}
 </all_issues>
+
+NOTE: Forged specialist findings use the same JSON format as Pantheon reviewers.
+Triage them identically — no special handling needed.
 
 <triage_instructions>
 **THE "REAL ISSUE" RULE (MOST IMPORTANT):**
@@ -1043,7 +1208,7 @@ Fix them. Run tests after each fix.
 
 ### 5.2 Resume original reviewers to verify
 
-Only resume reviewers who had upheld MUST_FIX findings.
+Only resume reviewers who had upheld MUST_FIX findings. This includes both Pantheon reviewers and forged specialists.
 
 ```
 FOR EACH reviewer_id IN reviewers_with_upheld_must_fix:
@@ -1055,6 +1220,32 @@ Metis has addressed your issues. Verify:
 2. Did the fix introduce NEW issues?
 `
   })
+
+# For forged specialists that cannot be resumed (no saved agent_id),
+# re-spawn with the original spec from Pygmalion output:
+FOR EACH spec IN forged_specialists_with_upheld_must_fix:
+  IF spec.agent_id is available:
+    Task({ resume: "{{spec.agent_id}}", prompt: "Verify fixes..." })
+  ELSE:
+    # Re-spawn with verification-focused prompt
+    Task({
+      subagent_type: "{{spec.suggested_claude_agent_type}}",
+      model: "opus",
+      prompt: `
+You are {{spec.name}} ({{spec.emoji}}) — {{spec.title}}.
+{{spec.domain_expertise}}
+
+Metis has fixed these issues you raised:
+{{upheld_must_fix_from_this_specialist}}
+
+Verify each fix:
+1. Is the fix satisfactory? (RESOLVED / NOT_RESOLVED)
+2. Did the fix introduce NEW issues?
+3. Check technology_checklist items again.
+
+Save to: docs/sprint-artifacts/completions/{{story_key}}-{{spec.id}}-verify.json
+`
+    })
 ```
 
 ### 5.3 Fresh eyes on iteration 2+
@@ -1412,12 +1603,15 @@ Update `docs/sprint-artifacts/completions/{{story_key}}-progress.json`:
 - **Themis** ⚖️ (Arbiter) - Triages issues with pragmatic judgment.
 - **Hermes** 📜 (Reflect+Report) - Updates playbooks AND generates completion report.
 - **Iris** 🌈 (Accessibility) - WCAG, ARIA, a11y (conditional, frontend only).
+- **Pygmalion** 🗿 (Persona Forge) - Analyzes domain, forges specialist personas. Invoked in Phase 1.5 for complexity >= light.
+- **Forged Specialists** (Dynamic) - Domain-specific reviewers created by Pygmalion. Same artifact format as Pantheon reviewers.
 </complexity_routing>
 
 <success_criteria>
 - [ ] Phase 1 PREPARE: Story validated, playbooks loaded
+- [ ] Phase 1.5 FORGE: Pygmalion invoked (if complexity >= light), forged specs stored
 - [ ] Phase 2 BUILD: Metis spawned, agent_id saved
-- [ ] Phase 3 VERIFY: Review completed (consolidated OR parallel based on complexity)
+- [ ] Phase 3 VERIFY: Review completed (consolidated OR parallel) + forged specialists (if any)
 - [ ] Phase 4 ASSESS: Coverage passed, Themis triaged issues
 - [ ] Phase 5 REFINE: Zero MUST_FIX remaining (or user accepted)
 - [ ] Phase 6 COMMIT: Story reconciled, sprint status updated
@@ -1429,6 +1623,15 @@ Update `docs/sprint-artifacts/completions/{{story_key}}-progress.json`:
 </success_criteria>
 
 <version_history>
+**v7.0 - Pygmalion Edition**
+1. ✅ Added Pygmalion (Persona Forge) — dynamically forges domain-specific specialist personas
+2. ✅ New Phase 1.5 FORGE: Domain analysis + specialist forging (complexity >= light)
+3. ✅ Phase 3 VERIFY: Forged specialists spawn alongside Pantheon reviewers in parallel
+4. ✅ Phase 4 ASSESS: Themis triages forged specialist findings identically to Pantheon
+5. ✅ Phase 5 REFINE: Forged specialists with upheld MUST_FIX resumed/respawned for verification
+6. ✅ Complexity gating: trivial/micro skip forging; light gets max 1; standard max 2; complex max 3; critical max 4
+7. ✅ Forged specialists use same artifact format as Pantheon — zero changes to Themis triage
+
 **v6.1 - Token Optimization Edition**
 1. ✅ Combined Mnemosyne + Hermes into Hermes (saves ~5-8K tokens/story)
 2. ✅ Added Multi-Reviewer consolidated agent (saves ~60-70% Phase 3 tokens)

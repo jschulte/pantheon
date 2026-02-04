@@ -19,7 +19,7 @@ Orchestrator coordinates. Agents do implementation. Orchestrator does reconcilia
 
 <config>
 name: batch-stories
-version: 3.5.0
+version: 4.0.0
 
 modes:
   sequential: {description: "Process one-by-one in this session", recommended_for: "gap analysis"}
@@ -249,11 +249,11 @@ For parallel: proceed to `analyze_dependencies`
 </step>
 
 <step name="analyze_dependencies" if="mode == parallel">
-**Dependency Analysis & Smart Wave Planning**
+**Dependency Analysis & Task Graph Creation**
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔗 ANALYZING DEPENDENCIES
+🔗 ANALYZING DEPENDENCIES & BUILDING TASK GRAPH
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
@@ -306,36 +306,63 @@ Dependencies found:
 
 ```bash
 # If circular dependency detected:
-echo "⚠️ CIRCULAR DEPENDENCY: 5-1 → 5-3 → 5-1"
+echo "CIRCULAR DEPENDENCY: 5-1 -> 5-3 -> 5-1"
 echo "Falling back to epic order for these stories"
 ```
 
-### Step 4: Build Smart Waves
+If circular dependency detected, remove the back-edge (the link that creates the cycle) and log a warning.
 
-**Algorithm:**
-1. Start with stories that have no unmet dependencies → Wave 1
-2. After Wave 1 completes, stories whose dependencies are now met → Wave 2
-3. Repeat until all stories are assigned
-4. Respect `max_concurrent` limit per wave
+### Step 4: Create Shared Task List
+
+**Instead of computing waves, create tasks with dependency constraints.**
+
+Workers will dynamically pick up unblocked tasks — no wave planning needed.
+
+For each selected story, create a task:
+
+```
+TaskCreate(
+  subject="Story {{story_key}}: {{story_title}}",
+  description="""
+    story_key: {{story_key}}
+    story_file: {{story_file_path}}
+    complexity_level: {{complexity_level}}
+    story_title: {{story_title}}
+
+    Execute the full story-pipeline for this story.
+    Load the story file, run all 7 phases (PREPARE through REFLECT),
+    and report results via SendMessage to team-lead.
+  """,
+  activeForm="Processing story {{story_key}}"
+)
+```
+
+Then set dependency constraints:
+
+```
+# For each story with dependencies:
+IF story has depends_on:
+  FOR each dependency in depends_on:
+    dep_task_id = task ID of the dependency story
+    TaskUpdate(taskId=this_task_id, addBlockedBy=[dep_task_id])
+```
+
+**Display the task graph:**
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 WAVE PLAN
+📋 TASK GRAPH
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Wave 1 (no dependencies):
-  • 5-1 Polish Catch List View
-  • 5-3 Polish Manual Catch Entry Form
+Task #1: 5-1 Polish Catch List View         [unblocked]
+Task #2: 5-2 Polish Catch Detail View       [blocked by #1]
+Task #3: 5-3 Polish Manual Catch Entry Form [unblocked]
+Task #4: 5-4 Fix Offline Photo Handling     [blocked by #1]
+Task #5: 5-5 Improve Photo Upload Widget    [blocked by #4]
+Task #6: 5-6 Add Catch Edit Functionality   [blocked by #2]
 
-Wave 2 (depends on Wave 1):
-  • 5-2 Polish Catch Detail View (← 5-1)
-  • 5-4 Fix Offline Photo Handling (← 5-1)
-
-Wave 3 (depends on Wave 2):
-  • 5-5 Improve Photo Upload Widget (← 5-4)
-  • 5-6 Add Catch Edit Functionality (← 5-2)
-
-Total: 6 stories in 3 waves
+Unblocked (ready now): 2 stories
+Blocked (waiting):     4 stories
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
@@ -343,15 +370,16 @@ Total: 6 stories in 3 waves
 
 Use AskUserQuestion:
 ```
-Smart wave plan created based on dependency analysis.
+Task graph created with dependency constraints.
+Workers will dynamically claim unblocked tasks.
 
 Options:
-1. Proceed with smart ordering (recommended)
-2. Override: Process in selection order (ignore dependencies)
-3. Adjust max concurrent (currently {{max_concurrent}})
+1. Proceed with task graph (recommended)
+2. Remove all dependencies (process in any order)
+3. Adjust max workers (currently {{max_workers}})
 ```
 
-**Store wave plan for execute_parallel step.**
+**Store task IDs for execute_parallel step.**
 </step>
 
 <step name="execute_sequential" if="mode == sequential">
@@ -523,215 +551,239 @@ Use Edit tool: `"{{story_key}}: ready-for-dev"` → `"{{story_key}}: done"`
 </step>
 
 <step name="execute_parallel" if="mode == parallel">
-**Parallel Processing with Smart Wave Pattern**
+**Parallel Processing with TeammateTool Swarm**
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📦 PARALLEL PROCESSING (SMART WAVES)
+📦 PARALLEL PROCESSING (SWARM MODE)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-**Uses wave plan from dependency analysis step.**
+**Requires:** Swarm-patched Claude Code (e.g., `claudesp` variant from claude-sneakpeek).
+**Uses task graph from dependency analysis step.**
 
-**Wave Configuration:**
-- Max concurrent: `{{max_concurrent}}` (default 3, user can override)
-- Smart ordering: Dependencies respected
-- Wait for wave completion before next wave
+Workers self-schedule from the shared task list. Dependencies are enforced via `addBlockedBy`
+constraints — workers automatically skip blocked tasks and grab unblocked ones. No wave
+planning or batch synchronization needed.
 
-**For each wave in wave_plan:**
-
-### Step 1: Display Wave Header
+### Step 1: Create Swarm Team
 
 ```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🌊 WAVE {{wave_number}}/{{total_waves}}: {{story_keys}}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Dependencies satisfied: {{deps_from_previous_waves}}
-Spawning {{count}} parallel pipeline agents...
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
-
-### Step 2: Spawn Task agents (up to 3 parallel)
-
-```
-Task({
-  subagent_type: "general-purpose",
-  description: "🔨 Pipeline: {{story_key}}",
-  prompt: `
-Execute story-pipeline for story {{story_key}}.
-
-<execution_context>
-@story-pipeline/workflow.md
-</execution_context>
-
-<context>
-Story: [inline story content]
-Complexity: {{complexity_level}}
-</context>
-
-<success_criteria>
-- [ ] All pipeline phases complete
-- [ ] Git commit created
-- [ ] Progress artifact updated at each phase
-- [ ] Return ## AGENT COMPLETE with summary
-</success_criteria>
-`
+Teammate({
+  operation: "spawnTeam",
+  team_name: "batch-{{epic_or_timestamp}}",
+  description: "Batch story implementation for {{story_count}} stories"
 })
 ```
 
-### Step 3: Poll Progress While Waiting (Smart Polling)
+The team name uses the epic number if filtering by epic (e.g., `batch-5`), otherwise
+a timestamp (e.g., `batch-20260203`).
 
-**Poll every 30 seconds, but only display when something changes.**
+### Step 2: Spawn Story Workers
 
-**State tracking:**
+Spawn `{{max_workers}}` (default 3) Heracles teammates. Each worker runs autonomously
+using the self-scheduling loop defined in `agents/heracles.md`.
+
+**Load the worker persona:**
+Read: `{installed_path}/agents/heracles.md`
+
+**Spawn workers in a single message (parallel launch):**
+
 ```
-# Track last known state for each story
-LAST_STATE = {}  # { "6-1": "BUILD", "6-3": "PREPARE", ... }
+# All Task calls in ONE message for parallel spawning
+Task({
+  subagent_type: "general-purpose",
+  team_name: "batch-{{epic_or_timestamp}}",
+  name: "worker-1",
+  model: "{{worker_model}}",  # default: sonnet
+  run_in_background: true,
+  prompt: `
+{{heracles.md persona content}}
+
+<project_context>
+Project root: {{project_root}}
+Story pipeline: {{project_root}}/_bmad/bse/workflows/story-pipeline/workflow.md
+Sprint artifacts: {{sprint_artifacts_path}}
+</project_context>
+
+You are worker-1 in a batch-stories swarm. Check TaskList for available stories,
+claim them, and execute the full story-pipeline for each.
+`
+})
+
+Task({
+  subagent_type: "general-purpose",
+  team_name: "batch-{{epic_or_timestamp}}",
+  name: "worker-2",
+  model: "{{worker_model}}",
+  run_in_background: true,
+  prompt: `
+{{heracles.md persona content}}
+
+<project_context>
+Project root: {{project_root}}
+Story pipeline: {{project_root}}/_bmad/bse/workflows/story-pipeline/workflow.md
+Sprint artifacts: {{sprint_artifacts_path}}
+</project_context>
+
+You are worker-2 in a batch-stories swarm. Check TaskList for available stories,
+claim them, and execute the full story-pipeline for each.
+`
+})
+
+# ... repeat for worker-3 through worker-N
 ```
 
-**Polling loop:**
+### Step 3: Monitor Progress via Idle Notifications
+
+**Workers send messages automatically.** The orchestrator receives:
+
+- **Completion messages** — Worker reports story results via `SendMessage`
+- **Failure messages** — Worker reports story failure with phase and reason
+- **Blocker messages** — Worker requests help from team lead
+- **Idle notifications** — Automatic when a worker has no more work to do
+
+**No polling loop needed.** Messages are delivered automatically as new conversation turns.
+
+**When a completion message arrives:**
+
 ```
-WHILE any agent still running:
-  SLEEP 30 seconds
+Received from worker-1:
+  "Story 5-1 COMPLETE - 25 tests, 97.6% cov, 4->0 issues, commit 8a1a0f0"
 
-  changes_detected = false
-  current_states = {}
-
-  FOR each story in wave:
-    PROGRESS = "docs/sprint-artifacts/completions/${story}-progress.json"
-
-    IF file exists:
-      phase = READ progress artifact -> current_phase
-      details = READ progress artifact -> phases[phase].details
-    ELSE:
-      phase = "STARTING"
-      details = "Initializing..."
-    END IF
-
-    current_states[story] = phase
-
-    IF phase != LAST_STATE[story]:
-      changes_detected = true
-      # Log the transition
-      PRINT "📍 ${story}: ${LAST_STATE[story]} → ${phase}"
-    END IF
-  END FOR
-
-  IF changes_detected:
-    DISPLAY full progress table
-  END IF
-
-  LAST_STATE = current_states
-END WHILE
+→ Log to progress tracker
+→ Reconcile story (Step 5)
+→ Check if all stories done
 ```
 
-**Display on change:**
+**When a failure message arrives:**
+
+```
+Received from worker-2:
+  "Story 5-3 FAILED at Phase VERIFY - Cerberus found critical security issue"
+
+→ Log failure
+→ Decide: retry, skip, or halt
+→ If retry: reset task status so another worker can claim it
+```
+
+**When a blocker message arrives:**
+
+```
+Received from worker-3:
+  "Story 5-5 BLOCKED - dependency 5-4 failed, cannot proceed"
+
+→ Assess blocker
+→ Either fix the dependency or mark story as skipped
+→ Reply via SendMessage to unblock worker
+```
+
+### Step 4: Track Running Progress
+
+Maintain a progress table that updates as messages arrive:
+
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🌊 WAVE {{wave_number}} IN PROGRESS ({{elapsed}})
+SWARM PROGRESS ({{completed}}/{{total}} stories)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-📍 6-1: BUILD → VERIFY (phase changed)
+  5-1  worker-1  COMPLETE  25 tests  97.6% cov  8a1a0f0
+  5-2  worker-2  BUILD     ...working...
+  5-3  worker-1  VERIFY    ...working...
+  5-4  --        pending   blocked by #1
+  5-5  --        pending   blocked by #4
+  5-6  --        pending   blocked by #2
 
-  6-1   👁️ VERIFY    4 reviewers checking...
-  6-3   🔨 BUILD     Metis implementing...
-  6-6   📋 PREPARE   Loading playbooks...
-
+Workers: 3 active | Stories: 1 done, 2 active, 3 waiting
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+Optionally read progress artifacts for more detail:
+```bash
+PROGRESS="docs/sprint-artifacts/completions/${story}-progress.json"
 ```
 
 **Phase status icons:**
 ```
-⏳ STARTING   Agent initializing
-📋 PREPARE    Loading story & playbooks
-🔨 BUILD      Metis implementing
-👁️ VERIFY     Reviewers checking
-⚖️ ASSESS     Themis triaging
-🔧 REFINE     Fixing issues
-💾 COMMIT     Reconciling & committing
-📚 REFLECT    Mnemosyne learning
-✅ COMPLETE   Done
+STARTING   Agent initializing
+PREPARE    Loading story & playbooks
+BUILD      Metis implementing
+VERIFY     Reviewers checking
+ASSESS     Themis triaging
+REFINE     Fixing issues
+COMMIT     Reconciling & committing
+REFLECT    Mnemosyne learning
+COMPLETE   Done
+FAILED     Pipeline failed
 ```
 
-**Polling behavior:**
-- **Frequency:** Every 30 seconds
-- **Display:** Only when phase changes detected
-- **Quiet mode:** No output if nothing changed (avoids spam)
-- **Completion:** Show final status when agent finishes
+### Step 5: Orchestrator Reconciles Each Completed Story
 
-**Transition announcements:**
-When a story changes phase, announce it inline:
-```
-📍 6-1: BUILD → VERIFY
-📍 6-3: PREPARE → BUILD
-📍 6-6: VERIFY → ASSESS
-✅ 6-1: COMPLETE (3m 42s)
-```
+As each worker reports completion:
 
-This gives real-time feel without flooding the screen with unchanged status.
+1. Read the story's completion artifact (`{{story_key}}-progress.json`)
+2. Check off completed tasks in story file (`- [ ]` to `- [x]`)
+3. Fill Dev Agent Record with metrics from artifact
+4. Update sprint-status.yaml: story status to `done`
 
-### Step 4: Display Wave Summary
+**This happens incrementally** — as soon as a story is reported complete, reconcile it.
+Don't wait for all stories to finish.
 
-After all agents complete, read progress artifacts and display detailed summary:
+### Step 6: Wait for All Workers to Finish
 
-```bash
-# Read progress files for this wave
-for story in {{wave_stories}}; do
-  PROGRESS="docs/sprint-artifacts/completions/${story}-progress.json"
-  if [ -f "$PROGRESS" ]; then
-    cat "$PROGRESS"
-  fi
-done
-```
+Workers send idle notifications automatically when they have no more tasks to claim.
+Once all workers are idle (or all tasks are completed/failed):
 
-**Display format (terminal-friendly):**
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🌊 WAVE {{wave_number}} COMPLETE
+SWARM COMPLETE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  5-1  ✅ done   25 tests   97.6% cov   4→0 issues   8a1a0f0
-  5-2  ✅ done   22 tests   100% cov    2→0 issues   481c7fd
-  5-3  ✅ done   32 tests   89.2% cov   6→0 issues   e94460c
+  5-1  DONE    25 tests  97.6% cov  4->0 issues  8a1a0f0
+  5-2  DONE    22 tests  100% cov   2->0 issues  481c7fd
+  5-3  DONE    32 tests  89.2% cov  6->0 issues  e94460c
+  5-4  DONE    18 tests  94.1% cov  3->0 issues  f2b9a1c
+  5-5  DONE    12 tests  91.3% cov  1->0 issues  7d3e4f2
+  5-6  FAILED  Phase VERIFY - critical security issue
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Wave Summary: {{success}}/{{total}} succeeded
+Summary: 5/6 succeeded, 1 failed
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
 **Column format:** `Story  Status  Tests  Coverage  Issues  Commit`
-- **Tests**: Number of tests (e.g., "25 tests")
-- **Coverage**: Line coverage (e.g., "97.6% cov")
-- **Issues**: found→remaining (e.g., "4→0 issues")
-- **Commit**: Short git hash
 
 **For failures, show phase details:**
 ```
-5-3 (FAILED):
-  ✓ PREPARE: standard, 2 playbooks
-  ✓ BUILD: 8 files, 423 lines
-  ✗ VERIFY: Cerberus found critical security issue
-  ⏳ ASSESS: Skipped
-  ⏳ REFINE: Skipped
-  ⏳ COMMIT: Skipped
+5-6 (FAILED):
+  PREPARE: standard, 2 playbooks
+  BUILD: 8 files, 423 lines
+  VERIFY: Cerberus found critical security issue [FAILED]
+  ASSESS: Skipped
+  REFINE: Skipped
+  COMMIT: Skipped
 ```
 
-**Status icons:**
-- ✓ = Complete
-- ⚠ = Completed with warnings
-- ✗ = Failed
-- ⏳ = Pending/Skipped
+### Step 7: Shutdown Workers and Cleanup
 
-**Coverage must always be populated.** If missing, it indicates a bug in the pipeline - the coverage gate in Phase 4 should always capture this metric.
+Request graceful shutdown of all workers, then clean up the team:
 
-### Step 5: Orchestrator reconciles each completed story
+```
+# For each worker:
+SendMessage({
+  type: "request",
+  subtype: "shutdown",
+  recipient: "worker-1",
+  content: "All stories processed. Shutting down."
+})
+# Repeat for worker-2, worker-3, etc.
 
-For each successful story:
-- Check off tasks in story file
-- Fill Dev Agent Record
-- Update sprint-status to done
+# After all workers confirm shutdown:
+Teammate({ operation: "cleanup" })
+```
 
-### Step 6: Continue to next wave or summary
+### Step 8: Continue to Summary
+
+Proceed to `summary` step with aggregated results from all completed stories.
 </step>
 
 <step name="summary">
