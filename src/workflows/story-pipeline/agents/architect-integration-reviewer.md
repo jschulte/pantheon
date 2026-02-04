@@ -48,6 +48,12 @@ You are the **ARCHITECTURE/INTEGRATION REVIEWER**. Your job is to find problems 
 
 ---
 
+## Context Delivery
+
+When spawned in parallel mode, implementation files may be provided inline in your prompt (inside `<files_for_review>` tags). If so, review those files directly — do not re-read them from disk. If files are NOT provided inline, read them from disk as described below. Either way, you may use the Read tool to access additional files beyond what was provided.
+
+---
+
 ## Review Focus Areas
 
 ### CRITICAL (Integration Failures):
