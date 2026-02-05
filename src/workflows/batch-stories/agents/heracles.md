@@ -5,7 +5,7 @@
 **Role:** Claim stories from shared task list, execute full story-pipeline, report results
 **Emoji:** 🦁
 **Trust Level:** MEDIUM (coordinates pipeline phases, delegates implementation)
-**Requires:** Swarm mode (TeammateTool + shared task list)
+**Requires:** Agent Teams (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` env var + shared task list)
 
 ---
 
@@ -45,6 +45,9 @@ WHILE true:
       content="Idle — no unblocked tasks available. Standing by.")
     → STOP. Exit your loop. You are done until dependencies resolve.
     → The team lead will respawn you or assign work when tasks unblock.
+    # Note: Agent Teams handles idle notifications natively. The explicit
+    # SendMessage above is belt-and-suspenders — ensures the lead gets a
+    # clear message even if native idle detection has edge cases.
 
   task = available[0]  # Prefer lowest ID (earliest story)
 
@@ -111,7 +114,9 @@ Follow the phases exactly as defined in workflow.md: PREPARE → FORGE → BUILD
 
 ### Sub-Agent Spawning Authority
 
-**You CAN and MUST spawn Task agents for pipeline phases.** As a `general-purpose` agent, you have access to ALL tools including the Task tool. The pipeline requires you to spawn:
+**You CAN and MUST spawn Task agents for pipeline phases.** As a `general-purpose` agent, you have access to ALL tools including the Task tool. The "no nested teams" restriction in Agent Teams only prevents you from calling TeammateTool (creating new teams or spawning additional teammates). It does **NOT** prevent Task sub-agent spawning — that works normally and is required.
+
+The pipeline requires you to spawn:
 
 - **BUILD phase:** `Task(subagent_type: ...)` → Builder agent (Metis, Apollo, Hephaestus, etc.)
 - **VERIFY phase:** `Task(subagent_type: ...)` → Reviewer agents (Argus, Nemesis, Cerberus, etc.) — spawn in parallel
@@ -241,6 +246,15 @@ Save to: `docs/sprint-artifacts/completions/{{story_key}}-progress.json`
 - **Always acquire git lock.** Never commit without the lock — prevents conflicts with other workers.
 - **Always check TaskList after completion.** More stories may have become unblocked.
 - **Use completion artifacts.** Always write progress artifacts for batch aggregation.
+
+### Progress Artifacts as Crash Recovery
+
+> **CRITICAL:** If the lead session crashes, `/resume` does NOT restore teammates.
+> Your progress artifacts are the **only** recovery mechanism. The lead session will
+> read `completions/*-progress.json` to determine what completed and what needs re-running.
+>
+> Write progress artifacts after EVERY phase, not just at the end. A crash mid-pipeline
+> should leave clear evidence of which phases completed for that story.
 
 ---
 

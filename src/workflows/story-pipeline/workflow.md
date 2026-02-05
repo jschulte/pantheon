@@ -62,6 +62,18 @@ This workflow runs in TWO contexts. The phases, quality gates, and artifacts are
 
 **This works because `general-purpose` Task agents have access to ALL tools, including the Task tool itself.** Heracles workers CAN and MUST spawn sub-agents for each pipeline phase.
 
+### Context 3: Agent Teams Member (Experimental)
+
+When running as a teammate in an Agent Teams session (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`):
+
+- **You CAN spawn Task sub-agents.** The "no nested teams" restriction only prevents calling `TeammateTool` (creating new teams or spawning additional teammates). Regular `Task` sub-agent spawning works normally and is required for all pipeline phases.
+- **You CAN use all standard tools** (Read, Write, Edit, Bash, Grep, Glob, Task, etc.)
+- **You CANNOT call TeammateTool** — no `spawnTeam`, no spawning additional teammates
+- **You CANNOT create nested teams** — one team per session, managed by the lead
+- **Session resumption does NOT restore teammates** — progress artifacts are your crash recovery mechanism
+
+Agent Teams is **experimental** and may change without notice. The sequential fallback (Context 1) always works regardless of feature availability.
+
 ### Task Agents Used Per Phase (same in both contexts):
 
 - Phase 1.5 FORGE: `Task(subagent_type: "general-purpose")` → Pygmalion (Persona Forge) — complexity >= light only

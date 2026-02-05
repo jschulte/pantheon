@@ -112,22 +112,25 @@ session_reporting:
     subagent_type: "general-purpose"
     model: "sonnet"
 
-# Swarm mode configuration (NEW in v4.0.0)
+# Agent Teams configuration (NEW in v4.0.0, updated v4.1.0)
 # Replaces wave-based parallel execution with TeammateTool swarm coordination.
-# Requires: swarm-patched Claude Code (e.g., claudesp variant from claude-sneakpeek)
+# EXPERIMENTAL: Requires CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 environment variable.
+# This feature is experimental and may change. See: Claude Code Agent Teams documentation.
 swarm_config:
   enabled: true                 # Use TeammateTool swarm for parallel mode
+  experimental: true            # Agent Teams is an experimental feature — may change without notice
   team_prefix: "batch"          # Team name: batch-{epic} or batch-{timestamp}
   max_workers: 3                # Number of Heracles worker teammates to spawn
   worker_model: "opus"           # Model for Heracles worker agents (must be opus to orchestrate 7-phase pipeline with sub-agent spawning)
   worker_persona: "{installed_path}/agents/heracles.md"
+  delegate_mode: recommended    # Use Shift+Tab delegate mode for the lead so it coordinates without implementing
 
-  # Swarm requires these Claude Code features (enabled by swarm patch):
+  # Agent Teams requires these Claude Code features:
   # - TeammateTool (spawnTeam, cleanup)
   # - SendMessage (inter-agent messaging)
   # - TaskCreate/TaskUpdate/TaskList (shared task list)
   # - Task with team_name param (teammate spawning)
   requires:
-    swarm_mode: true            # Variant must have swarm mode enabled
+    env: CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1  # Must be set before launching Claude Code
 
 standalone: true

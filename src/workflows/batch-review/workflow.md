@@ -269,46 +269,86 @@ ELSE:
 
 ---
 
-### SWARM MODE: Parallel Review Workers
+### SWARM MODE: Single-Team Strategy with Dependency Gating
 
-**Step 1: Create team and review tasks**
+**Pre-flight:** Pre-approve permissions in Claude Code settings before starting. Workers
+operate autonomously. Use `Shift+Tab` delegate mode for the lead session.
+
+**Step 1: Create ONE team for the entire workflow**
+
+Create a single team at the start. All worker types (reviewers, fixers, verifiers) join
+this team. Phase ordering is enforced via task dependencies (`blockedBy`), not separate teams.
 
 ```
 Teammate.spawnTeam("review-{{scope_id}}")
 
-# Create one task per standard perspective
+# --- REVIEW TASKS (Phase 2) - no dependencies, run immediately ---
+
 FOR EACH perspective IN [security, correctness, architecture, test_quality]:
   TaskCreate(
     subject="Review: {{perspective}}",
     description=`
+      phase: REVIEW
       perspective: {{perspective}}
       scope_id: {{scope_id}}
       scoped_files: {{all_files}}
       {{IF FOCUS_ENABLED}}focus: {{FOCUS_PROMPT}}{{ENDIF}}
     `
   )
+  # Store task IDs as REVIEW_TASK_IDS
 
-# Add accessibility if frontend files present
 IF has_frontend_files:
   TaskCreate(subject="Review: accessibility", description="...")
+  # Add to REVIEW_TASK_IDS
 
-# Add forged specialist tasks
 FOR EACH spec IN FORGED_SPECS.forged_specialists:
   TaskCreate(
     subject="Review: {{spec.id}} ({{spec.name}})",
     description=`
+      phase: REVIEW
       perspective: {{spec.id}}
       scope_id: {{scope_id}}
       scoped_files: {{all_files}}
       forged_spec: {{JSON.stringify(spec)}}
     `
   )
+  # Add to REVIEW_TASK_IDS
+
+# --- FIX TASKS (Phase 4) - blocked until ALL reviews + triage complete ---
+# These are created now but won't be claimable until dependencies resolve.
+# Actual issue content is populated after triage (Phase 3).
+
+FOR EACH category IN [frontend, backend, database]:
+  fix_task = TaskCreate(
+    subject="Fix: {{category}} (pending triage)",
+    description=`
+      phase: FIX
+      category: {{category}}
+      scope_id: {{scope_id}}
+      # Issues will be populated after ASSESS phase
+    `
+  )
+  TaskUpdate(taskId=fix_task.id, addBlockedBy=REVIEW_TASK_IDS + [TRIAGE_TASK_ID])
+  # Store as FIX_TASK_IDS
+
+# --- VERIFY TASKS (Phase 5) - blocked until ALL fixes complete ---
+
+FOR EACH category IN [frontend, backend, database]:
+  verify_task = TaskCreate(
+    subject="Verify: {{category}} (pending fixes)",
+    description=`
+      phase: VERIFY
+      category: {{category}}
+      scope_id: {{scope_id}}
+    `
+  )
+  TaskUpdate(taskId=verify_task.id, addBlockedBy=FIX_TASK_IDS)
 ```
 
-**Step 2: Spawn review workers (Dike)**
+**Step 2: Spawn all workers upfront**
 
 ```
-# Spawn workers — one per perspective (all in one message for parallel launch)
+# Spawn review workers (Dike) — they'll claim review tasks immediately
 worker_count = min(total_perspectives, swarm_config.review_workers.max_workers)
 
 Task(subagent_type="general-purpose", team_name="review-{{scope_id}}", name="dike-1",
@@ -317,10 +357,24 @@ Task(subagent_type="general-purpose", team_name="review-{{scope_id}}", name="dik
      model="opus", prompt="[INLINE: review-worker.md] Claim and review.", run_in_background=True)
 Task(subagent_type="general-purpose", team_name="review-{{scope_id}}", name="dike-3",
      model="opus", prompt="[INLINE: review-worker.md] Claim and review.", run_in_background=True)
-# ... up to max_workers
+
+# Spawn fixer workers (Asclepius) — they'll idle until fix tasks unblock
+Task(subagent_type="general-purpose", team_name="review-{{scope_id}}", name="asclepius-frontend",
+     model="opus", prompt="[INLINE: fixer-worker.md] Claim and fix.", run_in_background=True)
+Task(subagent_type="general-purpose", team_name="review-{{scope_id}}", name="asclepius-backend",
+     model="opus", prompt="[INLINE: fixer-worker.md] Claim and fix.", run_in_background=True)
+
+# Spawn verification workers (Aletheia) — they'll idle until verify tasks unblock
+Task(subagent_type="general-purpose", team_name="review-{{scope_id}}", name="aletheia-1",
+     model="opus", prompt="[INLINE: verification-worker.md] Claim and verify.", run_in_background=True)
+Task(subagent_type="general-purpose", team_name="review-{{scope_id}}", name="aletheia-2",
+     model="opus", prompt="[INLINE: verification-worker.md] Claim and verify.", run_in_background=True)
 ```
 
-**Step 3: Wait for all workers to complete**
+Workers idle until their tasks unblock — this is correct behavior. Review workers start
+immediately. Fixer workers wait for reviews + triage. Verifier workers wait for fixes.
+
+**Step 3: Wait for review workers to complete**
 
 Workers self-schedule from the shared task list. Each claims one perspective, reviews all scoped files from that angle, saves findings, and claims the next available perspective.
 
@@ -491,14 +545,20 @@ database_issues = issues where file matches: prisma/, migrations/, *.sql, models
 
 ---
 
-### SWARM MODE: Parallel Category Fixers
+### SWARM MODE: Parallel Category Fixers (Single-Team Strategy)
 
-**Step 1: Create fix tasks (one per category with issues)**
+With the single-team strategy, fixer tasks were created during team setup (Step 1) and
+are blocked until reviews + triage complete. After triage, update the fix tasks with
+actual issue content and unblock them.
+
+**Step 1: Update fix tasks with triage results (targeted messaging)**
 
 ```
 FOR EACH category IN [frontend, backend, database] WHERE category HAS issues:
-  TaskCreate(
-    subject="Fix: {{category}}",
+  # Update the pre-created fix task with actual issues
+  TaskUpdate(
+    taskId=FIX_TASK_IDS[category],
+    subject="Fix: {{category}} ({{issue_count}} issues)",
     description=`
       category: {{category}}
       scope_id: {{scope_id}}
@@ -506,19 +566,21 @@ FOR EACH category IN [frontend, backend, database] WHERE category HAS issues:
       file_boundaries: {{list of files in this category}}
     `
   )
+
+  # Send targeted message ONLY to the relevant fixer worker
+  SendMessage(type="request", recipient="asclepius-{{category}}",
+    content="Fix tasks unblocked for {{category}}. Claim and fix {{issue_count}} issues.")
+
+FOR EACH category WHERE category HAS NO issues:
+  # Mark empty fix tasks as completed (nothing to fix)
+  TaskUpdate(taskId=FIX_TASK_IDS[category], status="completed")
 ```
 
-**Step 2: Spawn fixer workers (Asclepius)**
+**Step 2: Fixer workers already running (spawned in Step 1)**
 
-```
-# Spawn one worker per category (all in one message)
-Task(subagent_type="general-purpose", team_name="review-{{scope_id}}", name="asclepius-frontend",
-     model="opus", prompt="[INLINE: fixer-worker.md] Claim and fix.", run_in_background=True)
-Task(subagent_type="general-purpose", team_name="review-{{scope_id}}", name="asclepius-backend",
-     model="opus", prompt="[INLINE: fixer-worker.md] Claim and fix.", run_in_background=True)
-Task(subagent_type="general-purpose", team_name="review-{{scope_id}}", name="asclepius-database",
-     model="opus", prompt="[INLINE: fixer-worker.md] Claim and fix.", run_in_background=True)
-```
+Asclepius workers were spawned during team creation. They've been idle waiting for
+fix tasks to unblock. Now that triage is complete and tasks are updated, they'll
+automatically pick up the work.
 
 **Step 3: Wait for all fixers to complete**
 
@@ -581,14 +643,18 @@ npm test 2>&1 | tee test-output.txt
 
 ---
 
-### SWARM MODE: Parallel Verification Workers
+### SWARM MODE: Parallel Verification Workers (Single-Team Strategy)
 
-**Step 1: Create verification tasks (one per category that was fixed)**
+With the single-team strategy, verify tasks were created during team setup and are blocked
+until fix tasks complete. After fixes, update verify tasks with fix artifacts.
+
+**Step 1: Update verification tasks with fix results (targeted messaging)**
 
 ```
 FOR EACH category THAT had fixes applied:
-  TaskCreate(
-    subject="Verify: {{category}}",
+  TaskUpdate(
+    taskId=VERIFY_TASK_IDS[category],
+    subject="Verify: {{category}} fixes",
     description=`
       category: {{category}}
       scope_id: {{scope_id}}
@@ -596,17 +662,19 @@ FOR EACH category THAT had fixes applied:
       original_issues: {{issues for this category}}
     `
   )
+
+  # Send targeted message ONLY to relevant verifier
+  SendMessage(type="request", recipient="aletheia-{{index}}",
+    content="Verification tasks unblocked for {{category}}. Claim and verify.")
+
+FOR EACH category WHERE no fixes were applied:
+  TaskUpdate(taskId=VERIFY_TASK_IDS[category], status="completed")
 ```
 
-**Step 2: Spawn verification workers (Aletheia)**
+**Step 2: Verification workers already running (spawned in Step 1)**
 
-```
-Task(subagent_type="general-purpose", team_name="review-{{scope_id}}", name="aletheia-1",
-     model="opus", prompt="[INLINE: verification-worker.md] Claim and verify.", run_in_background=True)
-Task(subagent_type="general-purpose", team_name="review-{{scope_id}}", name="aletheia-2",
-     model="opus", prompt="[INLINE: verification-worker.md] Claim and verify.", run_in_background=True)
-# ... up to max_workers
-```
+Aletheia workers were spawned during team creation. They'll automatically pick up
+verify tasks as they unblock.
 
 **Step 3: Wait for all verifiers to complete**
 
@@ -794,13 +862,20 @@ Track passes for this scope:
 
 ```
 IF swarm_config.enabled AND team was created:
-  # Shutdown all workers
-  FOR EACH worker IN active_workers:
-    SendMessage(type="request", subtype="shutdown", recipient=worker)
+  # Check for active teammates before cleanup
+  active = TaskList() WHERE status == "in_progress"
+  IF active.length > 0:
+    # Wait for stragglers or send shutdown requests
+    FOR EACH worker IN active_workers:
+      SendMessage(type="request", subtype="shutdown", recipient=worker)
+    # Wait briefly for shutdown confirmations
 
-  # Wait for shutdown confirmations, then cleanup
+  # Cleanup the team (only ONE team exists per session)
   Teammate.cleanup()
 ```
+
+> **Note:** Only one team can exist per session. If you need to re-run the workflow,
+> ensure cleanup completes before creating a new team.
 
 ### 6.4 Display Summary
 

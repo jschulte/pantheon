@@ -69,6 +69,19 @@ They use the same artifact format as Pantheon reviewers, so Themis triages them 
 - GraphQL Schema Design → `architect-reviewer` + Pygmalion-generated checklist
 - OAuth 2.0 PKCE Flow → `auditor-security` + Pygmalion-generated checklist
 
+## Agent Teams vs Task Sub-Agents
+
+**All mappings in this file use Task sub-agents** (spawned via the `Task` tool), **not** TeammateTool teammates. This is an important distinction:
+
+| Mechanism | Tool | Purpose | Works inside teammates? |
+|-----------|------|---------|-------------------------|
+| Task sub-agent | `Task(subagent_type: ...)` | Spawn a specialized worker for a pipeline phase | **Yes** — always works |
+| Teammate | `TeammateTool` / `spawnTeam` | Spawn a peer in an Agent Teams swarm | **No** — cannot create nested teams |
+
+When Heracles (a teammate) executes the pipeline, it uses **Task sub-agents** for every phase. The "no nested teams" restriction in Agent Teams does NOT prevent this. Task sub-agents are independent of Agent Teams and work in all contexts.
+
+**Rule of thumb:** If you see `Task(subagent_type: ...)` in this file or in workflow.md, that's a regular sub-agent call that works everywhere — inside teammates, inside the main session, inside other sub-agents.
+
 ## Implementation Notes
 
 1. **Always layer the persona** - Even when using specialized agents, include the BSE persona for:

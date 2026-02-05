@@ -98,6 +98,66 @@ Task({
 
 ---
 
+## Agent Teams Constraints
+
+### Agent Teams: Experimental Status
+
+Agent Teams requires the `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` environment variable set **before** launching Claude Code. This feature is experimental and may change without notice. Without this env var, TeammateTool, SendMessage, and team-based spawning are unavailable — the workflow falls back to sequential mode.
+
+```bash
+# Required before launching Claude Code for swarm mode
+export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1
+```
+
+---
+
+### No Nested Teams ≠ No Sub-Agents
+
+**CRITICAL DISTINCTION:** The Agent Teams restriction "no nested teams" means a teammate **cannot call TeammateTool** (cannot create a new team or spawn additional teammates). It does **NOT** prevent a teammate from using the `Task` tool to spawn sub-agents.
+
+This is essential for the pipeline architecture:
+- Heracles workers are teammates in the batch team
+- Heracles workers **must** spawn Task sub-agents for BUILD, VERIFY, ASSESS, REFINE, and REFLECT phases
+- These Task sub-agents are regular sub-agents, not teammates — no restriction applies
+- Sub-agents can use all available tools (Read, Write, Edit, Bash, Grep, Glob, Task, etc.)
+
+**What teammates CAN do:** Spawn Task sub-agents, use all standard tools
+**What teammates CANNOT do:** Call TeammateTool (spawnTeam, cleanup), create nested teams
+
+---
+
+### No Session Resumption for Teammates
+
+If the lead session crashes or `/resume` is used, teammates are **NOT** restored. Their context, state, and in-progress work are lost. The `/resume` command only restores the lead session's conversation history.
+
+**Recovery mechanism:** Progress artifacts (`completions/*-progress.json`) are written after every pipeline phase. After a crash:
+1. Resume the lead session
+2. Read progress artifacts to determine what completed
+3. Mark completed stories as done
+4. Create a **new** team and spawn fresh workers for remaining stories
+
+This is why the pipeline insists on writing artifacts after every phase — they are the crash recovery mechanism.
+
+---
+
+### One Team Per Session
+
+Only one team can exist per Claude Code session. You cannot create multiple teams or replace an existing team. If you need a fresh team (e.g., after recovery), you must clean up the old team first with `Teammate.cleanup()`, then create a new one.
+
+---
+
+### Delegate Mode
+
+The lead session should use `Shift+Tab` delegate mode to avoid accidentally implementing stories itself. In delegate mode, the lead coordinates work (creating tasks, monitoring progress, reconciling results) without writing implementation code. This aligns with the orchestrator's role.
+
+---
+
+### Permissions Inheritance
+
+All teammates inherit the lead session's permission settings. If the lead has pre-approved file writes and bash commands, teammates get those same permissions. Pre-approve all needed permissions **before** creating the team to avoid permission prompts during autonomous batch execution.
+
+---
+
 ## What Agents CAN Do
 
 ### ✅ Execute Clear, Well-Defined Tasks

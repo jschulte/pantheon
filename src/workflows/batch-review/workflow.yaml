@@ -120,13 +120,17 @@ agents:
     timeout: 600
 
 # =============================================================================
-# SWARM MODE (v2.0)
+# AGENT TEAMS MODE (v2.0, updated v2.1)
 # =============================================================================
-# When swarm mode is available, Phases 2, 4, and 5 use TeammateTool for
+# When Agent Teams is available, Phases 2, 4, and 5 use TeammateTool for
 # true parallel execution with non-overlapping file assignments.
+# EXPERIMENTAL: Requires CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 environment variable.
 swarm_config:
   enabled: true
+  experimental: true                 # Agent Teams is experimental — may change without notice
   team_prefix: "review"              # Team name: review-{scope_id}
+  delegate_mode: recommended         # Use Shift+Tab delegate mode for the lead
+  single_team_strategy: true         # All worker types (Dike + Asclepius + Aletheia) in ONE team, gated by task dependencies
   review_workers:
     perspectives: [security, correctness, architecture, test_quality, accessibility]
     model: "opus"
@@ -142,7 +146,7 @@ swarm_config:
     persona: "{agents_path}/verification-worker.md"  # Aletheia
     max_workers: 3                   # One per category
   requires:
-    swarm_mode: true                 # Variant must have swarm mode enabled
+    env: CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1  # Must be set before launching Claude Code
 
 # =============================================================================
 # PERSONA FORGING — Pygmalion (v2.0)

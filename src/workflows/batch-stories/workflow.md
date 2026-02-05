@@ -559,12 +559,26 @@ Use Edit tool: `"{{story_key}}: ready-for-dev"` → `"{{story_key}}: done"`
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-**Requires:** Swarm-patched Claude Code (e.g., `claudesp` variant from claude-sneakpeek).
+**Requires:** `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` environment variable set before launching Claude Code.
+This feature is **experimental** and may change. See Claude Code Agent Teams documentation.
 **Uses task graph from dependency analysis step.**
 
 Workers self-schedule from the shared task list. Dependencies are enforced via `addBlockedBy`
 constraints — workers automatically skip blocked tasks and grab unblocked ones. No wave
 planning or batch synchronization needed.
+
+### Pre-Flight: Permissions & Delegate Mode
+
+**Pre-approve permissions** in Claude Code settings before starting a batch run. Workers
+operate autonomously and cannot prompt for permission mid-execution. In your settings or
+`CLAUDE.md`, pre-approve:
+- File read/write in the project directory
+- Bash commands for `npm test`, `git add`, `git commit`, `npx`, etc.
+- Task agent spawning (sub-agents within teammates)
+
+**Delegate mode (recommended):** Use `Shift+Tab` to switch the lead session to delegate mode.
+This ensures the orchestrator coordinates work without accidentally implementing stories itself.
+The lead should only manage tasks, monitor progress, and reconcile results.
 
 ### Step 1: Create Swarm Team
 
@@ -642,12 +656,29 @@ Read these two files NOW, then follow them exactly:
 
 - Load and follow the workflow files. Do NOT paraphrase or improvise pipeline phases.
 - You CAN and MUST spawn Task sub-agents for BUILD, VERIFY, ASSESS, REFINE, and REFLECT phases.
+  (Note: The "no nested teams" restriction in Agent Teams only prevents calling TeammateTool
+  from within a teammate. It does NOT prevent spawning Task sub-agents — those work normally.)
 - Do NOT write implementation code yourself — delegate to builder agents.
 - Do NOT self-certify code — spawn independent reviewer agents.
 - Do NOT work on blocked tasks. If no unblocked tasks exist, send idle message and stop.
 `
   })
 ```
+
+**Optional: Plan approval gate for complex+ stories:**
+
+For stories scored `complex` or `critical`, you may optionally enable a plan approval gate
+where the orchestrator reviews the Heracles worker's execution plan before it starts building.
+This adds latency but catches misunderstood requirements early:
+
+```
+IF complexity_level in [complex, critical] AND plan_approval_gate enabled:
+  Worker sends plan via SendMessage to team-lead BEFORE Phase 2 BUILD
+  Team-lead reviews and replies with approval or corrections
+  Worker proceeds only after approval
+```
+
+This is opt-in. For most batch runs, autonomous execution is preferred.
 
 **When to spawn additional workers:**
 
@@ -679,6 +710,16 @@ This avoids spawning 3 workers when only 1 has work, which wastes tokens and cre
 the "idle worker works on blocked task" problem.
 
 ### Step 3: Monitor Progress via Idle Notifications
+
+> **WARNING: No Session Resumption for Teammates**
+>
+> If the lead session crashes or is interrupted, `/resume` does **NOT** restore teammates.
+> Teammates and their context are lost. The **only** recovery path is through progress
+> artifacts (`completions/*-progress.json`). After resuming the lead session:
+> 1. Read progress artifacts to determine which stories completed
+> 2. Mark completed stories as done
+> 3. Create a new team and re-spawn workers for remaining stories
+> This is why progress artifacts are written after EVERY phase — they are the crash recovery mechanism.
 
 **Workers send messages automatically.** The orchestrator receives:
 
