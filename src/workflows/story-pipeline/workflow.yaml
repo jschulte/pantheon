@@ -1,7 +1,7 @@
 name: story-pipeline
 description: "Enhanced multi-agent pipeline with smart builder spawning, playbook learning, code citation evidence, test quality validation, resume-builder fixes, and per-story completion reports"
 author: "Jonah Schulte (leveraging BMAD Method)"
-version: "7.0.0" # Hybrid agent mapping + Pygmalion persona forging
+version: "7.2.0" # Hybrid agent mapping + Pygmalion persona forging + Specialist Registry
 
 # ============================================================================
 # CRITICAL: EXECUTION DISCIPLINE
@@ -95,6 +95,14 @@ persona_forging:
   model: "opus"                  # Needs deep analysis capability
   timeout: 600                   # 10 minutes max
   output_dir: "{sprint_artifacts}/completions"
+  registry:
+    enabled: true
+    directory: "docs/specialist-registry"
+    index_file: "_index.json"
+    match_thresholds:
+      reuse: 0.5                 # Jaccard >= 0.5 → reuse as-is
+      evolve: 0.3                # 0.3 <= Jaccard < 0.5 → evolve existing
+    max_registry_size: 50        # Safety cap on total specialists
 
 # Agent tracking (from GSD)
 agent_history: "{sprint_artifacts}/agent-history.json"

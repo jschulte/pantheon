@@ -1,6 +1,6 @@
 # Batch Review - Hardening Sweep Workflow
 
-**Version:** 2.0.0
+**Version:** 2.1.0
 **Purpose:** Deep code review and hardening with swarm parallelism + Pygmalion persona forging
 
 ---
@@ -201,10 +201,13 @@ Forging domain-specific specialist personas
 
 ### Invoke Pygmalion
 
-Pygmalion analyzes the scoped code to identify domain-specific expertise gaps in the standard Pantheon reviewers.
+Pygmalion analyzes the scoped code to identify domain-specific expertise gaps in the standard Pantheon reviewers. It checks the specialist registry first to reuse or evolve existing specialists.
 
 ```
 IF persona_forging.enabled AND estimated_complexity >= "light":
+
+  # Load specialist registry for Pygmalion context
+  REGISTRY_INDEX = read("docs/specialist-registry/_index.json") OR { "version": "1.0", "specialists": [] }
 
   Task({
     subagent_type: "general-purpose",
@@ -216,11 +219,16 @@ IF persona_forging.enabled AND estimated_complexity >= "light":
   </agent_persona>
 
   Analyze this code scope and forge specialist personas if the Pantheon leaves coverage gaps.
+  Check the specialist registry first — reuse or evolve existing specialists when possible.
 
   <scope>
   Files: {{scoped_files}}
   Focus: {{FOCUS_PROMPT or "standard hardening"}}
   </scope>
+
+  <specialist_registry>
+  [INLINE: Content of docs/specialist-registry/_index.json]
+  </specialist_registry>
 
   <project_context>
   [INLINE: package.json dependencies, project structure]
@@ -237,8 +245,40 @@ ELSE:
   FORGED_SPECS = { forged_specialists: [], skipped: true }
 ```
 
-**📢 Orchestrator says (if specialists forged):**
-> "Pygmalion forged **{{count}} specialist(s)** to augment the review team."
+### Update Specialist Registry
+
+After Pygmalion returns, persist new/evolved specialists to the registry.
+
+```
+FOR EACH spec IN FORGED_SPECS.forged_specialists:
+  IF spec.registry_action == "forged_new":
+    Write("docs/specialist-registry/{{spec.id}}.json", {
+      "registry_metadata": {
+        "spec_version": 1,
+        "created_for": "{{scope_id}}",
+        "last_used": "{{scope_id}}",
+        "usage_history": ["{{scope_id}}"]
+      },
+      ...spec fields...
+    })
+    Append to REGISTRY_INDEX.specialists
+
+  ELIF spec.registry_action == "evolved":
+    existing = read("docs/specialist-registry/{{spec.id}}.json")
+    existing.registry_metadata.spec_version += 1
+    existing.registry_metadata.last_used = "{{scope_id}}"
+    existing.registry_metadata.usage_history.push("{{scope_id}}")
+    Write("docs/specialist-registry/{{spec.id}}.json", existing)
+    Update REGISTRY_INDEX entry
+
+  ELIF spec.registry_action == "reused":
+    Update last_used in REGISTRY_INDEX and spec file
+
+Write("docs/specialist-registry/_index.json", REGISTRY_INDEX)
+```
+
+**📢 Orchestrator says (if specialists assembled):**
+> "Pygmalion assembled **{{count}} specialist(s)** ({{new}} new, {{evolved}} evolved, {{reused}} reused)."
 
 **📢 Orchestrator says (if no specialists):**
 > "Pygmalion confirmed Pantheon coverage is sufficient. Proceeding with standard reviewers."
@@ -971,6 +1011,12 @@ Each pass builds on the previous, resulting in thoroughly hardened code.
 ---
 
 ## Version History
+
+**v2.1.0 - Specialist Registry Edition**
+1. Phase 1.5 FORGE: Pygmalion now checks specialist registry before forging
+2. Jaccard similarity matching: REUSE (>=0.5), EVOLVE (0.3-0.49), FORGE_NEW (<0.3)
+3. Registry writes handled by orchestrator after Pygmalion output
+4. Token savings from reusing previously forged specialists across reviews
 
 **v2.0.0 - Swarm + Pygmalion Edition**
 1. Phase 1.5 FORGE: Pygmalion forges domain-specific specialist personas

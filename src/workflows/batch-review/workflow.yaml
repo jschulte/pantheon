@@ -1,7 +1,7 @@
 name: batch-review
 description: "Deep code review and hardening workflow - run repeatedly until bulletproof"
 author: "Jonah Schulte (leveraging BMAD Method)"
-version: "2.0.0"  # Swarm mode + Pygmalion persona forging
+version: "2.1.0"  # Swarm mode + Pygmalion persona forging + Specialist Registry
 
 # ============================================================================
 # BATCH-REVIEW: Hardening Sweep Workflow
@@ -159,6 +159,14 @@ persona_forging:
   model: "opus"
   timeout: 600
   pygmalion_prompt: "{project-root}/_bmad/bse/workflows/story-pipeline/agents/pygmalion.md"
+  registry:
+    enabled: true
+    directory: "docs/specialist-registry"
+    index_file: "_index.json"
+    match_thresholds:
+      reuse: 0.5                     # Jaccard >= 0.5 → reuse as-is
+      evolve: 0.3                    # 0.3 <= Jaccard < 0.5 → evolve existing
+    max_registry_size: 50            # Safety cap on total specialists
 
 # =============================================================================
 # DEDUPLICATION (v2.0)

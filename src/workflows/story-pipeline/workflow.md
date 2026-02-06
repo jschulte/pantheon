@@ -1,4 +1,4 @@
-# Story Pipeline v7.1 - Context Optimization Edition
+# Story Pipeline v7.2 - Specialist Registry Edition
 
 <purpose>
 Implement a story using parallel verification agents with Builder context reuse.
@@ -110,7 +110,7 @@ The workflow structure EXISTS to prevent bugs that slip through when a single ag
 
 <config>
 name: story-pipeline
-version: 7.1.0
+version: 7.2.0
 execution_mode: multi_agent
 
 phases:
@@ -445,6 +445,9 @@ ELSE:
 ### Invoke Pygmalion
 
 ```
+# Load specialist registry for Pygmalion context
+REGISTRY_INDEX = read("docs/specialist-registry/_index.json") OR { "version": "1.0", "specialists": [] }
+
 PYGMALION_TASK = Task({
   subagent_type: "general-purpose",
   model: "opus",
@@ -455,6 +458,7 @@ PYGMALION_TASK = Task({
 </agent_persona>
 
 Analyze this story and its domain context. Forge specialist personas if the fixed Pantheon leaves coverage gaps.
+Check the specialist registry first — reuse or evolve existing specialists when possible.
 
 <story>
 [INLINE: Full story file content]
@@ -464,6 +468,10 @@ Analyze this story and its domain context. Forge specialist personas if the fixe
 Tier: {{COMPLEXITY}}
 Max specialists: {{max_specialists_for_tier}}
 </complexity>
+
+<specialist_registry>
+[INLINE: Content of docs/specialist-registry/_index.json]
+</specialist_registry>
 
 <playbooks>
 [INLINE: Playbook content loaded in Phase 1]
@@ -485,16 +493,75 @@ Save to: docs/sprint-artifacts/completions/{{story_key}}-pygmalion.json
 FORGED_SPECS = read("docs/sprint-artifacts/completions/{{story_key}}-pygmalion.json")
 
 IF FORGED_SPECS.forged_specialists.length > 0:
-  echo "🗿 Pygmalion forged {{count}} specialist(s):"
+  echo "🗿 Pygmalion assembled {{count}} specialist(s):"
   FOR EACH spec IN FORGED_SPECS.forged_specialists:
-    echo "  {{spec.emoji}} {{spec.name}} — {{spec.title}}"
+    IF spec.registry_action == "reused":
+      echo "  {{spec.emoji}} {{spec.name}} — {{spec.title}} (REUSED, score: {{spec.registry_match_score}})"
+    ELIF spec.registry_action == "evolved":
+      echo "  {{spec.emoji}} {{spec.name}} — {{spec.title}} (EVOLVED)"
+    ELSE:
+      echo "  {{spec.emoji}} {{spec.name}} — {{spec.title}} (NEW)"
 
 ELSE:
   echo "🗿 Pygmalion: No gaps identified — Pantheon coverage sufficient."
 ```
 
-**📢 Orchestrator says (if specialists forged):**
-> "Pygmalion has studied the domain and forged **{{count}} specialist(s)** to augment the review team. These specialists will join the Pantheon reviewers in Phase 3."
+### Update Specialist Registry
+
+After Pygmalion returns, persist new/evolved specialists to the registry.
+Pygmalion handles the matching logic; the orchestrator handles file I/O.
+
+```
+FOR EACH spec IN FORGED_SPECS.forged_specialists:
+  IF spec.registry_action == "forged_new":
+    # Write new specialist file
+    Write("docs/specialist-registry/{{spec.id}}.json", {
+      "registry_metadata": {
+        "spec_version": 1,
+        "created_for": "{{story_key}}",
+        "last_used": "{{story_key}}",
+        "usage_history": ["{{story_key}}"]
+      },
+      ...spec fields...
+    })
+    # Append to _index.json
+    Append to REGISTRY_INDEX.specialists: {
+      "id": spec.id,
+      "name": spec.name,
+      "emoji": spec.emoji,
+      "title": spec.title,
+      "technologies": [extracted from spec],
+      "domains": [extracted from spec],
+      "file": "{{spec.id}}.json",
+      "spec_version": 1,
+      "created_for": "{{story_key}}",
+      "last_used": "{{story_key}}"
+    }
+
+  ELIF spec.registry_action == "evolved":
+    # Read existing spec, merge new items, bump version
+    existing = read("docs/specialist-registry/{{spec.id}}.json")
+    existing.registry_metadata.spec_version += 1
+    existing.registry_metadata.last_used = "{{story_key}}"
+    existing.registry_metadata.usage_history.push("{{story_key}}")
+    # Merge new review_focus, technology_checklist, known_gotchas
+    Write("docs/specialist-registry/{{spec.id}}.json", existing)
+    # Update _index.json entry
+    Update REGISTRY_INDEX entry: spec_version, last_used
+
+  ELIF spec.registry_action == "reused":
+    # Update last_used tracking only
+    Update REGISTRY_INDEX entry: last_used = "{{story_key}}"
+    existing = read("docs/specialist-registry/{{spec.id}}.json")
+    existing.registry_metadata.last_used = "{{story_key}}"
+    existing.registry_metadata.usage_history.push("{{story_key}}")
+    Write("docs/specialist-registry/{{spec.id}}.json", existing)
+
+Write("docs/specialist-registry/_index.json", REGISTRY_INDEX)
+```
+
+**📢 Orchestrator says (if specialists assembled):**
+> "Pygmalion has assembled **{{count}} specialist(s)** to augment the review team ({{new}} new, {{evolved}} evolved, {{reused}} reused). These specialists will join the Pantheon reviewers in Phase 3."
 
 **📢 Orchestrator says (if no specialists):**
 > "Pygmalion analyzed the domain and confirmed the Pantheon reviewers have full coverage. No additional specialists needed."
@@ -1823,6 +1890,15 @@ Update `docs/sprint-artifacts/completions/{{story_key}}-progress.json`:
 </success_criteria>
 
 <version_history>
+**v7.2 - Specialist Registry Edition**
+1. Persistent specialist registry at `docs/specialist-registry/` for cross-story persona reuse
+2. Pygmalion now checks registry before forging (7-step process: Analyze → Registry → Builder → Playbooks → Gaps → Forge → Register)
+3. Jaccard similarity matching: REUSE (>=0.5), EVOLVE (0.3-0.49), FORGE_NEW (<0.3)
+4. New output fields: `registry_action`, `registry_match_score` per specialist
+5. Orchestrator handles registry file I/O after Pygmalion returns
+6. Registry auto-initializes on first invocation (no bootstrap needed)
+7. Safety cap: max 50 specialists in registry
+
 **v7.1 - Context Optimization Edition**
 1. ✅ Phase 3 Option B: Orchestrator pre-reads ALL files once, builds structural digest (~200-400 lines)
 2. ✅ File classification engine: test, migration, config, route, auth, ui, database, types, security, logic

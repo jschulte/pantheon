@@ -82,7 +82,46 @@ Example signals:
   → Integration: Stripe API, webhook signatures
 ```
 
-### Step 2: Analyze Builder Output (if available)
+### Step 2: Consult the Specialist Registry
+
+Before forging anything from scratch, check whether a suitable specialist already exists.
+
+**Load the registry:**
+```
+Read: docs/specialist-registry/_index.json
+IF file does not exist → Initialize with { "version": "1.0", "specialists": [] }
+```
+
+**For each detected technology cluster, compute Jaccard similarity:**
+
+```
+FOR EACH technology_cluster IN detected_gaps:
+  best_match = null
+  best_score = 0.0
+
+  FOR EACH entry IN registry.specialists:
+    intersection = |technology_cluster ∩ entry.technologies|
+    union        = |technology_cluster ∪ entry.technologies|
+    score        = intersection / union  # Jaccard similarity
+
+    IF score > best_score:
+      best_score = score
+      best_match = entry
+
+  CLASSIFY:
+    IF best_score >= 0.5 → REUSE  (read full spec, adapt review_focus if needed)
+    IF best_score >= 0.3 → EVOLVE (read full spec, append new gotchas/review_focus, bump version)
+    IF best_score <  0.3 → FORGE_NEW (create from scratch)
+```
+
+**Thresholds:**
+| Score Range | Action | Token Cost |
+|-------------|--------|------------|
+| >= 0.5 | **REUSE** — Load existing spec as-is (minor review_focus tweaks OK) | ~2K (read only) |
+| 0.3 – 0.49 | **EVOLVE** — Load existing spec, add new items, bump version | ~5K (read + augment) |
+| < 0.3 | **FORGE_NEW** — Create from scratch | ~15-20K (full analysis) |
+
+### Step 3: Analyze Builder Output (if available)
 
 If Phase 2 BUILD has already produced code (resume scenarios), scan the implementation for:
 
@@ -92,7 +131,7 @@ If Phase 2 BUILD has already produced code (resume scenarios), scan the implemen
 - Configuration patterns and env vars
 - Error handling approaches
 
-### Step 3: Consult Playbooks
+### Step 4: Consult Playbooks
 
 Read relevant playbooks from `docs/implementation-playbooks/` to identify:
 
@@ -101,7 +140,7 @@ Read relevant playbooks from `docs/implementation-playbooks/` to identify:
 - Previous issues encountered in this domain
 - Technology-specific best practices
 
-### Step 4: Identify Specialist Gaps
+### Step 5: Identify Specialist Gaps
 
 Compare detected technologies against the fixed Pantheon coverage:
 
@@ -117,6 +156,11 @@ Compare detected technologies against the fixed Pantheon coverage:
 
 Ask: **What domain-specific expertise does this story need that no Pantheon reviewer provides?**
 
+**Account for registry matches from Step 2:**
+- Gaps classified as **REUSE** are satisfied — include the existing spec directly (no forging needed)
+- Gaps classified as **EVOLVE** use the existing spec as a starting point — augment with story-specific items
+- Gaps classified as **FORGE_NEW** proceed to Step 6
+
 Examples of gaps:
 - Stripe webhook signature verification, idempotency keys, event ordering
 - GraphQL N+1 detection, schema design, resolver patterns
@@ -125,11 +169,11 @@ Examples of gaps:
 - OAuth 2.0 PKCE flow correctness, token refresh edge cases
 - Prisma-specific migration patterns, connection pooling, raw queries
 
-If no meaningful gaps exist, return an empty array. **An empty result is a valid and good outcome.** Do not force specialists where the Pantheon provides sufficient coverage.
+If no meaningful gaps exist (including after registry matches), return an empty array. **An empty result is a valid and good outcome.** Do not force specialists where the Pantheon + registry provides sufficient coverage.
 
-### Step 5: Forge Specialists
+### Step 6: Forge New Specialists
 
-For each identified gap, create a specialist spec with:
+**Only runs for FORGE_NEW gaps.** For each identified gap not satisfied by registry, create a specialist spec with:
 
 1. **A Greek mythology name** — Choose a figure relevant to the domain
 2. **A focused title** — Exactly what this specialist reviews
@@ -147,6 +191,38 @@ For each identified gap, create a specialist spec with:
 - Search/discovery → Aletheia, Delphi
 - Caching/storage → Mnemosyne (if not already used), Thesaurus
 - Scheduling/time → Chronos, Kairos
+
+### Step 7: Register New & Evolved Specialists
+
+After forging/evolving, persist specialists to the registry for future reuse.
+
+**For FORGE_NEW specialists:**
+1. Write the full specialist spec to `docs/specialist-registry/{{spec.id}}.json` with a `registry_metadata` wrapper:
+   ```json
+   {
+     "registry_metadata": {
+       "spec_version": 1,
+       "created_for": "{{story_key}}",
+       "last_used": "{{story_key}}",
+       "usage_history": ["{{story_key}}"]
+     },
+     ...specialist spec fields...
+   }
+   ```
+2. Append entry to `_index.json` `specialists[]` array
+
+**For EVOLVED specialists:**
+1. Read existing spec, merge new `review_focus`, `technology_checklist`, and `known_gotchas` items
+2. Bump `registry_metadata.spec_version`
+3. Update `last_used` and append to `usage_history[]`
+4. Write updated spec back to `docs/specialist-registry/{{spec.id}}.json`
+5. Update `_index.json` entry (`spec_version`, `last_used`)
+
+**For REUSED specialists:**
+1. Update `last_used` in `_index.json`
+2. Append `story_key` to `usage_history[]` in the spec file
+
+**Safety cap:** If `_index.json` already has `max_registry_size` (default 50) specialists, do NOT register new ones — only evolve/reuse existing.
 
 ---
 
@@ -167,6 +243,8 @@ Save to: `docs/sprint-artifacts/completions/{{story_key}}-pygmalion.json`
       "emoji": "💳",
       "title": "Stripe Webhook Integrity Specialist",
       "role_type": "reviewer",
+      "registry_action": "forged_new",
+      "registry_match_score": null,
       "domain_expertise": "Expert in Stripe webhook integration patterns including signature verification, event ordering, idempotency handling, and subscription lifecycle state machines. Understands Stripe's retry behavior and the implications of out-of-order event delivery.",
       "review_focus": [
         "Webhook signature verification uses raw body (not parsed JSON)",
@@ -196,8 +274,15 @@ Save to: `docs/sprint-artifacts/completions/{{story_key}}-pygmalion.json`
   "forged_builder": null,
   "summary": {
     "total_forged": 1,
+    "total_reused": 0,
+    "total_evolved": 0,
     "technologies_detected": ["stripe", "webhooks", "express"],
-    "pantheon_gaps_identified": ["Payment-specific webhook patterns not covered by generic security review"]
+    "pantheon_gaps_identified": ["Payment-specific webhook patterns not covered by generic security review"],
+    "registry_actions": {
+      "forged_new": ["stripe-webhook-integrity"],
+      "evolved": [],
+      "reused": []
+    }
   }
 }
 ```
@@ -291,17 +376,27 @@ After saving the artifact, display:
 Story: {{story_key}} ({{complexity_tier}})
 Technologies: {{technologies_detected}}
 
-Forged Specialists: {{total_forged}}
+Specialists: {{total_forged + total_reused + total_evolved}}
 {{for each specialist:}}
-  {{emoji}} {{name}} — {{title}}
+  {{emoji}} {{name}} — {{title}} {{registry_status}}
 {{end}}
+
+{{registry_status format:}}
+  (REUSED from {{created_for}}, score: {{registry_match_score}})
+  (EVOLVED from {{created_for}}, v{{old_version}}→v{{new_version}})
+  (NEW)
 
 {{if forged_builder:}}
 Builder: {{forged_builder.emoji}} {{forged_builder.name}} — {{forged_builder.title}}
 {{end}}
 
-{{if total_forged == 0:}}
+{{if total_specialists == 0:}}
 No gaps identified — Pantheon coverage sufficient.
+{{end}}
+
+Registry: {{total_forged}} new, {{total_evolved}} evolved, {{total_reused}} reused
+{{if total_reused + total_evolved > 0:}}
+Token savings: ~{{estimated_savings}}K (vs forging from scratch)
 {{end}}
 
 Artifact: completions/{{story_key}}-pygmalion.json
