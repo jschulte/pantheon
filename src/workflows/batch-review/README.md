@@ -1,7 +1,6 @@
 # Batch Review - Hardening Sweep Workflow
 
 **Author:** Jonah Schulte (leveraging BMAD Method)
-**Version:** 2.0.0
 
 Deep code review and hardening workflow with swarm parallelism and Pygmalion persona forging. Run repeatedly until bulletproof.
 

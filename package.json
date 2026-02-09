@@ -1,6 +1,6 @@
 {
   "name": "@jonahschulte/pantheon",
-  "version": "1.2.0",
+  "version": "1.0.0",
   "description": "Multi-agent story development engine for BMAD-METHOD with gap analysis, batch processing, playbook learning, and quality gates",
   "keywords": [
     "bmad",
@@ -18,12 +18,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jschulte/pantheon.git"
+    "url": "git+https://github.com/jonahschulte/pantheon.git"
   },
   "bugs": {
-    "url": "https://github.com/jschulte/pantheon/issues"
+    "url": "https://github.com/jonahschulte/pantheon/issues"
   },
-  "homepage": "https://github.com/jschulte/pantheon#readme",
+  "homepage": "https://github.com/jonahschulte/pantheon#readme",
   "files": [
     "src/**/*",
     "README.md",
@@ -31,6 +31,13 @@
   ],
   "engines": {
     "node": ">=18.0.0"
+  },
+  "type": "module",
+  "main": "src/module.yaml",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "validate:yaml": "node -e \"const yaml=require('yaml');const fs=require('fs');const glob=require('glob');glob.sync('src/**/*.yaml').forEach(f=>{try{yaml.parse(fs.readFileSync(f,'utf8'));console.log('OK:',f)}catch(e){console.error('FAIL:',f,e.message);process.exit(1)}})\"",
+    "lint:md": "markdownlint 'src/**/*.md' --ignore node_modules"
   },
   "peerDependencies": {
     "bmad-method": ">=6.0.0"

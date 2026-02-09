@@ -1,6 +1,6 @@
 name: gap-analysis
 description: "Validate story tasks against actual codebase - audit completed stories or validate before development"
-author: "BMad"
+author: "Jonah Schulte (leveraging BMAD Method)"
 
 # Critical variables from config
 config_source: "{project-root}/_bmad/bmm/config.yaml"

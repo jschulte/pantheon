@@ -1,7 +1,6 @@
 name: plan-team-sprint
 description: "Team work distribution and parallelization planner - dependency DAG + optimal developer assignment"
 author: "Jonah Schulte (leveraging BMAD Method)"
-version: "1.0.0"
 
 # ============================================================================
 # PLAN-TEAM-SPRINT: Team Execution Planning Workflow
@@ -80,5 +79,6 @@ output:
 
 # Execution
 standalone: true
+web_bundle: false
 execution_mode: "interactive"  # Conversational workflow with user checkpoints
 max_refinement_rounds: 5       # Interactive refinement iterations before finalizing

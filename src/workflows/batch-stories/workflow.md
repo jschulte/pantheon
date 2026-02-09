@@ -1,4 +1,4 @@
-# Batch Super-Dev v3.0 - Unified Workflow
+# Batch Stories - Unified Workflow
 
 <purpose>
 Interactive story selector for batch implementation. Scan codebase for gaps, select stories, process with story-pipeline, reconcile results.
@@ -19,8 +19,6 @@ Orchestrator coordinates. Agents do implementation. Orchestrator does reconcilia
 
 <config>
 name: batch-stories
-version: 4.0.0
-
 modes:
   sequential: {description: "Process one-by-one in this session", recommended_for: "gap analysis"}
   parallel: {description: "Spawn concurrent Task agents", recommended_for: "greenfield batch"}

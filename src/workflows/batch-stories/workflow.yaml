@@ -1,7 +1,6 @@
 name: batch-stories
 description: "Interactive batch selector for story-pipeline with complexity-based routing, smart wave ordering, and comprehensive session reporting."
 author: "Jonah Schulte (leveraging BMAD Method)"
-version: "4.0.0"
 
 # Critical variables from config
 config_source: "{project-root}/_bmad/bmm/config.yaml"
@@ -23,8 +22,14 @@ filter_by_epic: "" # Optional: Filter stories by epic number (e.g., "3" for only
 max_stories: 20 # Safety limit - won't process more than this in one batch
 pause_between_stories: 5 # Seconds to pause between stories (allows monitoring, prevents rate limits)
 
-# Super-dev-pipeline invocation settings
-super_dev_settings:
+# Global resource limits (M7 — prevent runaway consumption)
+resource_limits:
+  max_session_duration_hours: 8  # Hard stop for entire batch session
+  max_agent_spawns: 300          # Cumulative agent spawns across all stories
+  warn_at_agent_spawns: 200      # Emit warning when approaching limit
+
+# Story-pipeline invocation settings
+batch_settings:
   mode: "batch" # Always use batch mode for autonomous execution
   workflow_path: "{project-root}/_pantheon/workflows/story-pipeline"
 
@@ -40,6 +45,8 @@ validation:
 
 # Story complexity scoring (NEW in v1.3.0)
 # Routes stories to appropriate pipeline based on complexity
+# Canonical tier definitions: src/agent-routing.yaml → complexity_routing
+# This section defines scoring rules; tier definitions are in agent-routing.yaml.
 complexity:
   enabled: true
   thresholds:
@@ -91,6 +98,11 @@ complexity:
 # Execution settings
 execution:
   continue_on_failure: true # Keep processing remaining stories if one fails
+  circuit_breaker:
+    enabled: true
+    max_consecutive_failures: 3  # Halt batch if 3 stories fail at the same phase
+    same_phase_required: true    # Only triggers if failures are at the same pipeline phase
+    action: "halt_and_report"    # Options: halt_and_report, warn_and_continue
   display_progress: true # Show running summary after each story
   save_state: true # Save progress to resume if interrupted
 
@@ -142,4 +154,30 @@ swarm_config:
   requires:
     env: CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1  # Must be set before launching Claude Code
 
+  # -------------------------------------------------------------------------
+  # TIMEOUT & RECOVERY
+  # -------------------------------------------------------------------------
+  # What happens when a worker exceeds the timeout or crashes:
+  #   1. Lead detects worker idle beyond worker_timeout_seconds
+  #   2. Lead sends shutdown_request to the stalled worker
+  #   3. If worker doesn't respond within 60s, lead treats it as crashed
+  #   4. Lead checks for partial artifacts in completions/ directory
+  #   5. If story has progress artifacts, lead marks story as "partial"
+  #   6. If no artifacts, lead marks story as "failed" with reason "worker_timeout"
+  #   7. Lead may reassign the story to another worker (if retries remain)
+  #
+  # Workers should write progress artifacts after each phase completion
+  # so that partial work is not lost on timeout/crash.
+  worker_timeout_seconds: 3600  # 1 hour per story (generous for complex stories)
+  worker_retries: 1             # Retry failed stories once (0 = no retry)
+  stale_worker_check_interval: 300  # Check for stalled workers every 5 minutes
+
+  # -------------------------------------------------------------------------
+  # LOCK TIMEOUTS
+  # -------------------------------------------------------------------------
+  lock_timeout_seconds: 180     # 3 minutes — stale lock detection threshold
+  lock_retry_delay_ms: 500      # Initial retry delay (doubles with exponential backoff)
+  lock_max_retries: 5           # Maximum lock acquisition attempts
+
 standalone: true
+web_bundle: false

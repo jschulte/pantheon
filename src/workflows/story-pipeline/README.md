@@ -1,8 +1,28 @@
-# Story Pipeline v6.1 - Token Optimization Edition
+# Story Pipeline
 
 Enhanced multi-agent pipeline featuring the Greek Pantheon: Metis (builder), Argus (inspector), Nemesis (test quality), specialized reviewers (Cerberus, Apollo, Hestia, Arete, Iris), Themis (arbiter for triage), and Hermes (reflection + reporting).
 
-## What's New in v6.1
+## What's New in v7.4
+
+### v7.0: Pygmalion Persona Forging
+- Domain-specific specialist reviewers forged on-the-fly based on story context
+- Replaces static reviewer selection with dynamically crafted expert personas
+
+### v7.2: Specialist Registry
+- Reuse and evolve previously forged specialists across stories
+- Jaccard similarity matching to find the best existing specialist before forging new ones
+
+### v7.3: Phase File Split
+- Separate .md files per phase (75% context reduction vs monolithic workflow)
+- User-configurable reviewer count for flexible review depth
+
+### v7.4: Playbook Intelligence
+- Compaction protocol targeting 3-10KB per playbook
+- Structured `_index.json` for fast lookups without loading full playbook content
+- Token budget loading to stay within context limits
+- Hit-rate tracking to measure and improve playbook relevance
+
+## Previous Changes (v6.1)
 
 ### 1. Combined Hermes Agent
 **Token Savings: ~5-8K per story**
@@ -82,26 +102,29 @@ Enhanced multi-agent pipeline featuring the Greek Pantheon: Metis (builder), Arg
 ## Pipeline Flow - 7 Named Phases
 
 ```
-Phase 1: PREPARE ──────────────────────────────────────
-         Story quality gate + playbook query
-         ↓
-Phase 2: BUILD ────────────────────────────────────────
-         🔨 Metis (initial implementation with TDD)
-         ↓
-Phase 3: VERIFY ───────────────────────────────────────
-         👁️ Argus + 🧪 Nemesis + Reviewers (parallel)
-         ↓
-Phase 4: ASSESS ───────────────────────────────────────
-         Coverage gate + ⚖️ Themis triages issues
-         ↓
-Phase 5: REFINE ───────────────────────────────────────
-         🔨 Metis fixes MUST_FIX (iterative loop, max 3)
-         ↓
-Phase 6: COMMIT ───────────────────────────────────────
-         Orchestrator reconciliation (evidence-based)
-         ↓
-Phase 7: REFLECT ──────────────────────────────────────
-         📜 Hermes: playbooks + report
+Phase 1:   PREPARE ────────────────────────────────────
+           Story quality gate + playbook query
+           ↓
+Phase 1.5: FORGE (Pygmalion) ──────────────────────────
+           Forge domain-specific specialist reviewers
+           ↓
+Phase 2:   BUILD ──────────────────────────────────────
+           🔨 Metis (initial implementation with TDD)
+           ↓
+Phase 3:   VERIFY ─────────────────────────────────────
+           👁️ Argus + 🧪 Nemesis + Reviewers (parallel)
+           ↓
+Phase 4:   ASSESS ─────────────────────────────────────
+           Coverage gate + ⚖️ Themis triages issues
+           ↓
+Phase 5:   REFINE ─────────────────────────────────────
+           🔨 Metis fixes MUST_FIX (iterative loop, max 3)
+           ↓
+Phase 6:   COMMIT ─────────────────────────────────────
+           Orchestrator reconciliation (evidence-based)
+           ↓
+Phase 7:   REFLECT ────────────────────────────────────
+           📜 Hermes: playbooks + report
 ```
 
 ## 6-Tier Complexity Routing
@@ -175,7 +198,7 @@ The workflow uses agents for **verification parallelism**, not **implementation 
 - `agents/ux-accessibility-reviewer.md` - **Iris** 🌈 - Accessibility review
 
 **Workflow Config:**
-- `workflow.yaml` - Main configuration (v4.0)
+- `workflow.yaml` - Main configuration (v7.4)
 - `workflow.md` - Complete step-by-step documentation
 
 **Templates:**

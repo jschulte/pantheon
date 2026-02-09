@@ -1,7 +1,6 @@
 name: batch-review
 description: "Deep code review and hardening workflow - run repeatedly until bulletproof"
 author: "Jonah Schulte (leveraging BMAD Method)"
-version: "2.1.0"  # Swarm mode + Pygmalion persona forging + Specialist Registry
 
 # ============================================================================
 # BATCH-REVIEW: Hardening Sweep Workflow
@@ -201,3 +200,6 @@ output:
 completion:
   clean_pass: true  # Stop when no MUST_FIX issues found
   max_passes: 5     # Safety limit
+
+standalone: true
+web_bundle: false

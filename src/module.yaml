@@ -4,7 +4,7 @@
 code: pantheon
 name: "Pantheon"
 description: "Multi-agent story development engine with gap analysis, batch processing, playbook learning, and quality gates"
-version: "1.2.0"
+version: "1.0.0"
 author: "Jonah Schulte"
 default_selected: false
 

@@ -1,4 +1,4 @@
-# Detect Ghost Features v3.0 - Reverse Gap Analysis
+# Detect Ghost Features - Reverse Gap Analysis
 
 <purpose>
 Find undocumented code (components, APIs, services, tables) that exist in codebase
@@ -17,7 +17,6 @@ Find them, create backfill stories, restore traceability.
 
 <config>
 name: detect-ghost-features
-version: 3.0.0
 
 scan_scope:
   epic: "Filter to specific epic number"

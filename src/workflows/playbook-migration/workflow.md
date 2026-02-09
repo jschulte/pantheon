@@ -1,4 +1,4 @@
-# Playbook Migration v1.0 — Legacy to v7.4 Format
+# Playbook Migration — Legacy Format Conversion
 
 <purpose>
 One-time migration utility for repos with existing playbooks. Converts legacy format
@@ -21,7 +21,6 @@ Safe to re-run — idempotent (skips already-migrated playbooks, merges new arti
 
 <config>
 name: playbook-migration
-version: 1.0.0
 
 parameters:
   playbook_dir: "docs/implementation-playbooks"
