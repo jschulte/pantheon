@@ -9,7 +9,7 @@ implementation_artifacts: "{config_source}:implementation_artifacts"
 sprint_artifacts: "{config_source}:sprint_artifacts"
 
 # Workflow components
-installed_path: "{project-root}/_bmad/bse/workflows/playbook-migration"
+installed_path: "{project-root}/_pantheon/workflows/playbook-migration"
 instructions: "{installed_path}/workflow.md"
 
 # Input variables

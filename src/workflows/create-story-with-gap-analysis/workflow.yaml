@@ -13,7 +13,7 @@ output_folder: "{implementation_artifacts}"
 story_dir: "{implementation_artifacts}"
 
 # Workflow components
-installed_path: "{project-root}/_bmad/bse/workflows/create-story-with-gap-analysis"
+installed_path: "{project-root}/_pantheon/workflows/create-story-with-gap-analysis"
 instructions: "{installed_path}/workflow.md"
 
 # Variables

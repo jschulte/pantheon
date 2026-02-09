@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# BMAD Story Engine - Multi-Platform Adapter Installer
+# Pantheon - Multi-Platform Adapter Installer
 # Installs appropriate adapter configurations for your AI coding platform
 
 set -e
@@ -16,7 +16,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BLUE}  BMAD Story Engine - Adapter Installer${NC}"
+echo -e "${BLUE}  Pantheon - Adapter Installer${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
@@ -77,7 +77,7 @@ if [ -z "$PLATFORM" ]; then
   elif [ -f "$TARGET_DIR/.github/copilot-instructions.md" ] || [ -d "$TARGET_DIR/.github/skills" ]; then
     PLATFORM="copilot"
     echo -e "${GREEN}Detected: GitHub Copilot${NC}"
-  elif [ -f "$TARGET_DIR/_bmad/bse/module.yaml" ]; then
+  elif [ -f "$TARGET_DIR/_pantheon/module.yaml" ]; then
     PLATFORM="claude-code"
     echo -e "${GREEN}Detected: Claude Code (BMAD already installed)${NC}"
   else
@@ -125,7 +125,7 @@ case $PLATFORM in
       cat > "$TARGET_DIR/.opencode/config.json" << 'EOF'
 {
   "agent": {
-    "default": "bse-orchestrator"
+    "default": "pantheon-orchestrator"
   }
 }
 EOF
@@ -137,7 +137,7 @@ EOF
     echo ""
     echo "Usage:"
     echo "  1. Start OpenCode: opencode"
-    echo "  2. Switch to agent: Tab (or @bse-orchestrator, @bse-batch-review)"
+    echo "  2. Switch to agent: Tab (or @pantheon-orchestrator, @pantheon-batch-review)"
     echo ""
     echo "Commands:"
     echo "  Story Pipeline:  'Implement STORY-001 using BMAD pipeline'"
@@ -169,7 +169,7 @@ EOF
     # Append to copilot-instructions.md if exists
     instructions_file="$TARGET_DIR/.github/copilot-instructions.md"
     if [ -f "$instructions_file" ]; then
-      if ! grep -q "BMAD Story Engine" "$instructions_file"; then
+      if ! grep -q "Pantheon" "$instructions_file"; then
         echo "" >> "$instructions_file"
         cat "$SCRIPT_DIR/codex/instructions/codex-copilot-instructions.md" >> "$instructions_file"
         echo -e "${GREEN}  Updated: copilot-instructions.md${NC}"
@@ -189,7 +189,7 @@ EOF
     echo "  2. Skills work in VS Code agent mode too"
     echo ""
     echo "Commands:"
-    echo "  Story Pipeline:  '@workspace /bse-pipeline Implement STORY-001'"
+    echo "  Story Pipeline:  '@workspace /pantheon-pipeline Implement STORY-001'"
     echo "  Batch Review:    '@workspace /batch-review epic=17 focus=\"security\"'"
     ;;
 
@@ -225,8 +225,8 @@ EOF
     echo -e "${GREEN}Codex installation complete!${NC}"
     echo ""
     echo "Usage:"
-    echo "  1. Load instructions: Read .codex/bse-pipeline.md at session start"
-    echo "  2. Or use with Codex CLI: codex --instructions .codex/bse-pipeline.md"
+    echo "  1. Load instructions: Read .codex/pantheon-pipeline.md at session start"
+    echo "  2. Or use with Codex CLI: codex --instructions .codex/pantheon-pipeline.md"
     echo "  3. Then: 'Implement STORY-001 using BMAD pipeline'"
     ;;
 
@@ -234,16 +234,16 @@ EOF
     echo -e "${BLUE}Claude Code uses the native BMAD installation.${NC}"
     echo ""
 
-    if [ -d "$TARGET_DIR/_bmad/bse" ]; then
-      echo -e "${GREEN}BMAD Story Engine is already installed!${NC}"
+    if [ -d "$TARGET_DIR/_pantheon" ]; then
+      echo -e "${GREEN}Pantheon is already installed!${NC}"
       echo ""
       echo "Usage:"
       echo "  /bmad_bse_story-pipeline STORY-001"
     else
-      echo -e "${YELLOW}BMAD Story Engine not found.${NC}"
+      echo -e "${YELLOW}Pantheon not found.${NC}"
       echo ""
       echo "Install BMAD using the standard method:"
-      echo "  1. Copy bmad-story-engine/src to _bmad/bse in your project"
+      echo "  1. Copy pantheon/src to _pantheon in your project"
       echo "  2. Or use the BMAD module installer"
     fi
     ;;

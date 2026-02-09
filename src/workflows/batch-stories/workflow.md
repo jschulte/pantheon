@@ -460,7 +460,7 @@ echo "✅ Story file exists and ready for implementation"
 Execute the pipeline phases directly so each agent is a visible top-level Task.
 
 **B.1: Load story-pipeline workflow:**
-Read: `{project-root}/_bmad/bse/workflows/story-pipeline/workflow.md`
+Read: `{project-root}/_pantheon/workflows/story-pipeline/workflow.md`
 
 **B.2: Execute each phase as described in workflow.md:**
 The workflow describes spawning these Tasks - spawn them DIRECTLY.
@@ -615,7 +615,7 @@ You are Hygeia, the Quality Gate Coordinator for a batch-stories swarm.
 ## Your Instructions
 
 Read this file NOW, then follow it exactly:
-  {{project_root}}/_bmad/bse/workflows/batch-stories/agents/hygeia.md
+  {{project_root}}/_pantheon/workflows/batch-stories/agents/hygeia.md
 
 ## Project Context
 
@@ -687,17 +687,17 @@ You are {{HERO_NAME}}, a story-pipeline worker in a batch-stories swarm.
 Read these two files NOW, then follow them exactly:
 
 1. **Your persona & self-scheduling loop:**
-   {{project_root}}/_bmad/bse/workflows/batch-stories/agents/heracles.md
+   {{project_root}}/_pantheon/workflows/batch-stories/agents/heracles.md
 
 2. **The 7-phase pipeline you execute for each story:**
-   {{project_root}}/_bmad/bse/workflows/story-pipeline/workflow.md
+   {{project_root}}/_pantheon/workflows/story-pipeline/workflow.md
 
 ## Project Context
 
 - Project root: {{project_root}}
 - Sprint artifacts: {{sprint_artifacts_path}}
-- Pipeline config: {{project_root}}/_bmad/bse/workflows/story-pipeline/workflow.yaml
-- Agent routing: {{project_root}}/_bmad/bse/workflows/story-pipeline/agent-routing.yaml
+- Pipeline config: {{project_root}}/_pantheon/workflows/story-pipeline/workflow.yaml
+- Agent routing: {{project_root}}/_pantheon/workflows/story-pipeline/agent-routing.yaml
 
 ## Critical Rules
 
@@ -993,7 +993,7 @@ done
 ### Step 2: Spawn Hermes (Session Reporter)
 
 **Load persona:**
-Read: `{project-root}/_bmad/bse/workflows/batch-stories/agents/session-reporter.md`
+Read: `{project-root}/_pantheon/workflows/batch-stories/agents/session-reporter.md`
 
 ```
 Task({

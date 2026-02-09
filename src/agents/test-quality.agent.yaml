@@ -3,7 +3,7 @@
 agent:
   webskip: true
   metadata:
-    id: "_bmad/bse/agents/test-quality.md"
+    id: "_pantheon/agents/test-quality.md"
     name: Nemesis
     title: Goddess of Retribution & Balance
     icon: "🧪"

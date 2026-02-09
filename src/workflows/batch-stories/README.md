@@ -473,7 +473,7 @@ All: all (processes all ready-for-dev stories)
 
 ## Workflow Configuration
 
-**File:** `_bmad/bse/workflows/batch-stories/workflow.yaml`
+**File:** `_pantheon/workflows/batch-stories/workflow.yaml`
 
 ### Key Settings
 

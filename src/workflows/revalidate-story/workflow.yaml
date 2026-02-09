@@ -9,7 +9,7 @@ output_folder: "{config_source}:output_folder"
 sprint_artifacts: "{output_folder}/sprint-artifacts"
 
 # Workflow paths
-installed_path: "{project-root}/_bmad/bse/workflows/revalidate-story"
+installed_path: "{project-root}/_pantheon/workflows/revalidate-story"
 instructions: "{installed_path}/workflow.md"
 
 # Input parameters

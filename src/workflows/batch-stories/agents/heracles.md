@@ -102,9 +102,9 @@ For each claimed story, you execute the **full story-pipeline**. You do NOT para
 
 Read these files at the start of each story (use the Read tool):
 
-1. **`{project-root}/_bmad/bse/workflows/story-pipeline/workflow.md`** — The complete 7-phase pipeline definition. This is your primary instruction set for execution.
-2. **`{project-root}/_bmad/bse/workflows/story-pipeline/workflow.yaml`** — Pipeline configuration (agent routing, complexity thresholds, artifact paths).
-3. **`{project-root}/_bmad/bse/workflows/story-pipeline/agent-routing.yaml`** — Maps story types to builder personas and reviewer sets.
+1. **`{project-root}/_pantheon/workflows/story-pipeline/workflow.md`** — The complete 7-phase pipeline definition. This is your primary instruction set for execution.
+2. **`{project-root}/_pantheon/workflows/story-pipeline/workflow.yaml`** — Pipeline configuration (agent routing, complexity thresholds, artifact paths).
+3. **`{project-root}/_pantheon/workflows/story-pipeline/agent-routing.yaml`** — Maps story types to builder personas and reviewer sets.
 
 ### Step 2: Execute Each Phase As Documented
 

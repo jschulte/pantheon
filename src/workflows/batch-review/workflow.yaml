@@ -27,7 +27,7 @@ execution_mode: "multi_agent"  # multi_agent (sequential) | swarm (parallel Team
 max_iterations: 5  # Max fix/verify cycles per run
 
 # Paths
-installed_path: "{project-root}/_bmad/bse/workflows/batch-review"
+installed_path: "{project-root}/_pantheon/workflows/batch-review"
 instructions: "{installed_path}/workflow.md"
 agents_path: "{installed_path}/agents"
 
@@ -158,7 +158,7 @@ persona_forging:
   max_specialists: 3
   model: "opus"
   timeout: 600
-  pygmalion_prompt: "{project-root}/_bmad/bse/workflows/story-pipeline/agents/pygmalion.md"
+  pygmalion_prompt: "{project-root}/_pantheon/workflows/story-pipeline/agents/pygmalion.md"
   registry:
     enabled: true
     directory: "docs/specialist-registry"

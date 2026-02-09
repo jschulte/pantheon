@@ -1,4 +1,4 @@
-# BMAD Story Engine
+# Pantheon
 
 **Author:** Jonah Schulte (leveraging BMAD Method)
 **Version:** 6.1 (Token Optimization Edition)
@@ -22,10 +22,10 @@ Traditional development workflows are slow and error-prone:
 
 ## The Solution: Multi-Agent Orchestration
 
-BMAD Story Engine orchestrates **specialized AI agents** that work in parallel to deliver production-ready code faster than any single developer or AI assistant:
+Pantheon orchestrates **specialized AI agents** that work in parallel to deliver production-ready code faster than any single developer or AI assistant:
 
 ```
-ONE Developer                    BMAD Story Engine
+ONE Developer                    Pantheon
 ─────────────                    ─────────────────
 Write code (2-4 hrs)             🔨 Metis builds with TDD (30 min)
    ↓                                    ↓
@@ -72,7 +72,7 @@ Total: 2-3 days                       ↓
 
 Leverages **Claude Code's specialized agents** + our purpose-built personas:
 
-| Role | Claude Code Agent | BSE Persona | Combined Power |
+| Role | Claude Code Agent | Pantheon Persona | Combined Power |
 |------|-------------------|-------------|----------------|
 | React/Next.js | `dev-frontend` | `builders/frontend-react.md` | Frontend expertise + Apollo |
 | TypeScript API | `dev-typescript` | `builders/backend-typescript.md` | TS mastery + Hephaestus |
@@ -226,7 +226,7 @@ npx bmad-method install
 
 # Or install adapters for your platform
 cd your-project
-/path/to/bmad-story-engine/src/adapters/install.sh
+/path/to/pantheon/src/adapters/install.sh
 ```
 
 ### Platform-Specific Setup
@@ -234,16 +234,16 @@ cd your-project
 The installer auto-detects your platform and configures appropriately:
 
 **Claude Code** (default)
-- Uses existing `_bmad/bse/` structure
+- Uses existing `_pantheon/` structure
 - Full native support
 
 **OpenCode**
 - Installs agents to `.opencode/agents/`
-- Usage: `@bse-orchestrator "Implement STORY-001"`
+- Usage: `@pantheon-orchestrator "Implement STORY-001"`
 
 **GitHub Copilot**
 - Installs skills to `.github/skills/`
-- Usage: `@workspace /bse-pipeline Implement STORY-001`
+- Usage: `@workspace /pantheon-pipeline Implement STORY-001`
 
 **Codex CLI**
 - Installs instructions to `.codex/`
@@ -414,7 +414,7 @@ Developer → Manual Review → QA → Production
 Total: 7-9 days per story
 ```
 
-### How BMAD Story Engine Works
+### How Pantheon Works
 
 ```
 Story Pipeline (automated)
@@ -472,7 +472,7 @@ For a 10-story epic:
 ```
 Traditional: 10 stories × 7 days = 70 days (14 weeks)
 
-BMAD Story Engine:
+Pantheon:
 - Implementation: 10 stories in 3-4 waves = 8-12 hours
 - Hardening: 2-3 review passes = 3-6 hours
 - Total: ~16 hours (2 days)
@@ -635,7 +635,7 @@ Story 3-10: Same pattern, progressively fewer issues as playbooks grow
 ## File Structure
 
 ```
-bmad-story-engine/
+pantheon/
 ├── README.md                           # This file
 ├── src/
 │   ├── module.yaml                     # BMAD module definition
@@ -786,7 +786,7 @@ Finds and fixes inconsistencies:
 
 ## Success Metrics
 
-Projects using BMAD Story Engine report:
+Projects using Pantheon report:
 
 **Speed:**
 - Feature delivery: 10-20x faster
@@ -812,7 +812,7 @@ Projects using BMAD Story Engine report:
 |----------|-------|---------|-------------|----------|
 | Single AI assistant | 3-5x | Medium | Low | None |
 | Manual development | 1x | Medium | Medium | Slow |
-| **BMAD Story Engine** | **10-20x** | **High** | **High** | **Automatic** |
+| **Pantheon** | **10-20x** | **High** | **High** | **Automatic** |
 
 **Why BMAD wins:**
 
@@ -859,7 +859,7 @@ npx bmad-method install
 
 # Or install adapters directly
 cd your-project
-/path/to/bmad-story-engine/src/adapters/install.sh
+/path/to/pantheon/src/adapters/install.sh
 ```
 
 ### 2. Implement Stories
@@ -937,7 +937,7 @@ Traditional software development is bottlenecked by:
 - Repetitive bugs
 - Testing as afterthought
 
-**BMAD Story Engine solves all of these** through systematic multi-agent orchestration.
+**Pantheon solves all of these** through systematic multi-agent orchestration.
 
 The result: **Ship faster, ship better, ship consistently.**
 

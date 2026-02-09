@@ -10,7 +10,7 @@ sprint_artifacts: "{config_source}:sprint_artifacts"
 communication_language: "{config_source}:communication_language"
 
 # Workflow components
-installed_path: "{project-root}/_bmad/bse/workflows/multi-agent-review"
+installed_path: "{project-root}/_pantheon/workflows/multi-agent-review"
 instructions: "{installed_path}/workflow.md"
 
 # Input parameters
