@@ -7,7 +7,7 @@ agent:
     name: Themis
     title: Titan of Justice & Fair Judgment
     icon: "⚖️"
-    module: bse
+    module: pantheon
     hasSidecar: false
 
   persona:

@@ -4,6 +4,7 @@
 # Installs appropriate adapter configurations for your AI coding platform
 
 set -e
+shopt -s nullglob
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
@@ -52,7 +53,7 @@ while [[ $# -gt 0 ]]; do
       echo "  opencode    - OpenCode AI (sst.dev)"
       echo "  copilot     - GitHub Copilot CLI / Agent Mode"
       echo "  codex       - OpenAI Codex CLI"
-      echo "  claude-code - Claude Code (default, uses existing BMAD setup)"
+      echo "  claude-code - Claude Code (default, uses existing Pantheon setup)"
       exit 0
       ;;
     *)
@@ -67,6 +68,20 @@ if [ -z "$TARGET_DIR" ]; then
   TARGET_DIR="$(pwd)"
 fi
 
+# Validate target directory
+if [ ! -e "$TARGET_DIR" ]; then
+  echo -e "${RED}Error: Target directory does not exist: $TARGET_DIR${NC}"
+  exit 1
+fi
+if [ ! -d "$TARGET_DIR" ]; then
+  echo -e "${RED}Error: Target path is not a directory: $TARGET_DIR${NC}"
+  exit 1
+fi
+if [ -L "$TARGET_DIR" ]; then
+  echo -e "${RED}Error: Target directory is a symlink (potential path traversal): $TARGET_DIR${NC}"
+  exit 1
+fi
+
 # Detect platform if not specified
 if [ -z "$PLATFORM" ]; then
   echo -e "${YELLOW}Detecting platform...${NC}"
@@ -79,7 +94,7 @@ if [ -z "$PLATFORM" ]; then
     echo -e "${GREEN}Detected: GitHub Copilot${NC}"
   elif [ -f "$TARGET_DIR/_pantheon/module.yaml" ]; then
     PLATFORM="claude-code"
-    echo -e "${GREEN}Detected: Claude Code (BMAD already installed)${NC}"
+    echo -e "${GREEN}Detected: Claude Code (Pantheon already installed)${NC}"
   else
     echo -e "${YELLOW}Could not auto-detect platform.${NC}"
     echo ""
@@ -140,7 +155,7 @@ EOF
     echo "  2. Switch to agent: Tab (or @pantheon-orchestrator, @pantheon-batch-review)"
     echo ""
     echo "Commands:"
-    echo "  Story Pipeline:  'Implement STORY-001 using BMAD pipeline'"
+    echo "  Story Pipeline:  'Implement STORY-001 using Pantheon pipeline'"
     echo "  Batch Review:    'Harden epic=17 focus=\"security\"'"
     ;;
 
@@ -160,7 +175,7 @@ EOF
           echo -e "${YELLOW}  Skipping $skill_name (exists, use --force to overwrite)${NC}"
         else
           mkdir -p "$target_path"
-          cp -r "$skill_dir"/* "$target_path/"
+          cp -r "$skill_dir"/. "$target_path/"
           echo -e "${GREEN}  Installed: $skill_name${NC}"
         fi
       fi
@@ -174,7 +189,7 @@ EOF
         cat "$SCRIPT_DIR/codex/instructions/codex-copilot-instructions.md" >> "$instructions_file"
         echo -e "${GREEN}  Updated: copilot-instructions.md${NC}"
       else
-        echo -e "${YELLOW}  copilot-instructions.md already has BMAD section${NC}"
+        echo -e "${YELLOW}  copilot-instructions.md already has Pantheon section${NC}"
       fi
     else
       cp "$SCRIPT_DIR/codex/instructions/codex-copilot-instructions.md" "$instructions_file"
@@ -227,24 +242,24 @@ EOF
     echo "Usage:"
     echo "  1. Load instructions: Read .codex/pantheon-pipeline.md at session start"
     echo "  2. Or use with Codex CLI: codex --instructions .codex/pantheon-pipeline.md"
-    echo "  3. Then: 'Implement STORY-001 using BMAD pipeline'"
+    echo "  3. Then: 'Implement STORY-001 using Pantheon pipeline'"
     ;;
 
   claude-code)
-    echo -e "${BLUE}Claude Code uses the native BMAD installation.${NC}"
+    echo -e "${BLUE}Claude Code uses the native Pantheon installation.${NC}"
     echo ""
 
     if [ -d "$TARGET_DIR/_pantheon" ]; then
       echo -e "${GREEN}Pantheon is already installed!${NC}"
       echo ""
       echo "Usage:"
-      echo "  /bmad_bse_story-pipeline STORY-001"
+      echo "  /bmad_pantheon_story-pipeline STORY-001"
     else
       echo -e "${YELLOW}Pantheon not found.${NC}"
       echo ""
-      echo "Install BMAD using the standard method:"
+      echo "Install Pantheon using the standard method:"
       echo "  1. Copy pantheon/src to _pantheon in your project"
-      echo "  2. Or use the BMAD module installer"
+      echo "  2. Or use the Pantheon module installer"
     fi
     ;;
 

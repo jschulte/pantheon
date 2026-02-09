@@ -7,7 +7,7 @@ agent:
     name: Nemesis
     title: Goddess of Retribution & Balance
     icon: "🧪"
-    module: bse
+    module: pantheon
     hasSidecar: false
 
   persona:

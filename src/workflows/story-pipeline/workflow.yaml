@@ -6,7 +6,7 @@ version: "7.4.0" # Playbook Intelligence: compaction, index, budget loading, hit
 # ============================================================================
 # CRITICAL: EXECUTION DISCIPLINE
 # ============================================================================
-# This workflow MUST be invoked via the Skill tool (/bmad_bse_story-pipeline)
+# This workflow MUST be invoked via the Skill tool (/bmad_pantheon_story-pipeline)
 # The orchestrator (main Claude context) follows workflow.md phases.
 #
 # Task subagent_types listed below are ONLY for phases defined in workflow.md:
@@ -48,7 +48,7 @@ agent_routing:
   reviewers_path: "{project-root}/_pantheon/agents/reviewers"
   validators_path: "{project-root}/_pantheon/agents/validators"
 
-  # Project-level override (set in project's _bmad/_config/bse.yaml)
+  # Project-level override (set in project's _bmad/_config/pantheon.yaml)
   # If set, always use this builder regardless of detection
   project_default_builder: null  # e.g., "frontend-react"
 
@@ -56,7 +56,7 @@ agent_routing:
   available_builders:
     - id: frontend-react
       agent: "agents/builders/frontend-react.md"
-      persona: { name: "Apollo", emoji: "⚛️" }
+      persona: { name: "Helios", emoji: "⚛️" }
     - id: frontend-vue
       agent: "agents/builders/frontend-vue.md"
       persona: { name: "Verdant", emoji: "🌿" }
@@ -66,12 +66,24 @@ agent_routing:
     - id: backend-python
       agent: "agents/builders/backend-python.md"
       persona: { name: "Pythia", emoji: "🐍" }
+    - id: backend-go
+      agent: "agents/builders/backend-go.md"
+      persona: { name: "Gopher", emoji: "🦫" }
     - id: database-prisma
       agent: "agents/builders/database-prisma.md"
       persona: { name: "Athena", emoji: "🦉" }
+    - id: database-sql
+      agent: "agents/builders/database-sql.md"
+      persona: { name: "Oracle", emoji: "📊" }
+    - id: api-graphql
+      agent: "agents/builders/api-graphql.md"
+      persona: { name: "Mercury", emoji: "⚡" }
     - id: infrastructure
       agent: "agents/builders/infrastructure.md"
       persona: { name: "Atlas", emoji: "🌍" }
+    - id: testing
+      agent: "agents/builders/testing.md"
+      persona: { name: "Aletheia", emoji: "🎯" }
     - id: general
       agent: "agents/builders/general.md"
       persona: { name: "Metis", emoji: "🔨" }
@@ -287,23 +299,14 @@ agents:
           git diff --name-only HEAD~1 | grep -E "\.(tsx|jsx|vue|svelte|css|scss|html)$|components/|pages/|views/"
 
   fixer:
-    description: "Issue resolution - Mason resumes to fix critical/high issues"
+    description: "Issue resolution - Metis resumes to fix critical/high issues"
     steps: [8, 9]
     subagent_type: "general-purpose"
-    bmad_agent: "{project-root}/_pantheon/agents/builder.md" # Mason resumes - "Measure twice, cut once"
+    bmad_agent: "{project-root}/_pantheon/agents/builder.md" # Metis resumes - "Measure twice, cut once"
     resume_builder: true # IMPORTANT: Resume Builder agent instead of spawning fresh
     prompt_file: "{agents_path}/fixer.md"
-    trust_level: "medium" # Incentive to minimize work
+    trust_level: "low" # Same as builder — orchestrator handles commits
     timeout: 2400 # 40 minutes
-
-  reflection:
-    description: "Playbook learning - extracts patterns for future agents (DEPRECATED - use reflection_reporter)"
-    steps: [10]
-    subagent_type: "general-purpose"
-    bmad_agent: "{project-root}/_pantheon/agents/reflection.md" # Mnemosyne - Titan of Memory
-    prompt_file: "{agents_path}/reflection.md"
-    timeout: 900 # 15 minutes
-    deprecated: true # Use reflection_reporter instead
 
   reflection_reporter:
     description: "Combined reflection + reporting - extracts learnings, updates playbooks, generates completion report"

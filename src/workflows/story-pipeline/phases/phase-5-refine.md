@@ -237,7 +237,11 @@ Update `docs/sprint-artifacts/completions/{{story_key}}-progress.json`:
 After all MUST_FIX issues are resolved, commit the implementation:
 
 ```bash
-git add .
+# Stage only implementation files (not .env, credentials, temp files)
+git add src/ lib/ app/ components/ pages/ public/ prisma/ tests/ __tests__/
+git add package.json package-lock.json tsconfig.json
+# Stage sprint artifacts
+git add docs/sprint-artifacts/
 
 git commit -m "$(cat <<'EOF'
 feat({{story_key}}): {{story_title}}

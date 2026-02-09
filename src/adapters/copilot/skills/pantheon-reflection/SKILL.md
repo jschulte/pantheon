@@ -27,8 +27,8 @@ Review all artifacts:
 **Before creating anything, search first!**
 
 ```bash
-ls docs/playbooks/implementation-playbooks/
-grep -r "{{keyword}}" docs/playbooks/implementation-playbooks/
+ls docs/implementation-playbooks/
+grep -r "{{keyword}}" docs/implementation-playbooks/
 ```
 
 ### Step 3: Decide Action

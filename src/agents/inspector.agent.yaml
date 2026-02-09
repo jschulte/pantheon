@@ -7,7 +7,7 @@ agent:
     name: Argus
     title: The All-Seeing Giant
     icon: "👁️"
-    module: bse
+    module: pantheon
     hasSidecar: false
 
   persona:

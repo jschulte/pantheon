@@ -1,7 +1,7 @@
 # Pantheon
 
 **Author:** Jonah Schulte (leveraging BMAD Method)
-**Version:** 6.1 (Token Optimization Edition)
+**Version:** 7.4 (Playbook Intelligence Edition)
 
 A multi-agent orchestration system that delivers **10-20x faster development** with **production-grade quality** through systematic automation of code review, testing, and verification.
 
@@ -247,7 +247,7 @@ The installer auto-detects your platform and configures appropriately:
 
 **Codex CLI**
 - Installs instructions to `.codex/`
-- Usage: `Implement STORY-001 using BMAD pipeline`
+- Usage: `Implement STORY-001 using Pantheon pipeline`
 
 ---
 
@@ -689,7 +689,7 @@ pantheon/
 In your project's `_bmad/bmm/config.yaml`:
 
 ```yaml
-bse:
+pantheon:
   # Quality gates
   coverage_threshold: 80          # Minimum test coverage %
   require_code_citations: true    # Inspector must provide file:line proof

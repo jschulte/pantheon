@@ -1,5 +1,9 @@
 # Pantheon Pipeline - Codex Instructions
 
+> **Canonical source:** `src/workflows/story-pipeline/workflow.md` (v7.4)
+> This file is a Codex-adapted summary. For full phase details, refer to the canonical workflow.
+> When this file conflicts with the canonical source, the canonical source wins.
+
 When implementing user stories, follow this 7-phase pipeline for quality assurance.
 
 ## Overview
@@ -20,7 +24,7 @@ The pipeline ensures code quality through:
 1. Load story file: `docs/sprint-artifacts/{{story_key}}.md`
 2. Count tasks and check for risk keywords
 3. Validate story structure
-4. Load relevant playbooks from `docs/playbooks/implementation-playbooks/`
+4. Load relevant playbooks from `docs/implementation-playbooks/`
 
 ### Complexity Determination
 
@@ -146,7 +150,7 @@ If iteration > 3: Escalate to user.
 2. Fill Dev Agent Record:
    ```markdown
    **Implementation Date:** {{timestamp}}
-   **Agent Model:** Codex (BMAD Pipeline)
+   **Agent Model:** Codex (Pantheon Pipeline)
    **Git Commit:** {{hash}}
    ```
 
@@ -184,7 +188,7 @@ Since Codex runs sequentially (no parallel agents):
 When asked to implement a story:
 
 ```
-"Implement STORY-001 using the BMAD pipeline"
+"Implement STORY-001 using the Pantheon pipeline"
 ```
 
 Begin with Phase 1: PREPARE, then proceed through each phase.

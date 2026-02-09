@@ -158,7 +158,7 @@ set -e
 STORIES=$(grep "ready-for-dev" docs/sprint-artifacts/sprint-status.yaml | awk '{print $1}' | sed 's/://')
 
 echo "=========================================="
-echo "  BMAD Story Format Validation"
+echo "  Pantheon Story Format Validation"
 echo "=========================================="
 echo ""
 

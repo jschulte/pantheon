@@ -38,6 +38,6 @@
   "bmad": {
     "type": "module",
     "moduleDefinition": "src/module.yaml",
-    "code": "bse"
+    "code": "pantheon"
   }
 }

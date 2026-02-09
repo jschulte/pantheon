@@ -7,7 +7,7 @@ agent:
     name: Metis
     title: Goddess of Wisdom & Craft
     icon: "🔨"
-    module: bse
+    module: pantheon
     hasSidecar: false
 
   persona:

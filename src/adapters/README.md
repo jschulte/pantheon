@@ -43,6 +43,16 @@ adapters/
     └── instructions/            # Codex CLI instructions
 ```
 
+## Canonical Source
+
+All adapters are translations of the canonical workflow defined in:
+- **Workflow spec:** `src/workflows/story-pipeline/workflow.md`
+- **Workflow config:** `src/workflows/story-pipeline/workflow.yaml`
+- **Agent routing:** `src/agent-routing.yaml`
+
+When an adapter conflicts with the canonical source, the canonical source wins.
+Adapter files include a version reference (e.g., `v7.4`) to help detect drift.
+
 ## How It Works
 
 ### Claude Code (Native)
@@ -99,10 +109,10 @@ Implements new user stories with multi-agent review.
 
 | Platform | Command |
 |----------|---------|
-| Claude Code | `/story-pipeline story_key=17-1` |
+| Claude Code | `/bmad_pantheon_story-pipeline story_key=17-1` |
 | OpenCode | `@pantheon-orchestrator "Implement STORY-001"` |
 | Copilot | `@workspace /pantheon-pipeline Implement STORY-001` |
-| Codex | `Implement STORY-001 using BMAD pipeline` |
+| Codex | `Implement STORY-001 using Pantheon pipeline` |
 
 ### Batch Review (`/batch-review`)
 
