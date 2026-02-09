@@ -1,6 +1,22 @@
-# Pantheon
+<div align="center">
+
+<img src="images/pantheon-logo.jpg" alt="Pantheon" width="400">
 
 **Turn Claude Code into a self-improving engineering team.**
+
+Module 1.2.0 | Story Pipeline 7.4.0 | Batch Stories 4.0.0 | Batch Review 2.1.0
+
+<p>
+  <a href="https://github.com/sponsors/jschulte"><img src="https://img.shields.io/badge/Sponsor-GitHub-ea4aaa?style=for-the-badge&logo=github" alt="GitHub Sponsors"></a>
+  <a href="https://ko-fi.com/jschulte"><img src="https://img.shields.io/badge/Support-Ko--fi-ff5e5b?style=for-the-badge&logo=ko-fi&logoColor=white" alt="Ko-fi"></a>
+</p>
+
+<p>
+  <a href="https://github.com/jonahschulte/pantheon/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>
+  <img src="https://img.shields.io/badge/Node.js-%3E%3D18.0.0-green" alt="Node.js">
+</p>
+
+</div>
 
 Pantheon is a [BMAD Method](https://github.com/bmadcode/BMAD-METHOD) plugin that wraps every feature story in a structured, multi-agent pipeline — the same way a well-run engineering team operates. It works with **Claude Code** (best experience — native parallel agents and swarm support), **OpenCode**, **GitHub Copilot**, and **Codex CLI** — with specialized agents that build, review, triage, fix, and learn in parallel. The result: production-grade code, not "works on my machine" code.
 
@@ -54,6 +70,8 @@ Wave 3: Stories 6-5, 6-6  (depend on Wave 2)
 Hand it an epic. Walk away. Come back to production-ready code with 80%+ test coverage, multi-perspective reviews, and zero unresolved MUST_FIX issues across every story.
 
 ### It's built for Claude Code agent swarms
+
+> **Experimental:** Swarm mode requires Claude Code's Agent Teams feature (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`), which is experimental and may change without notice. Sequential mode works without it.
 
 Pantheon is designed from the ground up to work with Claude Code's multi-agent capabilities. In swarm mode, it spawns **Heracles workers** — each one an independent agent running the full story pipeline. Workers coordinate through shared task lists, claim stories automatically, and commit in parallel using a lock file protocol.
 
@@ -176,14 +194,22 @@ Interactive story generation with systematic codebase scanning. Auto-populates a
 
 ## Installation
 
-```bash
-# Via BMAD installer
-npx bmad-method install
+1. Clone this repo somewhere on your machine:
+   ```bash
+   git clone https://github.com/jonahschulte/pantheon.git ~/git/pantheon
+   ```
 
-# Or install adapters directly
-cd your-project
-/path/to/pantheon/src/adapters/install.sh
-```
+2. In your target project, run the BMAD installer:
+   ```bash
+   npx bmad-method install
+   ```
+
+3. When the installer asks if you have any **custom local workflows or agents**, point it to the `src` folder in this repo:
+   ```
+   ~/git/pantheon/src
+   ```
+
+That's it. The installer will wire Pantheon's agents and workflows into your project alongside the rest of BMAD.
 
 Pantheon works on multiple AI coding platforms, with Claude Code as the primary target:
 
@@ -284,6 +310,8 @@ pantheon/
 - **Git**
 - **Claude Code** (primary) or another supported AI coding platform
 - **BMAD Method** v6.0.0+ (for story format and module system)
+
+> **Note:** Workflow and agent files reference `@patterns/` (e.g., `@patterns/tdd.md`, `@patterns/verification.md`). These are resolved by the BMAD Method installer from the parent framework's shared patterns library. They are not included in this repository. If you see unresolved `@patterns/` references, ensure BMAD Method v6.0.0+ is installed in your project.
 
 ---
 
