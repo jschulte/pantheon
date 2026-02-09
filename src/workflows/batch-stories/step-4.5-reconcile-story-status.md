@@ -1,6 +1,5 @@
 # Step 4.5: Story Reconciliation (Orchestrator-Driven)
 
-**Version:** 2.1.0
 **Execute:** AFTER story-pipeline completes, BEFORE marking story done
 **Who:** Orchestrator (YOU) - not an agent
 

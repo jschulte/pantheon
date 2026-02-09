@@ -1,4 +1,4 @@
-# Validate v3.0 - Unified Story/Epic Validation
+# Validate - Unified Story/Epic Validation
 
 <purpose>
 Single workflow for all validation needs. Validates stories against codebase,
@@ -17,7 +17,6 @@ Read-only by default - does not modify files.
 
 <config>
 name: validate
-version: 3.0.0
 
 parameters:
   scope:

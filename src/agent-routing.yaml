@@ -3,8 +3,25 @@
 #
 # This file enables "smart spawning" - the workflow analyzes each story
 # and automatically selects the most appropriate specialized builder agent.
+#
+# =============================================================================
+# AGENT DEFINITION HIERARCHY (H7)
+# =============================================================================
+# Each agent may appear in multiple files. This is the precedence order:
+#
+#   1. src/agents/{category}/{name}.md         — AUTHORITATIVE persona definition
+#   2. src/agent-routing.yaml (this file)      — AUTHORITATIVE routing rules, persona name/emoji
+#   3. src/workflows/*/workflow.yaml            — Workflow-specific config (references, not definitions)
+#   4. src/agents/*.agent.yaml                  — BMAD web/UI rendering metadata (not runtime behavior)
+#   5. src/adapters/{platform}/agents/*.md      — Platform-adapted summaries (canonical source wins)
+#
+# When adding or modifying an agent:
+#   - Update (1) for persona/behavior changes
+#   - Update (2) for routing rule changes
+#   - Adapters (5) should be regenerated from (1) periodically
+#   - .agent.yaml (4) files are for BMAD UI only — do not affect pipeline behavior
+# =============================================================================
 
-version: "1.0.0"
 
 # =============================================================================
 # PROJECT-LEVEL CONFIGURATION
@@ -19,12 +36,25 @@ defaults:
   fallback_builder: "general"
 
   # Whether to log routing decisions
+  # When true, the orchestrator outputs which routing rule matched and why:
+  #   "Routing: frontend-react matched (file_patterns: *.tsx, story_keywords: component)"
+  #   "Routing: backend-typescript skipped (exclude_patterns: components/**/*.tsx present)"
+  #   "Routing: general (fallback — no specific builder matched)"
   log_routing: true
 
 # =============================================================================
 # BUILDER ROUTING RULES
 # =============================================================================
 # Evaluated in order - first match wins
+#
+# KEYWORD DISAMBIGUATION (M17):
+# Some keywords appear in multiple builders. Order + exclude_patterns resolve conflicts:
+#   "schema"   → database-prisma (priority via priority_keywords) wins over api-graphql
+#   "model"    → database-prisma wins (evaluated before graphql)
+#   "type"     → api-graphql (only if *.graphql files present)
+#   "API"      → backend-typescript wins (exclude_patterns prevent frontend match)
+#   "service"  → backend-typescript (first match, but frontend-react excluded)
+# When ambiguous, file_patterns are the stronger signal over story_keywords.
 # Each rule specifies:
 #   - id: unique identifier
 #   - agent: path to agent prompt file (relative to src/)
@@ -74,6 +104,11 @@ builder_routing:
         - "react"
         - "next"
         - "@types/react"
+      # Don't match if these patterns are present (prefer backend/database builders)
+      exclude_patterns:
+        - "api/**/*.ts"
+        - "server/**/*.ts"
+        - "prisma/**"
 
   - id: frontend-vue
     agent: "agents/builders/frontend-vue.md"
@@ -207,6 +242,10 @@ builder_routing:
         - "schema change"
         - "add column"
         - "create table"
+      # Don't match if these patterns dominate (prefer frontend/backend builders)
+      exclude_patterns:
+        - "components/**/*.tsx"
+        - "app/**/page.tsx"
 
   - id: database-sql
     agent: "agents/builders/database-sql.md"
@@ -249,6 +288,10 @@ builder_routing:
         - "subscription"
         - "schema"
         - "type"
+      # Don't match if these patterns dominate (prefer database-prisma for schema work)
+      exclude_patterns:
+        - "prisma/**"
+        - "**/schema.prisma"
 
   # ---------------------------------------------------------------------------
   # INFRASTRUCTURE BUILDERS
@@ -334,7 +377,7 @@ reviewer_routing:
     persona:
       name: "Cerberus"
       title: "Guardian of the Gates"
-      emoji: "🛡️"
+      emoji: "🔐"
     always_include: true
     priority: 1
 
@@ -375,7 +418,7 @@ reviewer_routing:
     persona:
       name: "Iris"
       title: "Rainbow Bridge of Accessibility"
-      emoji: "♿"
+      emoji: "🌈"
     match:
       file_patterns:
         - "*.tsx"
@@ -427,6 +470,77 @@ validator_routing:
       title: "Goddess of Test Justice"
       emoji: "🧪"
     always_include: true
+
+# =============================================================================
+# COMPLEXITY ROUTING (Canonical Source — v7.4)
+# =============================================================================
+# This is the single source of truth for complexity tiers.
+# story-pipeline/workflow.yaml and batch-stories/workflow.yaml reference this.
+# Tiers are evaluated by task count from the story file.
+
+complexity_routing:
+  tiers:
+    trivial:
+      max_tasks: 1
+      review_mode: "consolidated"
+      forging: "skip"
+      description: "Minimal review for static/config changes"
+      examples: ["README update", "config change", "copy fix"]
+
+    micro:
+      max_tasks: 2
+      review_mode: "consolidated"
+      forging: "skip"
+      description: "Lightweight path for low-risk stories"
+      examples: ["UI tweaks", "text changes", "simple CRUD"]
+
+    light:
+      max_tasks: 4
+      review_mode: "consolidated"
+      forging: "conditional"
+      max_specialists: 1
+      description: "Standard path with consolidated review"
+      examples: ["Simple component", "basic form", "minor feature"]
+
+    standard:
+      max_tasks: 10
+      review_mode: "consolidated"
+      forging: "conditional"
+      max_specialists: 2
+      description: "Balanced path — consolidated review sufficient"
+      examples: ["API endpoints", "business logic", "data validation"]
+
+    complex:
+      min_tasks: 11
+      max_tasks: 15
+      review_mode: "parallel"
+      forging: "always"
+      max_specialists: 3
+      description: "Enhanced validation — parallel independent reviewers"
+      examples: ["Auth", "payments", "security", "migrations"]
+
+    critical:
+      min_tasks: 16
+      review_mode: "parallel"
+      forging: "aggressive"
+      max_specialists: 4
+      description: "Maximum scrutiny — all reviewers + aggressive forging"
+      examples: ["Payment processing", "encryption", "PII handling"]
+
+  # Risk keywords can promote a story to a higher tier
+  risk_promotion:
+    high_risk: ["auth", "security", "payment", "encryption", "migration", "database", "schema"]
+    medium_risk: ["api", "integration", "external", "third-party", "cache"]
+    low_risk: ["ui", "style", "config", "docs", "test"]
+    promotion_rules:
+      high_risk_keyword: "+2 tiers"
+      medium_risk_keyword: "+1 tier"
+      low_risk_keyword: "+0 tiers"
+
+  # Token efficiency notes
+  # - trivial→standard: consolidated multi-reviewer (saves ~60-70% of Phase 3 tokens)
+  # - complex→critical: parallel reviewers (full independence for high-stakes code)
+  # - All tiers: digest-first context, reflection_reporter (saves ~5-8K/story)
 
 # =============================================================================
 # SUPPORT AGENT ROUTING

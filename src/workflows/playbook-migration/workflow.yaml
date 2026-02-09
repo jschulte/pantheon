@@ -1,7 +1,6 @@
 name: playbook-migration
 description: "One-time migration utility: converts legacy playbooks to v7.4 standardized format, bootstraps _index.json, and retroactively backfills learnings from historical mnemosyne/themis/review artifacts."
-author: "BMad"
-version: "1.0.0"
+author: "Jonah Schulte (leveraging BMAD Method)"
 
 # Critical variables from config
 config_source: "{project-root}/_bmad/bmm/config.yaml"

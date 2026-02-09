@@ -4,7 +4,7 @@
 
 **Turn Claude Code into a self-improving engineering team.**
 
-Module 1.2.0 | Story Pipeline 7.4.0 | Batch Stories 4.0.0 | Batch Review 2.1.0
+v1.0.0
 
 <p>
   <a href="https://github.com/sponsors/jschulte"><img src="https://img.shields.io/badge/Sponsor-GitHub-ea4aaa?style=for-the-badge&logo=github" alt="GitHub Sponsors"></a>
@@ -287,6 +287,7 @@ pantheon/
 │   │   ├── reviewers/            # Specialist reviewer personas
 │   │   ├── validators/           # Verification agents
 │   │   └── support/              # Triage, reflection, coordination
+│   ├── schemas/                  # JSON schemas for agent artifacts
 │   ├── workflows/
 │   │   ├── story-pipeline/       # Core 7-phase implementation
 │   │   ├── batch-stories/        # Epic-level batch orchestration

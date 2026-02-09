@@ -1,6 +1,5 @@
 # Batch Review - Hardening Sweep Workflow
 
-**Version:** 2.1.0
 **Purpose:** Deep code review and hardening with swarm parallelism + Pygmalion persona forging
 
 ---
@@ -241,6 +240,12 @@ IF persona_forging.enabled AND estimated_complexity >= "light":
 
   FORGED_SPECS = read("docs/sprint-artifacts/hardening/{{scope_id}}-pygmalion.json")
 
+  # --- VALIDATE OUTPUT (see story-pipeline/phases/phase-1.5-forge.md for full validation logic) ---
+  # Validate against: src/schemas/pygmalion-output.schema.json
+  # Key checks: required fields, specialist count <= tier max, agent type whitelist,
+  # free-text field sanitization (reject if contains <system, IGNORE PREVIOUS, etc.)
+  # If validation fails: FORGED_SPECS = { forged_specialists: [], skipped: true, reason: "Validation failure" }
+
 ELSE:
   FORGED_SPECS = { forged_specialists: [], skipped: true }
 ```
@@ -248,6 +253,8 @@ ELSE:
 ### Update Specialist Registry
 
 After Pygmalion returns, persist new/evolved specialists to the registry.
+**Concurrency:** In swarm mode, acquire `docs/specialist-registry/.write-lock` before writing
+(see story-pipeline/phases/phase-1.5-forge.md for full locking protocol).
 
 ```
 FOR EACH spec IN FORGED_SPECS.forged_specialists:
@@ -881,14 +888,14 @@ Track passes for this scope:
   "passes": [
     {
       "pass_number": 1,
-      "timestamp": "2024-...",
+      "timestamp": "2026-...",
       "issues_found": 15,
       "issues_fixed": 12,
       "focus": null
     },
     {
       "pass_number": 2,
-      "timestamp": "2024-...",
+      "timestamp": "2026-...",
       "issues_found": 5,
       "issues_fixed": 5,
       "focus": "security vulnerabilities"

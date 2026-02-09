@@ -1,7 +1,6 @@
 name: revalidate-story
 description: "Clear checkboxes and re-verify story against actual codebase implementation. Identifies gaps and optionally fills them."
-author: "BMad"
-version: "1.0.0"
+author: "Jonah Schulte (leveraging BMAD Method)"
 
 # Critical variables from config
 config_source: "{project-root}/_bmad/bmm/config.yaml"
@@ -39,3 +38,4 @@ output:
   update_sprint_status: true # Update progress in sprint-status.yaml
 
 standalone: false
+web_bundle: false

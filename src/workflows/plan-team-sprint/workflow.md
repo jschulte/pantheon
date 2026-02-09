@@ -19,7 +19,6 @@ Supports initial planning (greenfield/brownfield) and mid-project rebalancing.
 
 <config>
 name: plan-team-sprint
-version: 1.0.0
 execution_mode: interactive
 
 steps:

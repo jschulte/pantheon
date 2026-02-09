@@ -1,7 +1,6 @@
 name: story-pipeline
 description: "Enhanced multi-agent pipeline with smart builder spawning, playbook learning, code citation evidence, test quality validation, resume-builder fixes, and per-story completion reports"
 author: "Jonah Schulte (leveraging BMAD Method)"
-version: "7.4.0" # Playbook Intelligence: compaction, index, budget loading, hit-rate tracking
 
 # ============================================================================
 # CRITICAL: EXECUTION DISCIPLINE
@@ -24,6 +23,24 @@ version: "7.4.0" # Playbook Intelligence: compaction, index, budget loading, hit
 
 # Execution mode
 execution_mode: "multi_agent" # multi_agent | single_agent (fallback)
+
+# =============================================================================
+# VARIABLE INTERPOLATION SYNTAX (M23)
+# =============================================================================
+# Four patterns used in workflow YAML/MD files:
+#
+#   {single-curly}           BMAD path resolution (resolved at install time)
+#                            e.g., {project-root}, {installed_path}
+#
+#   {source}:key             Config file dereference (load YAML, extract key)
+#                            e.g., {config_source}:output_folder
+#
+#   {{double-curly}}         Runtime template variable (resolved by orchestrator)
+#                            e.g., {{story_key}}, {{date}}, {{COMPLEXITY}}
+#
+#   system-generated         Special value computed at runtime by the framework
+#                            e.g., date: system-generated
+# =============================================================================
 
 # Critical variables from config
 config_source: "{project-root}/_bmad/bmm/config.yaml"
@@ -106,6 +123,11 @@ persona_forging:
   allow_forged_builder: false    # Only for complex+ when enabled
   model: "{model_tier.pygmalion}"  # sonnet — structured persona output
   timeout: 600                   # 10 minutes max
+  # Token cost note: Pygmalion cost varies significantly by action:
+  #   REUSE (Jaccard >= 0.5):  ~2-3K tokens (registry lookup + minor adaptation)
+  #   EVOLVE (0.3-0.49):       ~5-8K tokens (read existing + modify + write back)
+  #   FORGE_NEW (< 0.3):       ~15-20K tokens (full domain analysis + persona generation)
+  # The registry amortizes cost: first story in a domain pays FORGE_NEW, subsequent pay REUSE.
   output_dir: "{sprint_artifacts}/completions"
   registry:
     enabled: true
@@ -115,6 +137,12 @@ persona_forging:
       reuse: 0.5                 # Jaccard >= 0.5 → reuse as-is
       evolve: 0.3                # 0.3 <= Jaccard < 0.5 → evolve existing
     max_registry_size: 50        # Safety cap on total specialists
+    eviction:
+      enabled: true
+      strategy: "lru_with_hit_rate" # Evict lowest usage_count * hit_rate when at cap
+      min_age_days: 7              # Don't evict specialists younger than 7 days
+      stale_after_days: 90         # Specialists unused for 90 days are eviction candidates
+      protect_high_performers: true # Never evict specialists with hit_rate > 0.8
 
 # =============================================================================
 # REVIEWER LIMITS (v7.3)
@@ -143,6 +171,20 @@ model_tier:
   multi_reviewer: "opus"         # 4 perspectives in one pass — needs deep reasoning
   forged_specialists: "sonnet"  # Domain reviewers — structured checklist work
   reflection_reporter: "sonnet" # Synthesis — already sonnet
+
+# =============================================================================
+# AGENT TIMEOUTS
+# =============================================================================
+# Maximum time (in seconds) before an agent spawn is considered hung.
+# The orchestrator should log a warning and consider terminating stalled agents.
+agent_timeouts:
+  builder: 1800          # 30 min — large stories may take time
+  reviewer: 600          # 10 min — review is bounded by diff size
+  validator: 600         # 10 min — similar to reviewer
+  arbiter: 300           # 5 min — triage is structured decision-making
+  pygmalion: 600         # 10 min — persona forging + registry lookup
+  reflection: 300        # 5 min — synthesis of existing artifacts
+  reporter: 300          # 5 min — report generation
 
 # Agent tracking (from GSD)
 agent_history: "{sprint_artifacts}/agent-history.json"
@@ -347,6 +389,7 @@ playbooks:
   token_budget: 7500 # Max tokens of playbook content to load (~30KB)
   target_size_bytes: [3000, 10000] # Per-playbook size target (3-10KB)
   compaction_threshold: 10000 # Bytes — above this triggers mandatory compaction
+  max_playbook_count: 50       # Safety cap — evict lowest hit-rate playbooks when exceeded
   auto_apply_updates: false # Require manual review of playbook updates
   discovery:
     enabled: true # Scan git/docs to populate initial playbooks
@@ -363,6 +406,9 @@ quality_gates:
 complexity_level: "standard" # micro | standard | complex
 
 # Complexity routing (v4.2 - token-optimized)
+# Canonical source: src/agent-routing.yaml → complexity_routing
+# This is a workflow-local copy for quick reference. If these drift,
+# agent-routing.yaml is authoritative.
 complexity_routing:
   trivial:
     review_mode: "consolidated" # Use multi_reviewer
@@ -403,6 +449,14 @@ complexity_routing:
 # - All tiers: Digest-first context (inline only top-5 files, Read tool for rest)
 # - All tiers: Use reflection_reporter instead of separate Mnemosyne + Hermes (saves ~5-8K)
 
+# Input validation (H4 security hardening)
+# story_key MUST match pattern: digits-digits (e.g., "17-1", "3-12")
+# story_file MUST be a relative path under sprint_artifacts
+# Orchestrator should validate before interpolating into shell commands
+input_validation:
+  story_key_pattern: "^[0-9]+-[0-9]+$"
+  story_file_pattern: "^docs/sprint-artifacts/story-[0-9]+-[0-9]+\\.md$"
+
 # Final verification checklist (main orchestrator)
 final_verification:
   enabled: true
@@ -434,3 +488,4 @@ fallback_to_v1:
   workflow: "{project-root}/_pantheon/workflows/story-pipeline"
 
 standalone: true
+web_bundle: false

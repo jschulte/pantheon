@@ -1,4 +1,4 @@
-# Story Pipeline v7.4 - Playbook Intelligence Edition
+# Story Pipeline
 
 <purpose>
 Implement a story using parallel verification agents with Builder context reuse.
@@ -162,7 +162,6 @@ These phases can have detailed steps since the orchestrator IS the executor.
 
 <config>
 name: story-pipeline
-version: 7.4
 execution_mode: multi_agent
 
 phases:

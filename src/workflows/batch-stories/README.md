@@ -1,9 +1,6 @@
-# Batch Super-Dev Workflow
+# Batch Stories Workflow
 
-**Version:** 4.0.0 (TeammateTool Swarm Mode)
-**Created:** 2026-01-06
-**Updated:** 2026-02-03
-**Author:** BMad
+**Author:** Jonah Schulte (leveraging BMAD Method)
 
 ---
 
@@ -545,7 +542,7 @@ reconciliation:
 - No wave planning, no polling loops — workers get notified via `SendMessage`
 - Dependencies enforced by task graph: workers skip blocked tasks automatically
 - **Commit Queue:** File-based locking prevents git lock conflicts
-  - Workers acquire `.git/bmad-commit.lock` before committing
+  - Workers acquire `.git/pantheon-commit.lock` before committing
   - Automatic retry with exponential backoff (1s → 30s)
   - Stale lock cleanup (>5 min)
   - Serialized commits, parallel implementation
@@ -721,7 +718,7 @@ See: `step-4.5-reconcile-story-status.md` for detailed algorithm
   - Non-blocking task polling with live progress dashboard
 - **NEW:** Git Commit Queue (Parallel-Safe)
   - File-based locking prevents concurrent commit conflicts
-  - Workers acquire `.git/bmad-commit.lock` before committing
+  - Workers acquire `.git/pantheon-commit.lock` before committing
   - Automatic retry with exponential backoff (1s → 30s max)
   - Stale lock cleanup (>5 min old locks auto-removed)
   - Eliminates "Another git process is running" errors
@@ -788,4 +785,4 @@ See: `step-4.5-reconcile-story-status.md` for detailed algorithm
 
 **Last Updated:** 2026-02-03
 **Status:** Active - Production-ready with TeammateTool swarm parallel mode
-**Maintained By:** BMad
+**Maintained By:** Jonah Schulte
