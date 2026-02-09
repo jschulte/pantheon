@@ -395,6 +395,7 @@ Load only the current phase, execute it, then load the next.
 </success_criteria>
 
 <version_history>
+<<<<<<< HEAD
 **v7.4 - Playbook Intelligence Edition**
 1. Standardized playbook format: YAML frontmatter, token cost headers, 3-10KB size target
 2. Playbook index (`_index.json`): structured search, dedup protection, hit-rate metadata
