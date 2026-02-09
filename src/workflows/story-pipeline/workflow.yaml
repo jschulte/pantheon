@@ -92,7 +92,7 @@ persona_forging:
     complex: 3
     critical: 4
   allow_forged_builder: false    # Only for complex+ when enabled
-  model: "opus"                  # Needs deep analysis capability
+  model: "{model_tier.pygmalion}"  # sonnet — structured persona output
   timeout: 600                   # 10 minutes max
   output_dir: "{sprint_artifacts}/completions"
   registry:
@@ -103,6 +103,34 @@ persona_forging:
       reuse: 0.5                 # Jaccard >= 0.5 → reuse as-is
       evolve: 0.3                # 0.3 <= Jaccard < 0.5 → evolve existing
     max_registry_size: 50        # Safety cap on total specialists
+
+# =============================================================================
+# REVIEWER LIMITS (v7.3)
+# =============================================================================
+# Maximum parallel reviewers for complex/critical stories.
+# The orchestrator asks the user at runtime, using this as the default.
+# 1 = consolidated (single multi-reviewer), 2 = two reviewers, 3 = three reviewers (recommended)
+max_parallel_reviewers:
+  default: 3            # Pre-selected option when asking user
+  ask_at_runtime: true  # Prompt user before Phase 3 parallel review
+
+# =============================================================================
+# MODEL TIERS (v7.3)
+# =============================================================================
+# Controls which model each agent role uses.
+# Opus for deep reasoning (code generation, security/logic analysis).
+# Sonnet for structured/mechanical work (checklists, pattern matching, synthesis).
+model_tier:
+  builder: "opus"               # Writing correct code — mistakes are expensive
+  fixer: "opus"                 # Resumed builder context — same reasoning needs
+  cerberus: "opus"              # Security + logic — subtle bugs need deep reasoning
+  themis: "opus"                # Triage arbiter — judgment calls on issue severity
+  argus: "sonnet"               # Task verification — checklist/mechanical work
+  nemesis: "sonnet"             # Test + quality review — pattern matching
+  pygmalion: "sonnet"           # Persona forging — structured JSON output
+  multi_reviewer: "opus"         # 4 perspectives in one pass — needs deep reasoning
+  forged_specialists: "sonnet"  # Domain reviewers — structured checklist work
+  reflection_reporter: "sonnet" # Synthesis — already sonnet
 
 # Agent tracking (from GSD)
 agent_history: "{sprint_artifacts}/agent-history.json"
@@ -124,7 +152,7 @@ agents:
     description: "Persona Forge - analyzes domain, forges specialist personas on-the-fly"
     steps: [1.5]
     subagent_type: "general-purpose"
-    model: "opus"
+    model: "{model_tier.pygmalion}"  # sonnet — structured JSON output
     prompt_file: "{agents_path}/pygmalion.md"
     fresh_context: true
     trust_level: "high"
@@ -135,7 +163,7 @@ agents:
   builder:
     description: "Implementation agent - writes code and tests (SMART SPAWNING)"
     steps: [1, 2, 3, 4]
-    model: "opus"  # Builder gets full capability model
+    model: "{model_tier.builder}"  # opus — writing code needs deep reasoning
     # HYBRID: subagent_type is DYNAMICALLY SELECTED based on story content
     # React/Next.js → dev-frontend + frontend-react.md
     # TypeScript API → dev-typescript + backend-typescript.md
@@ -166,7 +194,7 @@ agents:
     description: "Validation agent - independent verification with code citations"
     steps: [5, 6]
     subagent_type: "general-purpose"  # No specialized inspector in Claude Code
-    model: "opus"
+    model: "{model_tier.argus}"  # sonnet — checklist/mechanical verification
     bmad_agent: "{validators_path}/inspector.md"  # Argus - The All-Seeing
     prompt_file: "{agents_path}/inspector.md"
     fresh_context: true
@@ -178,7 +206,7 @@ agents:
     description: "Test quality validation - verifies test coverage and quality"
     steps: [5.5]
     subagent_type: "testing-suite:test-engineer"  # HYBRID: Claude Code test expertise
-    model: "opus"
+    model: "{model_tier.nemesis}"  # sonnet — pattern matching for test gaps
     bmad_agent: "{validators_path}/test-quality.md"  # Nemesis - Test quality persona
     prompt_file: "{agents_path}/test-quality.md"
     fresh_context: true
@@ -188,7 +216,7 @@ agents:
   reviewer:
     description: "Adversarial code review - finds problems (SMART ROUTING)"
     steps: [7]
-    model: "opus"
+    model: "{model_tier.cerberus}"  # opus for security/logic; see model_tier for overrides
     # HYBRID: Each reviewer type uses best Claude Code agent + BSE persona
     subagent_type_by_role:
       security: "auditor-security"        # OWASP expertise + Cerberus persona
@@ -203,7 +231,9 @@ agents:
     trust_level: "high"
     timeout: 1800
 
-    review_agent_count:
+    # v7.3: reviewer count now controlled by max_parallel_reviewers (user-configurable)
+    # These legacy counts are ignored when max_parallel_reviewers is set
+    review_agent_count_legacy:
       micro: 2
       standard: 3
       complex: 4
@@ -292,7 +322,7 @@ agents:
     description: "Consolidated multi-perspective review - Argus + Nemesis + Cerberus + Hestia in one pass"
     steps: [5, 6, 7]
     subagent_type: "general-purpose"
-    model: "opus" # Need full capability for thorough review
+    model: "{model_tier.multi_reviewer}"  # opus — 4 perspectives needs deep reasoning
     prompt_file: "{agents_path}/multi-reviewer.md"
     timeout: 2400 # 40 minutes (doing work of 4 agents)
     output_file: "{sprint_artifacts}/completions/{{story_key}}-review.json"
@@ -352,20 +382,22 @@ complexity_routing:
     examples: ["API endpoints", "business logic"]
 
   complex:
-    review_mode: "parallel" # Use separate parallel reviewers
-    description: "Enhanced validation - parallel reviewers for thoroughness"
+    review_mode: "parallel" # Reviewer count set by max_parallel_reviewers (user choice)
+    description: "Enhanced validation - consolidated parallel reviewers"
     examples: ["Auth", "payments", "security", "migrations"]
-    agents: ["argus", "nemesis", "cerberus", "apollo", "hestia"]
 
   critical:
-    review_mode: "parallel" # Use separate parallel reviewers + extras
-    description: "Maximum scrutiny - full parallel review team"
+    review_mode: "parallel" # Reviewer count set by max_parallel_reviewers (user choice)
+    description: "Maximum scrutiny - consolidated parallel reviewers"
     examples: ["Payment processing", "encryption", "PII handling"]
-    agents: ["argus", "nemesis", "cerberus", "apollo", "hestia", "arete"]
 
-# Token efficiency summary (v4.2):
+# Token efficiency summary (v7.3):
 # - trivial/micro/light/standard: Use multi_reviewer (saves ~60-70% of Phase 3 tokens)
-# - complex/critical: Use parallel reviewers (thoroughness > efficiency)
+# - complex/critical: Use max_parallel_reviewers consolidated reviewers (user-configurable)
+#   - 3 (default): Argus+Hestia, Cerberus+Apollo, Nemesis+Arete
+#   - 2: Argus+Hestia+Arete, Cerberus+Apollo+Nemesis
+#   - 1: Falls through to consolidated multi-reviewer
+# - All tiers: Digest-first context (inline only top-5 files, Read tool for rest)
 # - All tiers: Use reflection_reporter instead of separate Mnemosyne + Hermes (saves ~5-8K)
 
 # Final verification checklist (main orchestrator)
