@@ -45,10 +45,15 @@ Review all artifacts and identify:
 - What did Metis miss initially?
 - What playbook knowledge would have prevented these?
 - Which module/feature area does this apply to?
+- Were there **anti-patterns** — code that looked correct but failed?
 
-**Step 2: Search Existing Playbooks**
+**Step 2: Search Existing Playbooks via Index**
 
 ```bash
+# Read the index first (preferred)
+cat docs/implementation-playbooks/_index.json
+
+# Fallback if index doesn't exist yet
 ls docs/implementation-playbooks/
 grep -r "{{keyword}}" docs/implementation-playbooks/
 ```
@@ -59,16 +64,122 @@ grep -r "{{keyword}}" docs/implementation-playbooks/
 
 | Situation | Action |
 |-----------|--------|
-| Existing playbook covers this | **UPDATE** it |
-| Related playbook exists | **UPDATE** with new section |
+| Existing playbook covers this | **UPDATE** (via compaction protocol) |
+| Related playbook exists | **UPDATE** with integrated content |
 | Truly new domain | **CREATE** new (rare) |
 | No real learnings | **SKIP** |
 
-**Step 4: Write Changes**
+**Step 4: Revise Playbook (Compaction Protocol)**
 
-If updating or creating, actually write the changes using Edit/Write tools.
+When **UPDATING** an existing playbook:
+
+**4a. Read the full playbook.** Understand all current content — every gotcha, anti-pattern, code pattern.
+
+**4b. Assess current entries against new learnings.**
+- Does a new gotcha overlap with an existing one? → **MERGE** into one tighter entry
+- Does a new anti-pattern refine an existing one? → **UPDATE** the existing entry (don't create a duplicate)
+- Does a new code pattern contradict an existing one? → **REPLACE** the stale one
+- Is a new learning genuinely novel? → **ADD** to the appropriate section
+- Are there existing entries NOT relevant to any recent story? → Consider removing if the entry has low evidence (only 1 story, old)
+
+**4c. Integrate and compact.** Produce a revised playbook that:
+- Merges overlapping entries (combine best phrasing, keep all story refs)
+- Removes entries subsumed by better, newer entries
+- Tightens verbose entries (preserve code examples, trim prose)
+- Maintains the standardized format (frontmatter + required sections)
+
+**4d. Check size budget.** Calculate `byte_size` of the revised content.
+- If > 10KB: MUST compact further — drop lowest-value entries (fewest story refs, oldest without recent confirmation, most generic)
+- If < 3KB: Fine — small playbooks are OK, don't pad
+- Split into two playbooks ONLY as last resort (creates maintenance burden)
+
+**4e. Write the revised playbook** using `Write` tool (full file replacement, NOT `Edit`/append). Update frontmatter: `byte_size`, `token_cost`, `last_updated`, `last_updated_by`, `stories_contributed`.
+
+**4f. Update `_index.json`** — Read the current index, update the entry for this playbook (or add a new entry), write the updated index.
+
+**Critical distinction:** Step 4e uses `Write` (full replacement), not `Edit` (append). The agent produces the integrated result and writes it whole. This is what prevents bloat.
+
+When **CREATING** a new playbook: use the standardized format template below, write both the file and add an entry to `_index.json`.
+
+#### Standardized Playbook Format
+
+All playbooks MUST use this format:
+
+```markdown
+---
+id: {{kebab-case-id}}
+title: {{Playbook Title}}
+domains: [keyword1, keyword2, keyword3]
+file_patterns: ["app/api/**", "*/route.ts"]
+token_cost: {{estimated tokens}}
+byte_size: {{file size in bytes}}
+target_range_bytes: [3000, 10000]
+last_updated: {{YYYY-MM-DD}}
+last_updated_by: {{story_key}}
+created_by: {{story_key}}
+hit_count: 0
+miss_count: 0
+stories_contributed: [{{story_key}}]
+---
+# {{Playbook Title}}
+
+## Overview
+[1-2 sentences: what this covers, when to consult it]
+
+## Critical Patterns
+[Must-follow rules — the highest value per token]
+
+## Common Gotchas
+[Symptom → cause → fix format. Capped: top entries only.]
+
+## Anti-Patterns
+[What it looks like → Why it fails → Better approach]
+
+## Code Patterns
+[DO/DON'T with minimal but complete code examples]
+
+## Test Requirements
+[Mandatory test scenarios for this domain]
+
+## Related Stories
+[Story keys that contributed to this playbook]
+```
+
+Size target: **3-10KB** (~750-2500 tokens). Above 10KB triggers mandatory compaction.
+
+#### Playbook Index Format
+
+The index at `docs/implementation-playbooks/_index.json`:
+
+```json
+{
+  "version": "1.0",
+  "token_budget": 7500,
+  "playbooks": [
+    {
+      "id": "{{playbook-id}}",
+      "title": "{{Playbook Title}}",
+      "file": "{{filename}}.md",
+      "domains": ["keyword1", "keyword2"],
+      "file_patterns": ["app/api/**"],
+      "token_cost": 1250,
+      "byte_size": 5012,
+      "last_updated": "{{YYYY-MM-DD}}",
+      "last_updated_by": "{{story_key}}",
+      "hit_count": 0,
+      "miss_count": 0,
+      "hit_rate": 0.0,
+      "stories_contributed": ["{{story_key}}"]
+    }
+  ]
+}
+```
+
+Bootstrap: If `_index.json` doesn't exist, create `{"version":"1.0","token_budget":7500,"playbooks":[]}` before adding entries.
 
 **Step 5: Save Reflection Artifact**
+
+**Safety net:** Raw learnings are captured here BEFORE compaction. If a compaction goes wrong, original data is recoverable from artifacts + git history.
 
 ```json
 {
@@ -82,12 +193,25 @@ If updating or creating, actually write the changes using Edit/Write tools.
       "applies_to": "API integration"
     }
   ],
+  "anti_patterns": [
+    {
+      "name": "Trusting API Response Shape",
+      "looks_like": "Directly destructuring API response without null check",
+      "why_it_fails": "API returns null/undefined for deleted records, causing runtime crash",
+      "better_approach": "Always validate response shape before destructuring",
+      "evidence": "{{story_key}}"
+    }
+  ],
   "playbook_action": {
     "action": "updated|created|skipped",
     "path": "docs/implementation-playbooks/{{name}}.md",
     "reason": "Why this action",
-    "sections_modified": ["Common Gotchas"]
-  }
+    "sections_modified": ["Common Gotchas", "Anti-Patterns"],
+    "compaction_applied": true,
+    "size_before": "{{bytes}}",
+    "size_after": "{{bytes}}"
+  },
+  "index_updated": true
 }
 ```
 
@@ -226,6 +350,18 @@ curl -X {{METHOD}} http://localhost:3000/api/{{path}} \
 **Key Learnings:**
 - {{Learning 1}}
 - {{Learning 2}}
+
+### Anti-Patterns Discovered
+
+{{IF anti_patterns found}}
+| Anti-Pattern | Looks Like | Why It Fails |
+|-------------|------------|--------------|
+| {{name}} | {{looks_like}} | {{why_it_fails}} |
+
+*See playbook for detailed anti-pattern entries with better approaches.*
+{{ELSE}}
+No new anti-patterns discovered in this story cycle.
+{{ENDIF}}
 
 ---
 
