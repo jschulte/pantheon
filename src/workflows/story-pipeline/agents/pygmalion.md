@@ -386,6 +386,7 @@ Specialists: {{total_forged + total_reused + total_evolved}}
   (EVOLVED from {{created_for}}, v{{old_version}}→v{{new_version}})
   (NEW)
 
+
 {{if forged_builder:}}
 Builder: {{forged_builder.emoji}} {{forged_builder.name}} — {{forged_builder.title}}
 {{end}}
@@ -398,6 +399,7 @@ Registry: {{total_forged}} new, {{total_evolved}} evolved, {{total_reused}} reus
 {{if total_reused + total_evolved > 0:}}
 Token savings: ~{{estimated_savings}}K (vs forging from scratch)
 {{end}}
+
 
 Artifact: completions/{{story_key}}-pygmalion.json
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
