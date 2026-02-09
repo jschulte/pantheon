@@ -35,6 +35,26 @@ Review the story lifecycle and identify what future builders should know:
 - What gotchas should future builders know?
 - What code patterns should be standard?
 - What test requirements are essential?
+- Were there **anti-patterns** — code that looked correct but failed? (See Anti-Pattern category below)
+
+---
+
+### Playbook Categories
+
+Playbooks organize knowledge into these categories:
+
+| Category | Purpose | Example |
+|----------|---------|---------|
+| **Common Gotchas** | "Watch out for X" | "Prisma doesn't auto-migrate in CI" |
+| **Anti-Patterns** | "X looks right but is wrong because Y" | "Direct API destructuring looks idiomatic but crashes on deleted records" |
+| **Code Patterns** | DO/DON'T with code examples | "Always use `findUnique` not `findFirst` for ID lookups" |
+| **Test Requirements** | Mandatory test scenarios | "Always test with expired tokens" |
+
+**Gotchas vs Anti-Patterns:**
+- **Gotcha**: "Watch out — Prisma doesn't auto-run migrations in production." (Warning about an external behavior)
+- **Anti-Pattern**: "Using `prisma.model.findFirst({ where: req.query })` looks like a clean dynamic query, but it's actually a SQL injection vector because user input flows directly into the query." (A pattern that *looks correct* but has a subtle failure mode)
+
+The distinction matters because anti-patterns are more insidious — builders actively choose them thinking they're correct. Gotchas are environmental hazards that builders might not know about.
 
 ---
 
@@ -81,70 +101,71 @@ grep -r "{{keyword}}" docs/playbooks/implementation-playbooks/
 
 ---
 
-### Step 4: Write/Update the Playbook
+### Step 4: Write/Update the Playbook (Compaction Protocol)
 
 **If UPDATING existing playbook:**
 
-1. Read the existing playbook
-2. Find the appropriate section (or add a new section)
-3. Use Edit tool to add your learnings
-4. Update the "Last updated" line
-5. Add to "Related Stories" section
+1. **Read the full playbook.** Understand all current content — every gotcha, anti-pattern, code pattern.
+2. **Assess current entries against new learnings:**
+   - Overlapping gotcha? → **MERGE** into one tighter entry
+   - Refined anti-pattern? → **UPDATE** the existing entry (don't duplicate)
+   - Contradicting code pattern? → **REPLACE** the stale one
+   - Genuinely novel learning? → **ADD** to appropriate section
+   - Low-evidence old entries? → Consider removing (only 1 story, old)
+3. **Integrate and compact.** Produce a revised playbook that merges overlaps, removes subsumed entries, tightens prose, and maintains the standardized format.
+4. **Check size budget.** If > 10KB, compact further (drop lowest-value entries). If < 3KB, fine.
+5. **Write the revised playbook** using `Write` tool (full file replacement, NOT `Edit`/append). Update frontmatter: `byte_size`, `token_cost`, `last_updated`, `last_updated_by`, `stories_contributed`.
+6. **Update `_index.json`** with new metadata for this playbook.
 
-```markdown
-# Example: Adding to existing playbook
-
-## Common Gotchas
-
-[existing content...]
-
-- **NEW from {{story_key}}**: Description of new gotcha
-
-## Related Stories
-
-[existing stories...]
-- {{story_key}}: What was learned
-```
+**Critical:** Step 5 uses `Write` (full replacement), not `Edit` (append). This is what prevents bloat.
 
 **If CREATING new playbook:**
 
-Only if no suitable existing playbook exists.
+Only if no suitable existing playbook exists. Use the standardized format:
 
 ```markdown
-# {{Module}} Patterns Playbook
-
-*Last updated: {{date}} from story {{story_key}}*
+---
+id: {{kebab-case-id}}
+title: {{Playbook Title}}
+domains: [keyword1, keyword2, keyword3]
+file_patterns: ["relevant/glob/**"]
+token_cost: {{estimated tokens}}
+byte_size: {{file size in bytes}}
+target_range_bytes: [3000, 10000]
+last_updated: {{YYYY-MM-DD}}
+last_updated_by: {{story_key}}
+created_by: {{story_key}}
+hit_count: 0
+miss_count: 0
+stories_contributed: [{{story_key}}]
+---
+# {{Playbook Title}}
 
 ## Overview
+[1-2 sentences: what this covers, when to consult it]
 
-Brief description of what this playbook covers.
+## Critical Patterns
+[Must-follow rules — the highest value per token]
 
 ## Common Gotchas
+[Symptom → cause → fix format. Capped: top entries only.]
 
-- **Gotcha 1**: Description and how to avoid
-- **Gotcha 2**: Description and how to avoid
+## Anti-Patterns
+[What it looks like → Why it fails → Better approach]
 
 ## Code Patterns
-
-**DO ✓**
-```typescript
-// Good pattern with explanation
-```
-
-**DON'T ✗**
-```typescript
-// Bad pattern with explanation why
-```
+[DO/DON'T with minimal but complete code examples]
 
 ## Test Requirements
-
-- [ ] Test requirement 1
-- [ ] Test requirement 2
+[Mandatory test scenarios for this domain]
 
 ## Related Stories
-
 - {{story_key}}: Brief description of what was learned
 ```
+
+Size target: **3-10KB** (~750-2500 tokens). Above 10KB triggers mandatory compaction.
+
+After creating, also add an entry to `docs/implementation-playbooks/_index.json` (bootstrap the file if it doesn't exist).
 
 ---
 

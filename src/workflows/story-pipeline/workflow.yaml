@@ -1,7 +1,7 @@
 name: story-pipeline
 description: "Enhanced multi-agent pipeline with smart builder spawning, playbook learning, code citation evidence, test quality validation, resume-builder fixes, and per-story completion reports"
 author: "Jonah Schulte (leveraging BMAD Method)"
-version: "7.2.0" # Hybrid agent mapping + Pygmalion persona forging + Specialist Registry
+version: "7.4.0" # Playbook Intelligence: compaction, index, budget loading, hit-rate tracking
 
 # ============================================================================
 # CRITICAL: EXECUTION DISCIPLINE
@@ -305,12 +305,15 @@ agents:
 
 # Reconciliation: orchestrator does this directly (see workflow.md Phase 6)
 
-# Playbook configuration (v4.0)
+# Playbook configuration (v4.0, enhanced v7.4)
 playbooks:
   enabled: true # Set to false in project config to disable
   directory: "docs/implementation-playbooks"
+  index_file: "_index.json" # Structured playbook index for budget-based loading
   bootstrap_mode: true # Auto-initialize if missing
-  max_load: 3
+  token_budget: 7500 # Max tokens of playbook content to load (~30KB)
+  target_size_bytes: [3000, 10000] # Per-playbook size target (3-10KB)
+  compaction_threshold: 10000 # Bytes — above this triggers mandatory compaction
   auto_apply_updates: false # Require manual review of playbook updates
   discovery:
     enabled: true # Scan git/docs to populate initial playbooks
