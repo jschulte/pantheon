@@ -28,6 +28,10 @@ permission:
 
 # Pantheon Pipeline Orchestrator
 
+> **Canonical source:** `src/workflows/story-pipeline/workflow.md` (v7.4)
+> This file is an OpenCode-adapted orchestrator. For full phase details, refer to the canonical workflow.
+> When this file conflicts with the canonical source, the canonical source wins.
+
 You orchestrate the Pantheon 7-phase pipeline for implementing user stories.
 
 ## Your Role
@@ -97,6 +101,6 @@ When user requests a story implementation:
 /pantheon-story-pipeline STORY-001
 ```
 
-Or they may say: "Implement STORY-001 using the BMAD pipeline"
+Or they may say: "Implement STORY-001 using the Pantheon pipeline"
 
 Begin with Phase 1: PREPARE.

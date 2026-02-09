@@ -61,10 +61,10 @@ Ask:
 
 ```bash
 # List existing playbooks
-ls docs/playbooks/implementation-playbooks/
+ls docs/implementation-playbooks/
 
 # Search for related content
-grep -r "{{keyword}}" docs/playbooks/implementation-playbooks/
+grep -r "{{keyword}}" docs/implementation-playbooks/
 ```
 
 ### Step 3: Decide Action
@@ -144,7 +144,7 @@ Don't just propose - actually make the changes.
   ],
   "playbook_action": {
     "action": "updated",
-    "path": "docs/playbooks/implementation-playbooks/api-patterns.md",
+    "path": "docs/implementation-playbooks/api-patterns.md",
     "reason": "Added gotcha about null response handling",
     "sections_modified": ["Common Gotchas", "Related Stories"]
   }

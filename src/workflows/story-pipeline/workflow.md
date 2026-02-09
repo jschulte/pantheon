@@ -50,7 +50,7 @@ This workflow runs in TWO contexts. The phases, quality gates, and artifacts are
 
 ### Context 1: Main Session (Sequential — via Skill)
 
-1. User invokes `/bmad_bse_story-pipeline {story-key}`
+1. User invokes `/bmad_pantheon_story-pipeline {story-key}`
 2. Main session loads this workflow.md
 3. Main session executes phases sequentially, spawning Task agents as defined below
 4. Task agents return artifacts; main session continues with next phase
@@ -395,7 +395,6 @@ Load only the current phase, execute it, then load the next.
 </success_criteria>
 
 <version_history>
-<<<<<<< HEAD
 **v7.4 - Playbook Intelligence Edition**
 1. Standardized playbook format: YAML frontmatter, token cost headers, 3-10KB size target
 2. Playbook index (`_index.json`): structured search, dedup protection, hit-rate metadata

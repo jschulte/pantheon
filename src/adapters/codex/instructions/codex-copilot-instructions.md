@@ -54,7 +54,7 @@ Save completion artifacts to `docs/sprint-artifacts/completions/`:
 
 ### Playbooks
 
-Check `docs/playbooks/implementation-playbooks/` for:
+Check `docs/implementation-playbooks/` for:
 - Gotchas and patterns
 - Code examples
 - Test requirements

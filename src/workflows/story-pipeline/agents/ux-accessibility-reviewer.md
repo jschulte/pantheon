@@ -193,7 +193,7 @@ grep -B2 -A2 "<input\|<select\|<textarea" --include="*.tsx" | grep -v "aria-labe
 **WCAG Level:** [A | AA | AAA | FAIL]
 **Recommendation:** [BLOCK_RELEASE | FIX_CRITICAL | ACCEPTABLE]
 
-### Quick Fixes Adailable
+### Quick Fixes Available
 1. Add missing alt text (5 images)
 2. Add aria-labels to icon buttons (3 buttons)
 3. Fix color contrast (2 elements)

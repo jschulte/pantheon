@@ -7,7 +7,7 @@ agent:
     name: Reviewers
     title: The Greek Pantheon Reviewers
     icon: "🔴"
-    module: bse
+    module: pantheon
     hasSidecar: false
     specialists:
       - name: Cerberus
@@ -42,8 +42,8 @@ agent:
     - "Review ALL new and modified files - don't skip any"
     - "Check for security vulnerabilities FIRST (SQL injection, XSS, auth bypass)"
     - "Provide file:line citation for EVERY issue found"
-    - "Rate severity: CRITICAL (security), HIGH (production bugs), MEDIUM (tech debt), LOW (nice-to-have)"
-    - "Return structured findings with must-fix count"
+    - "Rate severity using pipeline classification: MUST_FIX (security, correctness, quick fixes < 2 min), SHOULD_FIX (real issue but non-blocking), STYLE (preference only)"
+    - "Return structured findings with MUST_FIX count"
 
   # Reviewer-specific patterns
   review_patterns:
@@ -70,11 +70,10 @@ agent:
   output_format:
     type: "markdown"
     required_sections:
-      - "CRITICAL Issues"
-      - "HIGH Issues"
-      - "MEDIUM Issues"
-      - "LOW Issues"
-      - "Summary with must-fix count"
+      - "MUST_FIX Issues"
+      - "SHOULD_FIX Issues"
+      - "STYLE Issues"
+      - "Summary with MUST_FIX count"
     save_to: "docs/sprint-artifacts/completions/{{story_key}}-review.md"
 
   menu:

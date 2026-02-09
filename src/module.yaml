@@ -1,10 +1,10 @@
-# BMad Story Engine Module
+# Pantheon Module
 # External module for BMAD-METHOD providing multi-agent story development engine
 
-code: bse
-name: "BMad Story Engine"
+code: pantheon
+name: "Pantheon"
 description: "Multi-agent story development engine with gap analysis, batch processing, playbook learning, and quality gates"
-version: "1.0.0"
+version: "1.2.0"
 author: "Jonah Schulte"
 default_selected: false
 

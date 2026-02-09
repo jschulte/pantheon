@@ -4,14 +4,14 @@
 
   "agent": {
     "pantheon-orchestrator": {
-      "description": "BMAD Story Pipeline Orchestrator - coordinates multi-agent implementation",
+      "description": "Pantheon Story Pipeline Orchestrator - coordinates multi-agent implementation",
       "mode": "primary",
       "model": "anthropic/claude-sonnet-4"
     }
   },
 
   "instructions": {
-    "story-pipeline": "When implementing stories, use the 7-phase BMAD pipeline: PREPARE → BUILD → VERIFY → ASSESS → REFINE → COMMIT → REFLECT. Stories are in docs/sprint-artifacts/*.md. Save artifacts to docs/sprint-artifacts/completions/."
+    "story-pipeline": "When implementing stories, use the 7-phase Pantheon pipeline: PREPARE → BUILD → VERIFY → ASSESS → REFINE → COMMIT → REFLECT. Stories are in docs/sprint-artifacts/*.md. Save artifacts to docs/sprint-artifacts/completions/."
   },
 
   "tools": {

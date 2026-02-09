@@ -26,6 +26,10 @@ version: "2.1.0"  # Swarm mode + Pygmalion persona forging + Specialist Registry
 execution_mode: "multi_agent"  # multi_agent (sequential) | swarm (parallel TeammateTool)
 max_iterations: 5  # Max fix/verify cycles per run
 
+# Critical variables from config
+config_source: "{project-root}/_bmad/bmm/config.yaml"
+sprint_artifacts: "{config_source}:sprint_artifacts"
+
 # Paths
 installed_path: "{project-root}/_pantheon/workflows/batch-review"
 instructions: "{installed_path}/workflow.md"

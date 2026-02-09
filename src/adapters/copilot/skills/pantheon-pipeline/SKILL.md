@@ -1,9 +1,13 @@
 ---
-name: BMAD Story Pipeline
+name: Pantheon Story Pipeline
 description: Execute the 7-phase Pantheon pipeline to implement user stories with multi-agent verification. Invoke when implementing stories or when user mentions BMAD, Pantheon, or story pipeline.
 ---
 
 # Pantheon Pipeline
+
+> **Canonical source:** `src/workflows/story-pipeline/workflow.md` (v7.4)
+> This file is a Copilot-adapted skill. For full phase details, refer to the canonical workflow.
+> When this file conflicts with the canonical source, the canonical source wins.
 
 You are orchestrating the **Pantheon** - a 7-phase pipeline that implements user stories with multi-agent verification.
 

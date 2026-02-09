@@ -1,5 +1,9 @@
 # Universal Story Pipeline Orchestrator
 
+> **Canonical source:** `src/workflows/story-pipeline/workflow.md` (v7.4)
+> This file is a platform-agnostic adapter. For full phase details, refer to the canonical workflow.
+> When this file conflicts with the canonical source, the canonical source wins.
+
 This document provides platform-agnostic orchestration instructions for the Pantheon pipeline. Each platform adapter translates these instructions into platform-specific agent invocations.
 
 ## Platform Detection
@@ -62,7 +66,7 @@ If blocked → HALT with message
 
 ### 1.4 Load Playbooks
 
-Search `docs/playbooks/implementation-playbooks/` for relevant playbooks (max 3).
+Search `docs/implementation-playbooks/` for relevant playbooks (max 3).
 
 ---
 
