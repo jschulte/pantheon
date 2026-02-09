@@ -593,6 +593,53 @@ Teammate({
 The team name uses the epic number if filtering by epic (e.g., `batch-5`), otherwise
 a timestamp (e.g., `batch-20260203`).
 
+### Step 1.5: Spawn Quality Gate Coordinator (Optional)
+
+**When to spawn Hygeia:** If `max_workers >= 2` (parallel workers will contend for CPU),
+spawn Hygeia as a team member before any workers. Hygeia serializes expensive quality
+checks (type-check, build, full test suite) so only one runs at a time.
+
+**Load the coordinator persona:**
+Read: `{installed_path}/agents/hygeia.md`
+
+```
+Task({
+  subagent_type: "general-purpose",
+  team_name: "batch-{{epic_or_timestamp}}",
+  name: "hygeia",
+  model: "sonnet",  # Hygeia just runs bash commands, doesn't need opus
+  run_in_background: true,
+  prompt: `
+You are Hygeia, the Quality Gate Coordinator for a batch-stories swarm.
+
+## Your Instructions
+
+Read this file NOW, then follow it exactly:
+  {{project_root}}/_bmad/bse/workflows/batch-stories/agents/hygeia.md
+
+## Project Context
+
+- Project root: {{project_root}}
+- Working directory for checks: {{project_root}}/app
+- Team name: batch-{{epic_or_timestamp}}
+
+## Critical Rules
+
+- You ONLY run quality checks. Never modify code.
+- Process messages one at a time (serialization is the point).
+- Cache results when git state hasn't changed.
+- Always respond to every request — workers are waiting.
+`
+})
+```
+
+Workers will detect Hygeia's presence by reading the team config file and
+route quality check requests through her instead of running checks independently.
+
+**Skip Hygeia when:**
+- `max_workers == 1` (no contention with sequential/single worker)
+- User explicitly opts out via prompt argument
+
 ### Step 2: Spawn Workers On-Demand (Demand-Based Spawning)
 
 **Do NOT spawn all workers upfront.** Only spawn a worker when there is an unblocked
