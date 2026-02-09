@@ -13,7 +13,7 @@ Smart Builder Selection + TDD Implementation
 
 **Load the agent routing configuration:**
 ```
-Read: {project-root}/_bmad/bse/agent-routing.yaml
+Read: {project-root}/_pantheon/agent-routing.yaml
 ```
 
 **Analyze story for routing signals:**
@@ -31,7 +31,7 @@ Read: {project-root}/_bmad/bse/agent-routing.yaml
 **Load the matched specialized builder prompt:**
 ```
 # Example: If story touches app/api/** files
-Read: {project-root}/_bmad/bse/agents/builders/backend-typescript.md
+Read: {project-root}/_pantheon/agents/builders/backend-typescript.md
 BUILDER_NAME = "Hephaestus"
 BUILDER_EMOJI = "🔥"
 BUILDER_SPECIALTY = "Backend TypeScript API Development"

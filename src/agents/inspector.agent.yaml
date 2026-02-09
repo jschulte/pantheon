@@ -3,7 +3,7 @@
 agent:
   webskip: true
   metadata:
-    id: "_bmad/bse/agents/inspector.md"
+    id: "_pantheon/agents/inspector.md"
     name: Argus
     title: The All-Seeing Giant
     icon: "👁️"

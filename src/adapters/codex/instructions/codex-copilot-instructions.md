@@ -1,4 +1,4 @@
-# BMAD Story Engine - Codex/Copilot Instructions
+# Pantheon - Codex/Copilot Instructions
 
 Add this to your `.github/copilot-instructions.md` or load into Codex context.
 
@@ -6,7 +6,7 @@ Add this to your `.github/copilot-instructions.md` or load into Codex context.
 
 ## Story Implementation Pipeline
 
-When implementing stories (files in `docs/sprint-artifacts/*.md`), use the BMAD Story Engine 7-phase pipeline:
+When implementing stories (files in `docs/sprint-artifacts/*.md`), use the Pantheon 7-phase pipeline:
 
 ### Phases
 

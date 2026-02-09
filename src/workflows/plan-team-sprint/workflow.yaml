@@ -22,7 +22,7 @@ version: "1.0.0"
 
 # Paths
 config_source: "{project-root}/_bmad/bmm/config.yaml"
-installed_path: "{project-root}/_bmad/bse/workflows/plan-team-sprint"
+installed_path: "{project-root}/_pantheon/workflows/plan-team-sprint"
 instructions: "{installed_path}/workflow.md"
 templates_path: "{installed_path}/templates"
 

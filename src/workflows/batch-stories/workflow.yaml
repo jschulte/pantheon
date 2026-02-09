@@ -11,7 +11,7 @@ communication_language: "{config_source}:communication_language"
 date: system-generated
 
 # Workflow paths
-installed_path: "{project-root}/_bmad/bse/workflows/batch-stories"
+installed_path: "{project-root}/_pantheon/workflows/batch-stories"
 instructions: "{installed_path}/workflow.md"
 
 # State management
@@ -26,7 +26,7 @@ pause_between_stories: 5 # Seconds to pause between stories (allows monitoring, 
 # Super-dev-pipeline invocation settings
 super_dev_settings:
   mode: "batch" # Always use batch mode for autonomous execution
-  workflow_path: "{project-root}/_bmad/bse/workflows/story-pipeline"
+  workflow_path: "{project-root}/_pantheon/workflows/story-pipeline"
 
 # Story validation settings (NEW in v1.2.0)
 validation:

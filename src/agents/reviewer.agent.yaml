@@ -3,7 +3,7 @@
 agent:
   webskip: true
   metadata:
-    id: "_bmad/bse/agents/reviewer.md"
+    id: "_pantheon/agents/reviewer.md"
     name: Reviewers
     title: The Greek Pantheon Reviewers
     icon: "🔴"

@@ -1,6 +1,6 @@
-# BMAD Story Engine - Multi-Platform Adapters
+# Pantheon - Multi-Platform Adapters
 
-This directory contains adapters that allow the BMAD Story Engine pipeline to run on different AI coding assistants.
+This directory contains adapters that allow the Pantheon pipeline to run on different AI coding assistants.
 
 ## Supported Platforms
 
@@ -100,8 +100,8 @@ Implements new user stories with multi-agent review.
 | Platform | Command |
 |----------|---------|
 | Claude Code | `/story-pipeline story_key=17-1` |
-| OpenCode | `@bse-orchestrator "Implement STORY-001"` |
-| Copilot | `@workspace /bse-pipeline Implement STORY-001` |
+| OpenCode | `@pantheon-orchestrator "Implement STORY-001"` |
+| Copilot | `@workspace /pantheon-pipeline Implement STORY-001` |
 | Codex | `Implement STORY-001 using BMAD pipeline` |
 
 ### Batch Review (`/batch-review`)
@@ -111,7 +111,7 @@ Deep hardening sweeps on existing code. Run repeatedly until bulletproof.
 | Platform | Command |
 |----------|---------|
 | Claude Code | `/batch-review epic=17 focus="security"` |
-| OpenCode | `@bse-batch-review "Harden epic=17 focus=security"` |
+| OpenCode | `@pantheon-batch-review "Harden epic=17 focus=security"` |
 | Copilot | `@workspace /batch-review epic=17 focus="security"` |
 | Codex | `batch-review epic=17 focus="security"` |
 
@@ -133,18 +133,18 @@ focus="error handling consistency"
 
 ### OpenCode
 Files in `.opencode/agents/`:
-- `bse-orchestrator.md` - Story pipeline orchestrator
-- `bse-batch-review.md` - Batch review orchestrator
-- `bse-builder.md`, `bse-inspector.md`, etc. - Specialized agents
-- `bse-deep-reviewer.md`, `bse-issue-fixer.md` - Hardening agents
+- `pantheon-orchestrator.md` - Story pipeline orchestrator
+- `pantheon-batch-review.md` - Batch review orchestrator
+- `pantheon-builder.md`, `pantheon-inspector.md`, etc. - Specialized agents
+- `pantheon-deep-reviewer.md`, `pantheon-issue-fixer.md` - Hardening agents
 
 ### GitHub Copilot
 Skills in `.github/skills/`:
-- `bse-pipeline/` - Story pipeline skill
-- `bse-batch-review/` - Batch review skill
-- `bse-security/`, `bse-inspector/`, etc. - Specialized skills
+- `pantheon-pipeline/` - Story pipeline skill
+- `pantheon-batch-review/` - Batch review skill
+- `pantheon-security/`, `pantheon-inspector/`, etc. - Specialized skills
 
 ### Codex CLI
 Instructions in `.codex/`:
-- `bse-pipeline.md` - Story pipeline instructions
-- `bse-batch-review.md` - Batch review instructions
+- `pantheon-pipeline.md` - Story pipeline instructions
+- `pantheon-batch-review.md` - Batch review instructions

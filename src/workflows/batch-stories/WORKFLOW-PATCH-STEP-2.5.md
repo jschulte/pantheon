@@ -220,7 +220,7 @@ fi
 
 ## Documentation Update
 
-**Add to:** `_bmad/bse/workflows/batch-stories/README.md`
+**Add to:** `_pantheon/workflows/batch-stories/README.md`
 
 ```markdown
 # Batch Super-Dev Workflow

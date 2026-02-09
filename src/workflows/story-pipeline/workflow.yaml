@@ -33,7 +33,7 @@ communication_language: "{config_source}:communication_language"
 date: system-generated
 
 # Workflow paths
-installed_path: "{project-root}/_bmad/bse/workflows/story-pipeline"
+installed_path: "{project-root}/_pantheon/workflows/story-pipeline"
 instructions: "{installed_path}/workflow.md"
 agents_path: "{installed_path}/agents"
 
@@ -43,10 +43,10 @@ agents_path: "{installed_path}/agents"
 # Agent routing configuration determines which specialized builder to spawn
 # based on story content, file patterns, and project configuration.
 agent_routing:
-  config_file: "{project-root}/_bmad/bse/agent-routing.yaml"
-  builders_path: "{project-root}/_bmad/bse/agents/builders"
-  reviewers_path: "{project-root}/_bmad/bse/agents/reviewers"
-  validators_path: "{project-root}/_bmad/bse/agents/validators"
+  config_file: "{project-root}/_pantheon/agent-routing.yaml"
+  builders_path: "{project-root}/_pantheon/agents/builders"
+  reviewers_path: "{project-root}/_pantheon/agents/reviewers"
+  validators_path: "{project-root}/_pantheon/agents/validators"
 
   # Project-level override (set in project's _bmad/_config/bse.yaml)
   # If set, always use this builder regardless of detection
@@ -144,7 +144,7 @@ audit_trail: "{sprint_artifacts}/audit-story-pipeline-{{story_id}}-{{date}}.yaml
 agents:
   # ==========================================================================
   # HYBRID AGENT MAPPING (v5.1)
-  # Strategy: Use Claude Code's specialized agents + layer BSE persona on top
+  # Strategy: Use Claude Code's specialized agents + layer Pantheon persona on top
   # See agent-type-mapping.md for full documentation
   # ==========================================================================
 
@@ -217,7 +217,7 @@ agents:
     description: "Adversarial code review - finds problems (SMART ROUTING)"
     steps: [7]
     model: "{model_tier.cerberus}"  # opus for security/logic; see model_tier for overrides
-    # HYBRID: Each reviewer type uses best Claude Code agent + BSE persona
+    # HYBRID: Each reviewer type uses best Claude Code agent + Pantheon persona
     subagent_type_by_role:
       security: "auditor-security"        # OWASP expertise + Cerberus persona
       architecture: "architect-reviewer"  # SOLID/patterns + Hestia persona
@@ -290,7 +290,7 @@ agents:
     description: "Issue resolution - Mason resumes to fix critical/high issues"
     steps: [8, 9]
     subagent_type: "general-purpose"
-    bmad_agent: "{project-root}/_bmad/bse/agents/builder.md" # Mason resumes - "Measure twice, cut once"
+    bmad_agent: "{project-root}/_pantheon/agents/builder.md" # Mason resumes - "Measure twice, cut once"
     resume_builder: true # IMPORTANT: Resume Builder agent instead of spawning fresh
     prompt_file: "{agents_path}/fixer.md"
     trust_level: "medium" # Incentive to minimize work
@@ -300,7 +300,7 @@ agents:
     description: "Playbook learning - extracts patterns for future agents (DEPRECATED - use reflection_reporter)"
     steps: [10]
     subagent_type: "general-purpose"
-    bmad_agent: "{project-root}/_bmad/bse/agents/reflection.md" # Mnemosyne - Titan of Memory
+    bmad_agent: "{project-root}/_pantheon/agents/reflection.md" # Mnemosyne - Titan of Memory
     prompt_file: "{agents_path}/reflection.md"
     timeout: 900 # 15 minutes
     deprecated: true # Use reflection_reporter instead
@@ -428,6 +428,6 @@ final_verification:
 fallback_to_v1:
   enabled: true
   condition: "execution_mode == 'single_agent'"
-  workflow: "{project-root}/_bmad/bse/workflows/story-pipeline"
+  workflow: "{project-root}/_pantheon/workflows/story-pipeline"
 
 standalone: true
