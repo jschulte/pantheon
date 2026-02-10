@@ -1,6 +1,10 @@
 <div align="center">
 
-<img src="images/pantheon-logo.jpg" alt="Pantheon" width="400">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="images/pantheon-logo-dark-mode.jpg">
+  <source media="(prefers-color-scheme: light)" srcset="images/pantheon-logo.jpg">
+  <img src="images/pantheon-logo.jpg" alt="Pantheon" width="400">
+</picture>
 
 **Turn Claude Code into a self-improving engineering team.**
 
