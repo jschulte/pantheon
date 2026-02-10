@@ -472,7 +472,7 @@ validator_routing:
     always_include: true
 
 # =============================================================================
-# COMPLEXITY ROUTING (Canonical Source — v7.4)
+# COMPLEXITY ROUTING (Canonical Source — v1)
 # =============================================================================
 # This is the single source of truth for complexity tiers.
 # story-pipeline/workflow.yaml and batch-stories/workflow.yaml reference this.

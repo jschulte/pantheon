@@ -2,7 +2,7 @@
 
 Enhanced multi-agent pipeline featuring the Greek Pantheon: Metis (builder), Argus (inspector), Nemesis (test quality), specialized reviewers (Cerberus, Apollo, Hestia, Arete, Iris), Themis (arbiter for triage), and Hermes (reflection + reporting).
 
-## What's New in v7.4
+## What's New in v1
 
 ### v7.0: Pygmalion Persona Forging
 - Domain-specific specialist reviewers forged on-the-fly based on story context
@@ -16,7 +16,7 @@ Enhanced multi-agent pipeline featuring the Greek Pantheon: Metis (builder), Arg
 - Separate .md files per phase (75% context reduction vs monolithic workflow)
 - User-configurable reviewer count for flexible review depth
 
-### v7.4: Playbook Intelligence
+### v1: Playbook Intelligence
 - Compaction protocol targeting 3-10KB per playbook
 - Structured `_index.json` for fast lookups without loading full playbook content
 - Token budget loading to stay within context limits
@@ -198,7 +198,7 @@ The workflow uses agents for **verification parallelism**, not **implementation 
 - `agents/ux-accessibility-reviewer.md` - **Iris** 🌈 - Accessibility review
 
 **Workflow Config:**
-- `workflow.yaml` - Main configuration (v7.4)
+- `workflow.yaml` - Main configuration (v1)
 - `workflow.md` - Complete step-by-step documentation
 
 **Templates:**

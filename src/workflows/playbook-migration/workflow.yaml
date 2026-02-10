@@ -1,5 +1,5 @@
 name: playbook-migration
-description: "One-time migration utility: converts legacy playbooks to v7.4 standardized format, bootstraps _index.json, and retroactively backfills learnings from historical mnemosyne/themis/review artifacts."
+description: "One-time migration utility: converts legacy playbooks to v1 standardized format, bootstraps _index.json, and retroactively backfills learnings from historical mnemosyne/themis/review artifacts."
 author: "Jonah Schulte (leveraging BMAD Method)"
 
 # Critical variables from config
@@ -19,7 +19,7 @@ variables:
   backfill: true # If true, scan historical artifacts for uncaptured learnings
   max_artifact_scan: 50 # Max historical artifacts to scan (most recent first)
 
-# Target format (from story-pipeline v7.4)
+# Target format (from story-pipeline v1)
 target_format:
   frontmatter_required: true
   required_sections:

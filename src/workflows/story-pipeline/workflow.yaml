@@ -384,7 +384,7 @@ agents:
 
 # Reconciliation: orchestrator does this directly (see workflow.md Phase 6)
 
-# Playbook configuration (v4.0, enhanced v7.4)
+# Playbook configuration (v4.0, enhanced v1)
 playbooks:
   enabled: true # Set to false in project config to disable
   directory: "docs/implementation-playbooks"

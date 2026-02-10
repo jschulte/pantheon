@@ -2,11 +2,11 @@
 
 <purpose>
 One-time migration utility for repos with existing playbooks. Converts legacy format
-to v7.4 standardized format (YAML frontmatter, required sections, size targets),
+to v1 standardized format (YAML frontmatter, required sections, size targets),
 bootstraps the _index.json, and retroactively backfills learnings from historical
 pipeline artifacts (mnemosyne, themis, review JSONs).
 
-Run this ONCE per repo when upgrading to story-pipeline v7.4.
+Run this ONCE per repo when upgrading to story-pipeline v1.
 Safe to re-run — idempotent (skips already-migrated playbooks, merges new artifacts).
 </purpose>
 
@@ -54,7 +54,7 @@ For EACH playbook file found:
 READ the file. Classify its current state:
 
 FORMAT_STATUS:
-  - "v7.4"       → Has YAML frontmatter with all required fields (id, domains, token_cost, etc.)
+  - "v1"       → Has YAML frontmatter with all required fields (id, domains, token_cost, etc.)
   - "partial"    → Has some frontmatter or some required sections, but incomplete
   - "legacy"     → No frontmatter, freeform format (the common case)
   - "empty"      → File exists but has no meaningful content
@@ -143,7 +143,7 @@ Display summary:
 📊 DISCOVERY RESULTS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Playbooks found: {{count}}
-  - v7.4 format:  {{count}} (will skip)
+  - v1 format:  {{count}} (will skip)
   - Partial:      {{count}} (will complete)
   - Legacy:       {{count}} (will migrate)
   - Empty:        {{count}} (will remove or populate)
@@ -169,7 +169,7 @@ Estimated uncaptured learnings: {{count}}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🔄 PHASE 2: BACKUP + REFORMAT
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Back up originals, convert to v7.4 format
+Back up originals, convert to v1 format
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
@@ -187,7 +187,7 @@ echo "Backed up {{count}} files to $BACKUP_DIR"
 
 ### 2.2 Reformat Each Playbook
 
-For EACH playbook in `PLAYBOOK_INVENTORY[]` where `FORMAT_STATUS != "v7.4"`:
+For EACH playbook in `PLAYBOOK_INVENTORY[]` where `FORMAT_STATUS != "v1"`:
 
 **Step A: Read the full legacy content.**
 
@@ -235,8 +235,8 @@ token_cost: {{byte_size / 4, rounded to nearest 50}}
 byte_size: {{calculate after reformat}}
 target_range_bytes: [3000, 10000]
 last_updated: {{extract from "Last updated" line, or file mtime, or today}}
-last_updated_by: {{extract story key from "Last updated" line, or "MIGRATION-v7.4"}}
-created_by: {{earliest story key found in file, or "MIGRATION-v7.4"}}
+last_updated_by: {{extract story key from "Last updated" line, or "MIGRATION-v1"}}
+created_by: {{earliest story key found in file, or "MIGRATION-v1"}}
 hit_count: 0
 miss_count: 0
 stories_contributed: {{all story keys found in file content}}
@@ -486,9 +486,9 @@ Write to `{{sprint_artifacts}}/playbook-migration-report.md`:
 | Metric | Count |
 |--------|-------|
 | Playbooks found | {{n}} |
-| Reformatted (legacy → v7.4) | {{n}} |
-| Completed (partial → v7.4) | {{n}} |
-| Already v7.4 (skipped) | {{n}} |
+| Reformatted (legacy → v1) | {{n}} |
+| Completed (partial → v1) | {{n}} |
+| Already v1 (skipped) | {{n}} |
 | Empty (flagged) | {{n}} |
 | New playbooks created | {{n}} |
 
@@ -589,13 +589,13 @@ The report shows exactly what WOULD change, including before/after diffs for eac
 
 This workflow is safe to re-run:
 
-- **Already-migrated playbooks** (FORMAT_STATUS = "v7.4") are skipped in Phase 2
+- **Already-migrated playbooks** (FORMAT_STATUS = "v1") are skipped in Phase 2
 - **Backup directory** is only created once; subsequent runs don't overwrite backups
 - **Backfill deduplication** (Phase 3.2) prevents adding learnings that already exist
 - **Index rebuild** (Phase 4) regenerates from current state, preserving hit/miss counts
 - **Artifacts are read-only** — the workflow never modifies historical artifacts
 
-The ONE exception: if you want to force re-migration of an already-v7.4 playbook (e.g., to re-apply backfill), delete its frontmatter first.
+The ONE exception: if you want to force re-migration of an already-v1 playbook (e.g., to re-apply backfill), delete its frontmatter first.
 </idempotency>
 
 <artifact_data_quality>

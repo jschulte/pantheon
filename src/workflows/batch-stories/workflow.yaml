@@ -138,8 +138,9 @@ swarm_config:
   delegate_mode: recommended    # Use Shift+Tab delegate mode for the lead so it coordinates without implementing
 
   # Quality Gate Coordinator (Hygeia) — serializes expensive quality checks across workers
-  # Spawns as a team member when max_workers >= 2. Workers message Hygeia for type-check/build
-  # instead of running them independently, preventing CPU contention from parallel tsc processes.
+  # Spawns as a team member when max_workers >= 2. Workers queue check requests with Hygeia
+  # instead of running them independently. Hygeia runs one check at a time and serves fresh
+  # results to all waiting workers — no caching, preventing both CPU contention and stale results.
   quality_gate:
     enabled: true               # Set false to disable Hygeia (workers run checks independently)
     min_workers_to_spawn: 2     # Only spawn Hygeia when this many workers are active
