@@ -35,9 +35,14 @@
   "type": "module",
   "main": "src/module.yaml",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "validate:yaml": "node -e \"const yaml=require('yaml');const fs=require('fs');const glob=require('glob');glob.sync('src/**/*.yaml').forEach(f=>{try{yaml.parse(fs.readFileSync(f,'utf8'));console.log('OK:',f)}catch(e){console.error('FAIL:',f,e.message);process.exit(1)}})\"",
-    "lint:md": "markdownlint 'src/**/*.md' --ignore node_modules"
+    "lint:md": "markdownlint 'src/**/*.md' --ignore node_modules",
+    "validate:stories": "bash scripts/validate-all-stories.sh",
+    "check:drift": "bash scripts/detect-adapter-drift.sh",
+    "sanitize": "bash scripts/sanitize-story.sh"
   },
   "peerDependencies": {
     "bmad-method": ">=6.0.0"
@@ -46,5 +51,12 @@
     "type": "module",
     "moduleDefinition": "src/module.yaml",
     "code": "pantheon"
+  },
+  "devDependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "glob": "^13.0.1",
+    "vitest": "^4.0.18",
+    "yaml": "^2.8.2"
   }
 }

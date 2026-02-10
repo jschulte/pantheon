@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pantheon/reflection-learning",
+  "title": "Reflection Learning Artifact",
+  "description": "Output produced by Hermes during Phase 7 REFLECT — extracted learnings and playbook updates",
+  "type": "object",
+  "required": ["agent", "story_key", "learnings", "playbook_updates"],
+  "properties": {
+    "agent": {
+      "type": "string",
+      "const": "hermes"
+    },
+    "story_key": {
+      "type": "string",
+      "pattern": "^[0-9]+-[0-9]+$"
+    },
+    "learnings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["pattern", "domain", "source"],
+        "properties": {
+          "pattern": {
+            "type": "string",
+            "description": "The pattern, gotcha, or anti-pattern learned"
+          },
+          "domain": {
+            "type": "string",
+            "description": "Technology or domain this applies to"
+          },
+          "source": {
+            "type": "string",
+            "enum": ["review_finding", "build_issue", "test_gap", "security_issue", "performance_issue"]
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["critical", "important", "informational"]
+          },
+          "example": {
+            "type": "string",
+            "description": "Concrete code example from this story"
+          }
+        }
+      }
+    },
+    "playbook_updates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["action", "playbook"],
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["create", "update", "compact"]
+          },
+          "playbook": {
+            "type": "string",
+            "description": "Playbook filename"
+          },
+          "entries_added": { "type": "integer", "minimum": 0 },
+          "entries_merged": { "type": "integer", "minimum": 0 },
+          "entries_removed": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "anti_patterns": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["pattern", "why_it_fails"],
+        "properties": {
+          "pattern": { "type": "string", "description": "What looks right but is wrong" },
+          "why_it_fails": { "type": "string", "description": "Why this approach fails" },
+          "correct_approach": { "type": "string" }
+        }
+      }
+    },
+    "story_summary": {
+      "type": "object",
+      "properties": {
+        "total_issues_found": { "type": "integer" },
+        "must_fix_resolved": { "type": "integer" },
+        "iterations_needed": { "type": "integer" },
+        "coverage_achieved": { "type": "number" },
+        "new_patterns_extracted": { "type": "integer" }
+      }
+    }
+  }
+}

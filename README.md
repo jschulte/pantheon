@@ -299,8 +299,16 @@ pantheon/
 │       ├── opencode/
 │       ├── copilot/
 │       └── codex/
+├── scripts/
+│   ├── validate-all-stories.sh   # Pre-batch story validation
+│   ├── sanitize-story.sh         # Story file sanitization
+│   └── detect-adapter-drift.sh   # Adapter sync verification
 └── docs/
-    └── specialist-registry/      # Forged specialist personas
+    ├── specialist-registry/      # Forged specialist personas
+    ├── adrs/                     # Architecture Decision Records
+    ├── TROUBLESHOOTING.md        # Common issues and solutions
+    ├── PLATFORM-MIGRATION.md     # Cross-platform migration guide
+    └── PHASE-FLOWCHART.md        # Pipeline flow visualization
 ```
 
 ---

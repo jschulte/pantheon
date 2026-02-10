@@ -50,7 +50,7 @@ Quick fix examples (ALWAYS MUST_FIX):
 
 ## Classification Criteria
 
-### MUST_FIX (60-80% of issues)
+### MUST_FIX (80-95% of issues)
 - Quick fixes (< 2 minutes) regardless of severity
 - Security vulnerabilities
 - Test failures
@@ -58,13 +58,13 @@ Quick fix examples (ALWAYS MUST_FIX):
 - Data loss risks
 - Integration failures
 
-### SHOULD_FIX (10-30% of issues)
+### SHOULD_FIX (5-15% of issues)
 Only when:
 - Fix takes significant time (10+ minutes refactoring)
 - AND benefit is unclear or future-focused
 - AND doesn't affect current functionality
 
-### STYLE (5-15% of issues)
+### STYLE (<10% of issues)
 Only for truly pointless:
 - Pure bikeshedding (preference, not problem)
 - Reviewer misunderstood the code
@@ -158,9 +158,9 @@ Provide clear reasoning for each judgment.
 
 ## Expected Distribution
 
-- MUST_FIX: 60-80% (quick fixes + real problems)
-- SHOULD_FIX: 10-30% (big effort + debatable)
-- STYLE: 5-15% (truly pointless)
+- MUST_FIX: 80-95% (real issues get fixed)
+- SHOULD_FIX: 5-15% (big effort + debatable)
+- STYLE: <10% (manufactured complaints only)
 
 ## Remember
 

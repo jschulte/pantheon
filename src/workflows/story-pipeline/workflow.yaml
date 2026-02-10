@@ -143,6 +143,10 @@ persona_forging:
       min_age_days: 7              # Don't evict specialists younger than 7 days
       stale_after_days: 90         # Specialists unused for 90 days are eviction candidates
       protect_high_performers: true # Never evict specialists with hit_rate > 0.8
+    # Lock configuration for concurrent registry/playbook writes (swarm mode)
+    lock_timeout_seconds: 180     # Stale lock detection threshold
+    lock_retry_delay_ms: 500      # Initial retry delay (doubles with exponential backoff)
+    lock_max_retries: 5           # Maximum lock acquisition attempts
 
 # =============================================================================
 # REVIEWER LIMITS (v7.3)

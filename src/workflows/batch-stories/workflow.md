@@ -17,6 +17,28 @@ Interactive story selector for batch implementation. Scan codebase for gaps, sel
 Orchestrator coordinates. Agents do implementation. Orchestrator does reconciliation.
 </philosophy>
 
+<story_quality_guidance>
+**IMPORTANT: Story File Quality Determines Output Quality**
+
+Before running batch-stories, verify your story files are robust enough:
+
+| File Size | Likely Quality | Recommendation |
+|-----------|---------------|----------------|
+| < 3KB | Too thin | Will produce poor results. Regenerate with more context. |
+| 3-6KB | Minimal | May work for trivial/micro stories only. Enrich for anything larger. |
+| 6-10KB | Adequate | Sufficient for light/standard stories. |
+| 10KB+ | Good | Recommended for standard+ stories. Rich context = better implementation. |
+
+**What makes a story robust:**
+- Detailed Business Context (not just "add a button")
+- Specific Acceptance Criteria with edge cases
+- Technical Requirements mentioning frameworks, patterns, constraints
+- Dev Agent Guardrails with anti-patterns and gotchas
+- Current State describing what exists already
+
+**Rule of thumb:** If the story doesn't give a human developer enough context to implement it well, it won't give an AI agent enough either. Run `npm run validate:stories` before batch processing.
+</story_quality_guidance>
+
 <config>
 name: batch-stories
 modes:
@@ -169,17 +191,57 @@ Legend: ✅ ready | ❌ missing | 🔄 done but not tracked
 </step>
 
 <step name="validate_stories">
-**Validate story files have required sections**
+**Validate story files have required sections and sufficient depth**
 
 For each story with existing file:
 1. Read story file
 2. Check for 12 BMAD sections (Business Context, Acceptance Criteria, Tasks, etc.)
-3. If invalid: mark for regeneration
+3. Check file size for quality signal
+4. If invalid: mark for regeneration
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🔍 VALIDATING STORY FILES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+**File size quality check:**
+```bash
+for STORY_FILE in ${STORY_FILES[@]}; do
+  FILE_SIZE=$(wc -c < "$STORY_FILE" | tr -d ' ')
+  STORY_NAME=$(basename "$STORY_FILE" .md)
+
+  if [ "$FILE_SIZE" -lt 3000 ]; then
+    echo "⚠️  $STORY_NAME (${FILE_SIZE}B) — TOO THIN: likely insufficient context"
+    THIN_STORIES+=("$STORY_NAME")
+  elif [ "$FILE_SIZE" -lt 6000 ]; then
+    echo "⚠️  $STORY_NAME (${FILE_SIZE}B) — may lack detail for quality implementation"
+    THIN_STORIES+=("$STORY_NAME")
+  else
+    SIZE_KB=$((FILE_SIZE / 1024))
+    echo "✅ $STORY_NAME (${SIZE_KB}KB)"
+  fi
+done
+```
+
+**If thin stories found, prompt user:**
+```
+IF THIN_STORIES.length > 0:
+  Use AskUserQuestion:
+    "Found {{THIN_STORIES.length}} story file(s) under 6KB. Thin stories often
+    produce poor results — they lack the context agents need for quality work.
+    Most stories should be 10KB+ with detailed Business Context, Acceptance
+    Criteria, and Technical Requirements.
+
+    Thin stories: {{THIN_STORIES}}
+
+    What would you like to do?"
+
+    Options:
+    1. "Continue anyway" — Process all stories including thin ones
+    2. "Skip thin stories" — Only process stories >= 6KB
+    3. "Regenerate thin stories first" — Run /create-story-with-gap-analysis on thin ones
+    4. "Cancel" — Stop and review story files manually
 ```
 
 **Note:** Stories with missing files will be auto-created in the execution step.
@@ -897,6 +959,10 @@ As each worker reports completion:
 
 **This happens incrementally** — as soon as a story is reported complete, reconcile it.
 Don't wait for all stories to finish.
+
+> **Detailed reconciliation protocol:** See `step-4.5-reconcile-story-status.md` for the
+> full step-by-step reconciliation procedure (task check-off logic, Dev Agent Record filling,
+> sprint-status.yaml updates, and edge case handling).
 
 ### Step 6: Wait for All Workers to Finish
 

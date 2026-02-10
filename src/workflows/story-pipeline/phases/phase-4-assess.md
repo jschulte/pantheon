@@ -160,18 +160,25 @@ After triage, update playbook effectiveness metrics based on review outcomes.
 ```
 FOR EACH playbook loaded in Phase 1:
   playbook_domains = playbook.domains
-  matching_issues = issues where domain overlaps with playbook_domains
+  story_domains = domains actually touched by this story (from file patterns + keywords)
 
-  IF matching_issues.length == 0:
-    → HIT: Playbook guidance was followed, no issues in this domain
+  # RELEVANCE CHECK (M15): Only score playbooks against domains the story actually touches.
+  # A playbook about "auth" is irrelevant to a UI-only story — don't score it.
+  domain_overlap = playbook_domains ∩ story_domains
+  IF domain_overlap is empty:
+    → SKIP: Playbook domain not relevant to this story (no signal)
+    # Don't update counts — prevents inflating hit-rate with irrelevant loads
+
+  ELIF matching_issues for domain_overlap == 0:
+    → HIT: Playbook guidance was followed in relevant domain, no issues found
     playbook.hit_count += 1
 
   ELIF any matching_issue matches a SPECIFIC playbook entry (gotcha/anti-pattern):
-    → MISS: Playbook was loaded but guidance not followed
+    → MISS: Playbook was loaded but specific guidance not followed
     playbook.miss_count += 1
 
   ELSE:
-    → NEUTRAL: Issues exist but don't match playbook entries (no signal)
+    → NEUTRAL: Issues exist in domain but don't match playbook entries
     # Don't update counts
 
   Recalculate: playbook.hit_rate = hit_count / (hit_count + miss_count)
@@ -184,14 +191,16 @@ FOR EACH playbook loaded in Phase 1:
 {
   "playbook_effectiveness": {
     "loaded": ["api-patterns", "auth-patterns"],
+    "relevant": ["api-patterns"],
+    "skipped_irrelevant": ["auth-patterns"],
     "hits": ["api-patterns"],
     "misses": [],
-    "neutral": ["auth-patterns"]
+    "neutral": []
   }
 }
 ```
 
-This is a coarse heuristic. Over 20+ stories it becomes meaningful even if individual measurements are noisy.
+This is a coarse heuristic. The relevance check prevents inflating hit-rates by counting irrelevant domain loads as "hits." Over 20+ stories it becomes meaningful even if individual measurements are noisy.
 
 ---
 
