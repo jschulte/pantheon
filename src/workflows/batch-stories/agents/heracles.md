@@ -102,15 +102,46 @@ For each claimed story, you execute the **full story-pipeline**. You do NOT para
 
 Read these files at the start of each story (use the Read tool):
 
-1. **`{project-root}/_pantheon/workflows/story-pipeline/workflow.md`** — The complete 7-phase pipeline definition. This is your primary instruction set for execution.
-2. **`{project-root}/_pantheon/workflows/story-pipeline/workflow.yaml`** — Pipeline configuration (agent routing, complexity thresholds, artifact paths).
-3. **`{project-root}/_pantheon/workflows/story-pipeline/agent-routing.yaml`** — Maps story types to builder personas and reviewer sets.
+1. **`{project-root}/_bmad/pantheon/workflows/story-pipeline/workflow.md`** — The complete 7-phase pipeline definition. This is your primary instruction set for execution.
+2. **`{project-root}/_bmad/pantheon/workflows/story-pipeline/workflow.yaml`** — Pipeline configuration (agent routing, complexity thresholds, artifact paths).
+3. **`{project-root}/_bmad/pantheon/workflows/story-pipeline/agent-routing.yaml`** — Maps story types to builder personas and reviewer sets.
 
 ### Step 2: Execute Each Phase As Documented
 
 Follow the phases exactly as defined in workflow.md: PREPARE → FORGE → BUILD → VERIFY → ASSESS → REFINE → COMMIT → REFLECT.
 
 **You ARE the pipeline orchestrator.** You coordinate phases sequentially and spawn Task sub-agents for each phase as the workflow specifies.
+
+### Already-Implemented Detection
+
+During PREPARE, if the story file shows ALL tasks already checked off (`- [x]`),
+or if gap analysis reveals zero remaining work:
+
+1. Write a progress artifact with status `"ALREADY_DONE"` and current_phase `"COMPLETE"`:
+   ```json
+   {
+     "story_key": "{{story_key}}",
+     "current_phase": "COMPLETE",
+     "status": "ALREADY_DONE",
+     "phases": {
+       "PREPARE": { "status": "complete", "details": "All tasks already checked — skipped pipeline" }
+     }
+   }
+   ```
+   Save to: `docs/sprint-artifacts/completions/{{story_key}}-progress.json`
+
+2. Mark task as completed: `TaskUpdate(taskId, status="completed")`
+
+3. Report to team lead:
+   ```
+   SendMessage(type="message", recipient="team-lead",
+     content="⏭️ {story_key} ALREADY IMPLEMENTED — all tasks checked, no gaps found. Skipped.",
+     summary="{story_key} already done, skipped")
+   ```
+
+4. Continue self-scheduling loop (check TaskList for next task)
+
+Do NOT run BUILD/VERIFY/ASSESS/REFINE/COMMIT/REFLECT for already-done stories.
 
 ### Sub-Agent Spawning Authority
 
