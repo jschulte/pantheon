@@ -1,4 +1,6 @@
-# Batch-Super-Dev Step 2.5 Patch
+# Batch Stories Step 2.5 Patch
+
+> **Status:** Known limitation. This documents a workaround for agent-to-workflow invocation constraints. The patch code below should be applied to `instructions.md` if you encounter this issue.
 
 **Issue:** Step 2.5 tries to invoke `/create-story-with-gap-analysis` which agents cannot do
 **Impact:** Skeleton stories get skipped instead of regenerated
@@ -223,7 +225,7 @@ fi
 **Add to:** `_pantheon/workflows/batch-stories/README.md`
 
 ```markdown
-# Batch Super-Dev Workflow
+# Batch Stories Workflow
 
 ## Critical Prerequisites
 

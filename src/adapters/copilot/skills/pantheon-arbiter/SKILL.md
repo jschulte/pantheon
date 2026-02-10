@@ -27,19 +27,19 @@ Quick fix examples (ALWAYS MUST_FIX):
 
 ## Classification
 
-### MUST_FIX (60-80% of issues)
+### MUST_FIX (80-95% of issues)
 - Quick fixes (< 2 minutes)
 - Security vulnerabilities
 - Test failures
 - Broken functionality
 - Integration failures
 
-### SHOULD_FIX (10-30% of issues)
+### SHOULD_FIX (5-15% of issues)
 - Significant effort (10+ minutes)
 - AND benefit is unclear
 - AND doesn't affect current functionality
 
-### STYLE (5-15% of issues)
+### STYLE (<10% of issues)
 - Pure bikeshedding
 - Reviewer misunderstood
 - Exceeds project standards

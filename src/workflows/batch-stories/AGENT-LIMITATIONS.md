@@ -40,7 +40,7 @@
 
 **Available sub-agent types for pipeline phases:**
 - `general-purpose` — Metis (builder), Pygmalion (forge), Mnemosyne (reflect)
-- `dev-frontend` — Apollo (frontend builder)
+- `dev-frontend` — Helios (frontend builder)
 - `dev-typescript` — Hephaestus (backend builder)
 - `database-administrator` — Athena (database builder)
 - `engineer-deployment` — Atlas (infrastructure builder)
@@ -307,7 +307,7 @@ done
 ## Summary
 
 **The Golden Rule:**
-> **Batch-super-dev is for EXECUTION, not CREATION.**
+> **Batch-stories is for EXECUTION, not CREATION.**
 >
 > Story creation is interactive and requires user input.
 > Always create/regenerate stories BEFORE batch execution.

@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pantheon/reviewer-findings",
+  "title": "Reviewer Findings Artifact",
+  "description": "Output produced by reviewer agents (Cerberus, Hestia, Apollo, etc.) during Phase 3 VERIFY",
+  "type": "object",
+  "required": ["agent", "story_key", "findings"],
+  "properties": {
+    "agent": {
+      "type": "string",
+      "description": "Reviewer agent ID (e.g., 'cerberus', 'hestia', 'forged:tyche')"
+    },
+    "story_key": {
+      "type": "string",
+      "pattern": "^[0-9]+-[0-9]+$"
+    },
+    "review_perspective": {
+      "type": "string",
+      "description": "What this reviewer focused on (security, architecture, test quality, etc.)"
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "severity", "title", "file", "description"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique finding ID (e.g., 'SEC-001', 'ARCH-003')"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["MUST_FIX", "SHOULD_FIX", "STYLE"]
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "file": {
+            "type": "string",
+            "description": "File path where issue was found"
+          },
+          "line": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Line number (required for code citations)"
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed explanation with evidence"
+          },
+          "suggested_fix": {
+            "type": "string",
+            "description": "Recommended code change"
+          },
+          "category": {
+            "type": "string",
+            "enum": ["security", "architecture", "performance", "testing", "quality", "accessibility", "logic", "domain"]
+          }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "properties": {
+        "total_findings": { "type": "integer" },
+        "must_fix": { "type": "integer" },
+        "should_fix": { "type": "integer" },
+        "style": { "type": "integer" }
+      }
+    }
+  }
+}

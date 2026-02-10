@@ -54,6 +54,11 @@ ls docs/implementation-playbooks/
 | No real learnings | **SKIP** |
 
 **Step 4: Revise playbook (Compaction Protocol)**
+
+**Concurrency note (M16):** In swarm mode, acquire `docs/implementation-playbooks/.write-lock`
+before writing playbooks (same mkdir-based protocol as specialist registry — see phase-1.5-forge.md).
+Re-read `_index.json` after acquiring lock.
+
 - If updating: Read full playbook → assess entries vs new learnings → MERGE overlaps, REPLACE stale, ADD novel → check size budget (3-10KB target) → use Write tool for FULL FILE REPLACEMENT (not Edit/append) → update _index.json
 - If creating: Use Write tool with standardized format (YAML frontmatter + required sections) → add entry to _index.json
 

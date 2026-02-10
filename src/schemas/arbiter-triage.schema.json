@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pantheon/arbiter-triage",
+  "title": "Arbiter Triage Artifact",
+  "description": "Output produced by Themis during Phase 4 ASSESS — triages all reviewer findings",
+  "type": "object",
+  "required": ["agent", "story_key", "triaged_findings", "summary"],
+  "properties": {
+    "agent": {
+      "type": "string",
+      "const": "themis"
+    },
+    "story_key": {
+      "type": "string",
+      "pattern": "^[0-9]+-[0-9]+$"
+    },
+    "triaged_findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["original_id", "original_agent", "final_severity", "triage_reason"],
+        "properties": {
+          "original_id": {
+            "type": "string",
+            "description": "ID from the reviewer's finding"
+          },
+          "original_agent": {
+            "type": "string",
+            "description": "Which reviewer raised this finding"
+          },
+          "original_severity": {
+            "type": "string",
+            "enum": ["MUST_FIX", "SHOULD_FIX", "STYLE"]
+          },
+          "final_severity": {
+            "type": "string",
+            "enum": ["MUST_FIX", "SHOULD_FIX", "STYLE", "DISMISSED"]
+          },
+          "triage_reason": {
+            "type": "string",
+            "description": "Why this finding was promoted, kept, demoted, or dismissed"
+          },
+          "quick_fix": {
+            "type": "boolean",
+            "description": "True if fixable in <2 minutes (auto-promoted to MUST_FIX)"
+          },
+          "duplicate_of": {
+            "type": "string",
+            "description": "ID of the finding this duplicates (if deduplicated)"
+          }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["must_fix_count", "should_fix_count", "style_count", "dismissed_count"],
+      "properties": {
+        "must_fix_count": { "type": "integer", "minimum": 0 },
+        "should_fix_count": { "type": "integer", "minimum": 0 },
+        "style_count": { "type": "integer", "minimum": 0 },
+        "dismissed_count": { "type": "integer", "minimum": 0 },
+        "duplicates_merged": { "type": "integer", "minimum": 0 },
+        "promotions": { "type": "integer", "minimum": 0, "description": "Findings promoted to higher severity" },
+        "demotions": { "type": "integer", "minimum": 0, "description": "Findings demoted to lower severity" }
+      }
+    }
+  }
+}

@@ -26,7 +26,7 @@ When implementing stories (files in `docs/sprint-artifacts/*.md`), use the Panth
 
 **Quick Fix Rule**: If an issue takes < 2 minutes to fix, it's MUST_FIX regardless of severity.
 
-**Pragmatic Triage**: Focus on real issues, not gold-plating. Expected: 60-80% MUST_FIX, 10-30% SHOULD_FIX, 5-15% STYLE.
+**Pragmatic Triage**: Focus on real issues, not gold-plating. Expected: 80-95% MUST_FIX, 5-15% SHOULD_FIX, <10% STYLE.
 
 ### Artifacts
 

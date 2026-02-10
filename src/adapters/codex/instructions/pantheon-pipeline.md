@@ -4,6 +4,12 @@
 > This file is a Codex-adapted summary. For full phase details, refer to the canonical workflow.
 > When this file conflicts with the canonical source, the canonical source wins.
 
+> **Limitation — Degraded Mode:** Codex CLI runs sequentially with a single agent context.
+> Pantheon's core value proposition — independent verification by separate agents — is weakened here
+> because the same agent that builds the code also reviews it (via persona-switching). This means the
+> builder's implicit biases carry into the review phase. For full independent verification, use
+> Claude Code or another platform that supports parallel agent spawning.
+
 When implementing user stories, follow this 7-phase pipeline for quality assurance.
 
 ## Overview
@@ -123,9 +129,9 @@ Examples: null check, typo fix, aria-label, variable rename
 
 ### Expected Distribution
 
-- MUST_FIX: 60-80%
-- SHOULD_FIX: 10-30%
-- STYLE: 5-15%
+- MUST_FIX: 80-95%
+- SHOULD_FIX: 5-15%
+- STYLE: <10%
 
 ## Phase 5: REFINE
 

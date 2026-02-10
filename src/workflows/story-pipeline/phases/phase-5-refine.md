@@ -237,8 +237,18 @@ Update `docs/sprint-artifacts/completions/{{story_key}}-progress.json`:
 After all MUST_FIX issues are resolved, commit the implementation:
 
 ```bash
-# Stage only implementation files (not .env, credentials, temp files)
-git add src/ lib/ app/ components/ pages/ public/ prisma/ tests/ __tests__/
+# Stage ONLY files from the builder completion artifact (targeted git add)
+# This prevents accidentally committing debug code, temp files, or parallel work
+BUILDER_ARTIFACT="docs/sprint-artifacts/completions/{{story_key}}-metis.json"
+if [ -f "$BUILDER_ARTIFACT" ]; then
+  # Extract file lists from builder artifact and stage them
+  FILES_CREATED=$(node -e "const a=JSON.parse(require('fs').readFileSync('$BUILDER_ARTIFACT'));(a.files_created||[]).forEach(f=>console.log(f))")
+  FILES_MODIFIED=$(node -e "const a=JSON.parse(require('fs').readFileSync('$BUILDER_ARTIFACT'));(a.files_modified||[]).forEach(f=>console.log(f))")
+  echo "$FILES_CREATED" "$FILES_MODIFIED" | xargs git add
+else
+  # Fallback: stage common implementation directories (less precise)
+  git add src/ lib/ app/ components/ pages/ public/ prisma/ tests/ __tests__/
+fi
 git add package.json package-lock.json tsconfig.json
 # Stage sprint artifacts
 git add docs/sprint-artifacts/

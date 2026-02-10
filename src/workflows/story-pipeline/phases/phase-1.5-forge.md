@@ -66,10 +66,64 @@ Save to: docs/sprint-artifacts/completions/{{story_key}}-pygmalion.json
 })
 ```
 
-### Process Pygmalion Output
+### Validate Pygmalion Output (H2 — Security Hardening)
+
+Before consuming Pygmalion's output, the orchestrator validates structure and sanitizes content.
+This prevents malicious story content from propagating through forged specialist prompts.
 
 ```
 FORGED_SPECS = read("docs/sprint-artifacts/completions/{{story_key}}-pygmalion.json")
+
+# --- STRUCTURAL VALIDATION ---
+# Required top-level fields
+ASSERT FORGED_SPECS has keys: agent, story_key, complexity_tier, skipped, forged_specialists, summary
+ASSERT FORGED_SPECS.agent == "pygmalion"
+ASSERT FORGED_SPECS.forged_specialists is Array
+
+# Enforce complexity gate limits
+MAX_ALLOWED = complexity_routing[COMPLEXITY].max_specialists  # from agent-routing.yaml
+IF FORGED_SPECS.forged_specialists.length > MAX_ALLOWED:
+  WARN "Pygmalion returned {{count}} specialists but tier {{COMPLEXITY}} allows max {{MAX_ALLOWED}}. Truncating."
+  FORGED_SPECS.forged_specialists = FORGED_SPECS.forged_specialists[0:MAX_ALLOWED]
+
+# --- PER-SPECIALIST VALIDATION ---
+FOR EACH spec IN FORGED_SPECS.forged_specialists:
+  # Required fields
+  ASSERT spec has keys: id, name, emoji, title, role_type, domain_expertise, review_focus, technology_checklist
+  ASSERT spec.role_type IN ["reviewer", "builder"]
+  ASSERT spec.id matches /^[a-z0-9-]+$/  # No special characters in IDs
+
+  # Whitelist suggested_claude_agent_type (prevents arbitrary agent types)
+  ALLOWED_AGENT_TYPES = [
+    "general-purpose", "auditor-security", "dev-frontend", "dev-typescript",
+    "dev-python", "dev-go", "dev-java", "dev-rust", "dev-csharp",
+    "architect-backend", "database-administrator", "specialist-graphql",
+    "dev-ios", "dev-android", "dev-php"
+  ]
+  IF spec.suggested_claude_agent_type NOT IN ALLOWED_AGENT_TYPES:
+    WARN "Unknown agent type '{{spec.suggested_claude_agent_type}}' — defaulting to general-purpose"
+    spec.suggested_claude_agent_type = "general-purpose"
+
+  # Sanitize free-text fields (strip potential prompt injection)
+  FOR EACH field IN [domain_expertise, issue_classification_guidance]:
+    IF spec[field] contains any of: "<system", "</system", "<tool_use", "IGNORE PREVIOUS", "DISREGARD":
+      WARN "Suspicious content in Pygmalion output field '{{field}}' for specialist '{{spec.id}}'. Removing specialist."
+      REMOVE spec from FORGED_SPECS.forged_specialists
+      CONTINUE to next specialist
+
+  # Array length limits
+  ASSERT spec.review_focus.length <= 10
+  ASSERT spec.technology_checklist.length <= 15
+  ASSERT spec.known_gotchas.length <= 10 (if present)
+
+IF validation fails for any ASSERT:
+  WARN "Pygmalion output failed validation. Falling back to Pantheon-only review."
+  FORGED_SPECS = { forged_specialists: [], skipped: true, reason: "Validation failure" }
+```
+
+### Process Pygmalion Output
+
+```
 
 IF FORGED_SPECS.forged_specialists.length > 0:
   echo "🗿 Pygmalion assembled {{count}} specialist(s):"
@@ -89,6 +143,41 @@ ELSE:
 
 After Pygmalion returns, persist new/evolved specialists to the registry.
 Pygmalion handles the matching logic; the orchestrator handles file I/O.
+
+**Registry Write Lock (H3 — Concurrency Safety):**
+In swarm mode, multiple workers may forge specialists concurrently. Use directory-based
+locking (same protocol as the git commit lock) to prevent registry corruption.
+
+```
+# --- ACQUIRE REGISTRY LOCK ---
+# Only needed in swarm/parallel mode. Sequential mode can skip.
+IF execution_mode == "swarm":
+  MAX_RETRIES = 5
+  RETRY_DELAY = 2  # seconds, doubles each retry
+
+  FOR attempt IN 1..MAX_RETRIES:
+    TRY: mkdir docs/specialist-registry/.write-lock
+    IF SUCCESS:
+      Write("docs/specialist-registry/.write-lock/owner", "{{worker_id}} {{timestamp}}")
+      BREAK
+    IF FAILED:
+      # Check for stale lock (>3 minutes old)
+      owner_info = read("docs/specialist-registry/.write-lock/owner")
+      IF owner_info.timestamp is older than 3 minutes:
+        rm -rf docs/specialist-registry/.write-lock
+        CONTINUE  # Retry
+      ELSE:
+        sleep(RETRY_DELAY)
+        RETRY_DELAY = RETRY_DELAY * 2
+        CONTINUE
+
+  IF all retries exhausted:
+    WARN "Could not acquire registry lock. Skipping registry update (specialist will still be used for this story)."
+    → Skip registry write, proceed to Phase 2.
+
+  # Re-read registry index after acquiring lock (another worker may have updated it)
+  REGISTRY_INDEX = read("docs/specialist-registry/_index.json") OR { "version": "1.0", "specialists": [] }
+```
 
 ```
 FOR EACH spec IN FORGED_SPECS.forged_specialists:
@@ -137,6 +226,10 @@ FOR EACH spec IN FORGED_SPECS.forged_specialists:
     Write("docs/specialist-registry/{{spec.id}}.json", existing)
 
 Write("docs/specialist-registry/_index.json", REGISTRY_INDEX)
+
+# --- RELEASE REGISTRY LOCK ---
+IF execution_mode == "swarm":
+  rm -rf docs/specialist-registry/.write-lock
 ```
 
 **📢 Orchestrator says (if specialists assembled):**
