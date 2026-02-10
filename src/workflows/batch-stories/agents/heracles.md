@@ -158,9 +158,10 @@ to compete for CPU, grinding the machine to a halt. Always use `SKIP_TYPECHECK=1
 #   - Linting (eslint, prettier) — MUST always run
 #   - Other pre-commit hooks — MUST always run
 #
-# Hygeia integration: When Hygeia is present as a team member, she runs centralized
-# type-checking after all workers complete their stories. This avoids N parallel tsc
-# processes while still ensuring full type safety before merge.
+# Hygeia integration: When Hygeia is present as a team member, workers request
+# type-checks from her instead of running them independently. Hygeia serializes
+# checks and serves fresh results to all waiting workers, avoiding N parallel tsc
+# processes while ensuring results always reflect the latest code changes.
 ```
 
 The lock uses `mkdir` as the atomic primitive — `mkdir` fails atomically if the directory
@@ -292,9 +293,8 @@ If Hygeia does NOT exist, sub-agents run checks themselves (default behavior).
 ### Benefits
 
 - **CPU serialization:** Only one type-check/build runs at a time across ALL workers
-- **Caching:** If code state hasn't changed (e.g., reviewer checks right after builder),
-  Hygeia returns cached results instantly
-- **Deduplication:** Multiple workers requesting the same check get the same cached result
+- **Batch notification:** Multiple workers requesting the same check type while one is running all get the fresh result when it completes
+- **Always fresh:** Every check runs against the current filesystem — no risk of stale cached results after code changes
 - **Visibility:** All quality check results flow through one agent for easy debugging
 
 ---

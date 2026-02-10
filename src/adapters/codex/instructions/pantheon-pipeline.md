@@ -1,6 +1,6 @@
 # Pantheon Pipeline - Codex Instructions
 
-> **Canonical source:** `src/workflows/story-pipeline/workflow.md` (v7.4)
+> **Canonical source:** `src/workflows/story-pipeline/workflow.md` (v1)
 > This file is a Codex-adapted summary. For full phase details, refer to the canonical workflow.
 > When this file conflicts with the canonical source, the canonical source wins.
 

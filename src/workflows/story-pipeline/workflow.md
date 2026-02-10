@@ -394,7 +394,7 @@ Load only the current phase, execute it, then load the next.
 </success_criteria>
 
 <version_history>
-**v7.4 - Playbook Intelligence Edition**
+**v1 - Playbook Intelligence Edition**
 1. Standardized playbook format: YAML frontmatter, token cost headers, 3-10KB size target
 2. Playbook index (`_index.json`): structured search, dedup protection, hit-rate metadata
 3. Hermes Compaction Protocol: read → assess → integrate → compact (replaces append-only)

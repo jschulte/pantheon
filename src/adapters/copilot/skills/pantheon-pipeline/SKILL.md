@@ -5,7 +5,7 @@ description: Execute the 7-phase Pantheon pipeline to implement user stories wit
 
 # Pantheon Pipeline
 
-> **Canonical source:** `src/workflows/story-pipeline/workflow.md` (v7.4)
+> **Canonical source:** `src/workflows/story-pipeline/workflow.md` (v1)
 > This file is a Copilot-adapted skill. For full phase details, refer to the canonical workflow.
 > When this file conflicts with the canonical source, the canonical source wins.
 

@@ -51,7 +51,7 @@ All adapters are translations of the canonical workflow defined in:
 - **Agent routing:** `src/agent-routing.yaml`
 
 When an adapter conflicts with the canonical source, the canonical source wins.
-Adapter files include a version reference (e.g., `v7.4`) to help detect drift.
+Adapter files include a version reference (e.g., `v1`) to help detect drift.
 
 ## How It Works
 

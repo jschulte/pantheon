@@ -1,5 +1,5 @@
 # Phase 3: VERIFY (3/7)
-<!-- Part of Story Pipeline v7.4 — see workflow.md for config and routing -->
+<!-- Part of Story Pipeline v1 — see workflow.md for config and routing -->
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
