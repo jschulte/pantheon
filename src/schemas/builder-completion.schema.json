@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pantheon/builder-completion",
+  "title": "Builder Completion Artifact",
+  "description": "Output produced by builder agents (Metis, Helios, etc.) after Phase 2 BUILD",
+  "type": "object",
+  "required": ["agent", "story_key", "status", "files_created", "files_modified", "tests_added"],
+  "properties": {
+    "agent": {
+      "type": "string",
+      "description": "Builder agent ID (e.g., 'metis', 'helios')"
+    },
+    "story_key": {
+      "type": "string",
+      "pattern": "^[0-9]+-[0-9]+$"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["completed", "partial", "failed"]
+    },
+    "files_created": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "files_modified": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "tests_added": {
+      "type": "object",
+      "required": ["total", "passing"],
+      "properties": {
+        "total": { "type": "integer", "minimum": 0 },
+        "passing": { "type": "integer", "minimum": 0 },
+        "coverage_percent": { "type": "number", "minimum": 0, "maximum": 100 }
+      }
+    },
+    "tasks_implemented": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["task", "status"],
+        "properties": {
+          "task": { "type": "string" },
+          "status": { "type": "string", "enum": ["done", "partial", "skipped"] },
+          "files": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "playbooks_consulted": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "notes": { "type": "string" }
+  }
+}

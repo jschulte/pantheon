@@ -1,0 +1,84 @@
+name: plan-team-sprint
+description: "Team work distribution and parallelization planner - dependency DAG + optimal developer assignment"
+author: "Jonah Schulte (leveraging BMAD Method)"
+
+# ============================================================================
+# PLAN-TEAM-SPRINT: Team Execution Planning Workflow
+# ============================================================================
+# Purpose: Analyze epics + architecture, build a dependency DAG, and generate
+# a team execution plan assigning work across N developers with maximum
+# parallelism and minimum file conflicts.
+#
+# Supports:
+#   - Initial planning (before development begins)
+#   - Mid-project rebalancing (reads sprint-status.yaml for completed work)
+#
+# Usage:
+#   /plan-team-sprint
+#   /plan-team-sprint team_size=3
+#   /plan-team-sprint team_size=4 project_type=greenfield
+# ============================================================================
+
+# Paths
+config_source: "{project-root}/_bmad/bmm/config.yaml"
+installed_path: "{project-root}/_pantheon/workflows/plan-team-sprint"
+instructions: "{installed_path}/workflow.md"
+templates_path: "{installed_path}/templates"
+
+# Variables
+variables:
+  team_size:
+    required: true
+    description: "Number of developers on the team"
+    type: integer
+    min: 1
+    max: 20
+
+  developer_profiles:
+    required: false
+    description: "Array of developer profiles with name and optional specialization"
+    type: array
+    items:
+      name: string
+      specialization: string  # frontend | backend | fullstack | database | infrastructure
+    default: null  # If null, prompt user interactively
+
+  project_type:
+    required: false
+    description: "Project type determines foundation phase handling"
+    type: string
+    enum: [greenfield, brownfield, auto-detect]
+    default: auto-detect
+
+# Input files
+inputs:
+  epics:
+    pattern: "docs/epics.md"
+    sharded_pattern: "docs/epics/*.md"
+    load_mode: FULL_LOAD
+    required: true
+    description: "Epic and story definitions from BMAD create-epics-and-stories"
+
+  architecture:
+    pattern: "docs/architecture.md"
+    load_mode: FULL_LOAD
+    required: true
+    description: "Architecture document from BMAD create-architecture"
+
+  sprint_status:
+    pattern: "docs/sprint-artifacts/sprint-status.yaml"
+    load_mode: FULL_LOAD
+    required: false
+    description: "Sprint status for rebalance mode - detects completed work"
+
+# Output
+output:
+  execution_plan: "docs/team-execution-plan.md"
+  sprint_status_enriched: "docs/sprint-artifacts/sprint-status.yaml"
+  template: "{templates_path}/team-execution-plan-template.md"
+
+# Execution
+standalone: true
+web_bundle: false
+execution_mode: "interactive"  # Conversational workflow with user checkpoints
+max_refinement_rounds: 5       # Interactive refinement iterations before finalizing

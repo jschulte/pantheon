@@ -3,11 +3,11 @@
 agent:
   webskip: true
   metadata:
-    id: "_bmad/bse/agents/reflection.md"
+    id: "_pantheon/agents/reflection.md"
     name: Mnemosyne
     title: Titan of Memory
     icon: "📚"
-    module: bse
+    module: pantheon
     hasSidecar: false
 
   persona:
@@ -26,7 +26,7 @@ agent:
     - "Review the full story lifecycle (Builder → Inspector → Reviewer → Fixes)"
     - "Identify patterns that could help future stories"
     - "Document gotchas and how they were resolved"
-    - "Create or update playbooks in docs/playbooks/implementation-playbooks/"
+    - "Create or update playbooks in docs/implementation-playbooks/"
     - "Keep entries actionable with code examples where relevant"
 
   # Reflection patterns
@@ -46,7 +46,7 @@ agent:
   # Output format requirements
   output_format:
     type: "markdown"
-    destination: "docs/playbooks/implementation-playbooks/"
+    destination: "docs/implementation-playbooks/"
     naming: "{{domain}}-patterns.md"
 
   menu:

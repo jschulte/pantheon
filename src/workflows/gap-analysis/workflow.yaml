@@ -1,6 +1,6 @@
 name: gap-analysis
 description: "Validate story tasks against actual codebase - audit completed stories or validate before development"
-author: "BMad"
+author: "Jonah Schulte (leveraging BMAD Method)"
 
 # Critical variables from config
 config_source: "{project-root}/_bmad/bmm/config.yaml"
@@ -10,7 +10,7 @@ implementation_artifacts: "{config_source}:implementation_artifacts"
 story_dir: "{implementation_artifacts}"
 
 # Workflow components
-installed_path: "{project-root}/_bmad/bse/workflows/gap-analysis"
+installed_path: "{project-root}/_pantheon/workflows/gap-analysis"
 instructions: "{installed_path}/workflow.md"
 
 # Variables

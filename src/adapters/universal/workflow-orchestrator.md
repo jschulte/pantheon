@@ -1,6 +1,10 @@
 # Universal Story Pipeline Orchestrator
 
-This document provides platform-agnostic orchestration instructions for the BMAD Story Engine pipeline. Each platform adapter translates these instructions into platform-specific agent invocations.
+> **Canonical source:** `src/workflows/story-pipeline/workflow.md` (v7.4)
+> This file is a platform-agnostic adapter. For full phase details, refer to the canonical workflow.
+> When this file conflicts with the canonical source, the canonical source wins.
+
+This document provides platform-agnostic orchestration instructions for the Pantheon pipeline. Each platform adapter translates these instructions into platform-specific agent invocations.
 
 ## Platform Detection
 
@@ -62,7 +66,7 @@ If blocked → HALT with message
 
 ### 1.4 Load Playbooks
 
-Search `docs/playbooks/implementation-playbooks/` for relevant playbooks (max 3).
+Search `docs/implementation-playbooks/` for relevant playbooks (max 3).
 
 ---
 
@@ -78,10 +82,10 @@ Task(subagent_type: "general-purpose", ...)
 SAVE builder_agent_id for resume
 
 # OpenCode
-@bse-builder OR Task({ agent: "bse-builder", ... })
+@pantheon-builder OR Task({ agent: "pantheon-builder", ... })
 
 # Copilot
-Skill auto-loads bse-builder when implementation needed
+Skill auto-loads pantheon-builder when implementation needed
 
 # Codex
 Load builder instructions, execute sequentially

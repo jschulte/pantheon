@@ -1,0 +1,43 @@
+name: playbook-migration
+description: "One-time migration utility: converts legacy playbooks to v7.4 standardized format, bootstraps _index.json, and retroactively backfills learnings from historical mnemosyne/themis/review artifacts."
+author: "Jonah Schulte (leveraging BMAD Method)"
+
+# Critical variables from config
+config_source: "{project-root}/_bmad/bmm/config.yaml"
+implementation_artifacts: "{config_source}:implementation_artifacts"
+sprint_artifacts: "{config_source}:sprint_artifacts"
+
+# Workflow components
+installed_path: "{project-root}/_pantheon/workflows/playbook-migration"
+instructions: "{installed_path}/workflow.md"
+
+# Input variables
+variables:
+  playbook_dir: "docs/implementation-playbooks" # Where playbooks live
+  artifacts_dir: "docs/sprint-artifacts/completions" # Where mnemosyne/themis/review artifacts live
+  dry_run: false # If true, report what WOULD change without writing files
+  backfill: true # If true, scan historical artifacts for uncaptured learnings
+  max_artifact_scan: 50 # Max historical artifacts to scan (most recent first)
+
+# Target format (from story-pipeline v7.4)
+target_format:
+  frontmatter_required: true
+  required_sections:
+    - "Overview"
+    - "Critical Patterns"
+    - "Common Gotchas"
+    - "Anti-Patterns"
+    - "Code Patterns"
+    - "Test Requirements"
+    - "Related Stories"
+  size_target_bytes: [3000, 10000]
+  compaction_threshold: 10000
+
+# Output
+output:
+  index_file: "_index.json"
+  migration_report: "{sprint_artifacts}/playbook-migration-report.md"
+  backup_dir: "{playbook_dir}/.migration-backup" # Originals saved here
+
+standalone: true
+web_bundle: false

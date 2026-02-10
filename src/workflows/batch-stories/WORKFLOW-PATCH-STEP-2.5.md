@@ -1,4 +1,6 @@
-# Batch-Super-Dev Step 2.5 Patch
+# Batch Stories Step 2.5 Patch
+
+> **Status:** Known limitation. This documents a workaround for agent-to-workflow invocation constraints. The patch code below should be applied to `instructions.md` if you encounter this issue.
 
 **Issue:** Step 2.5 tries to invoke `/create-story-with-gap-analysis` which agents cannot do
 **Impact:** Skeleton stories get skipped instead of regenerated
@@ -158,7 +160,7 @@ set -e
 STORIES=$(grep "ready-for-dev" docs/sprint-artifacts/sprint-status.yaml | awk '{print $1}' | sed 's/://')
 
 echo "=========================================="
-echo "  BMAD Story Format Validation"
+echo "  Pantheon Story Format Validation"
 echo "=========================================="
 echo ""
 
@@ -220,10 +222,10 @@ fi
 
 ## Documentation Update
 
-**Add to:** `_bmad/bse/workflows/batch-stories/README.md`
+**Add to:** `_pantheon/workflows/batch-stories/README.md`
 
 ```markdown
-# Batch Super-Dev Workflow
+# Batch Stories Workflow
 
 ## Critical Prerequisites
 

@@ -1,7 +1,20 @@
 name: multi-agent-review
 description: "Smart multi-agent code review with dynamic agent selection based on changed code. Uses multiple specialized AI agents to review different aspects: architecture, security, performance, testing, and code quality."
-author: "BMad"
-version: "1.0.0"
+author: "Jonah Schulte (leveraging BMAD Method)"
+
+# =============================================================================
+# DEPRECATION NOTICE
+# =============================================================================
+# This workflow is SUPERSEDED by:
+#   - story-pipeline Phase 3 (VERIFY) — for story-based reviews with Pantheon agents
+#   - batch-review workflow — for multi-pass review of existing code
+#
+# This workflow uses pre-Pantheon naming (generic "security", "code_quality" instead
+# of Greek mythology names) and a different severity system (CRITICAL/HIGH/MEDIUM/LOW
+# vs MUST_FIX/SHOULD_FIX/STYLE). It is retained for backward compatibility with
+# projects that reference it directly. New projects should use story-pipeline or
+# batch-review instead.
+# =============================================================================
 
 # Critical variables from config
 config_source: "{project-root}/_bmad/bmm/config.yaml"
@@ -10,7 +23,7 @@ sprint_artifacts: "{config_source}:sprint_artifacts"
 communication_language: "{config_source}:communication_language"
 
 # Workflow components
-installed_path: "{project-root}/_bmad/bse/workflows/multi-agent-review"
+installed_path: "{project-root}/_pantheon/workflows/multi-agent-review"
 instructions: "{installed_path}/workflow.md"
 
 # Input parameters

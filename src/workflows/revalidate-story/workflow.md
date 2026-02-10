@@ -1,4 +1,4 @@
-# Revalidate Story v3.0 - Verify Checkboxes Against Codebase
+# Revalidate Story - Verify Checkboxes Against Codebase
 
 <purpose>
 Clear all checkboxes and re-verify each item against actual codebase reality.
@@ -17,7 +17,6 @@ Optionally fills gaps by implementing missing items.
 
 <config>
 name: revalidate-story
-version: 3.0.0
 
 defaults:
   fill_gaps: false
