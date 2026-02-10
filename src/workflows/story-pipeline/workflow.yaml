@@ -1,12 +1,11 @@
 name: story-pipeline
 description: "Enhanced multi-agent pipeline with smart builder spawning, playbook learning, code citation evidence, test quality validation, resume-builder fixes, and per-story completion reports"
 author: "Jonah Schulte (leveraging BMAD Method)"
-version: "5.1.0" # Hybrid agent mapping - Claude Code specialized agents + BSE personas
 
 # ============================================================================
 # CRITICAL: EXECUTION DISCIPLINE
 # ============================================================================
-# This workflow MUST be invoked via the Skill tool (/bmad_bse_story-pipeline)
+# This workflow MUST be invoked via the Skill tool (/bmad_pantheon_story-pipeline)
 # The orchestrator (main Claude context) follows workflow.md phases.
 #
 # Task subagent_types listed below are ONLY for phases defined in workflow.md:
@@ -25,6 +24,24 @@ version: "5.1.0" # Hybrid agent mapping - Claude Code specialized agents + BSE p
 # Execution mode
 execution_mode: "multi_agent" # multi_agent | single_agent (fallback)
 
+# =============================================================================
+# VARIABLE INTERPOLATION SYNTAX (M23)
+# =============================================================================
+# Four patterns used in workflow YAML/MD files:
+#
+#   {single-curly}           BMAD path resolution (resolved at install time)
+#                            e.g., {project-root}, {installed_path}
+#
+#   {source}:key             Config file dereference (load YAML, extract key)
+#                            e.g., {config_source}:output_folder
+#
+#   {{double-curly}}         Runtime template variable (resolved by orchestrator)
+#                            e.g., {{story_key}}, {{date}}, {{COMPLEXITY}}
+#
+#   system-generated         Special value computed at runtime by the framework
+#                            e.g., date: system-generated
+# =============================================================================
+
 # Critical variables from config
 config_source: "{project-root}/_bmad/bmm/config.yaml"
 output_folder: "{config_source}:output_folder"
@@ -33,7 +50,7 @@ communication_language: "{config_source}:communication_language"
 date: system-generated
 
 # Workflow paths
-installed_path: "{project-root}/_bmad/bse/workflows/story-pipeline"
+installed_path: "{project-root}/_pantheon/workflows/story-pipeline"
 instructions: "{installed_path}/workflow.md"
 agents_path: "{installed_path}/agents"
 
@@ -43,12 +60,12 @@ agents_path: "{installed_path}/agents"
 # Agent routing configuration determines which specialized builder to spawn
 # based on story content, file patterns, and project configuration.
 agent_routing:
-  config_file: "{project-root}/_bmad/bse/agent-routing.yaml"
-  builders_path: "{project-root}/_bmad/bse/agents/builders"
-  reviewers_path: "{project-root}/_bmad/bse/agents/reviewers"
-  validators_path: "{project-root}/_bmad/bse/agents/validators"
+  config_file: "{project-root}/_pantheon/agent-routing.yaml"
+  builders_path: "{project-root}/_pantheon/agents/builders"
+  reviewers_path: "{project-root}/_pantheon/agents/reviewers"
+  validators_path: "{project-root}/_pantheon/agents/validators"
 
-  # Project-level override (set in project's _bmad/_config/bse.yaml)
+  # Project-level override (set in project's _bmad/_config/pantheon.yaml)
   # If set, always use this builder regardless of detection
   project_default_builder: null  # e.g., "frontend-react"
 
@@ -56,7 +73,7 @@ agent_routing:
   available_builders:
     - id: frontend-react
       agent: "agents/builders/frontend-react.md"
-      persona: { name: "Apollo", emoji: "⚛️" }
+      persona: { name: "Helios", emoji: "⚛️" }
     - id: frontend-vue
       agent: "agents/builders/frontend-vue.md"
       persona: { name: "Verdant", emoji: "🌿" }
@@ -66,15 +83,112 @@ agent_routing:
     - id: backend-python
       agent: "agents/builders/backend-python.md"
       persona: { name: "Pythia", emoji: "🐍" }
+    - id: backend-go
+      agent: "agents/builders/backend-go.md"
+      persona: { name: "Gopher", emoji: "🦫" }
     - id: database-prisma
       agent: "agents/builders/database-prisma.md"
       persona: { name: "Athena", emoji: "🦉" }
+    - id: database-sql
+      agent: "agents/builders/database-sql.md"
+      persona: { name: "Oracle", emoji: "📊" }
+    - id: api-graphql
+      agent: "agents/builders/api-graphql.md"
+      persona: { name: "Mercury", emoji: "⚡" }
     - id: infrastructure
       agent: "agents/builders/infrastructure.md"
       persona: { name: "Atlas", emoji: "🌍" }
+    - id: testing
+      agent: "agents/builders/testing.md"
+      persona: { name: "Aletheia", emoji: "🎯" }
     - id: general
       agent: "agents/builders/general.md"
       persona: { name: "Metis", emoji: "🔨" }
+
+# =============================================================================
+# PERSONA FORGING — Pygmalion (v7.0)
+# =============================================================================
+# Pygmalion analyzes code, stories, and playbooks to forge domain-specific
+# specialist personas on-the-fly. Forged specialists augment (never replace)
+# the fixed Pantheon reviewers.
+persona_forging:
+  enabled: true
+  complexity_gate:
+    skip_below: "light"          # trivial/micro use fixed Pantheon only
+  max_specialists:
+    light: 1
+    standard: 2
+    complex: 3
+    critical: 4
+  allow_forged_builder: false    # Only for complex+ when enabled
+  model: "{model_tier.pygmalion}"  # sonnet — structured persona output
+  timeout: 600                   # 10 minutes max
+  # Token cost note: Pygmalion cost varies significantly by action:
+  #   REUSE (Jaccard >= 0.5):  ~2-3K tokens (registry lookup + minor adaptation)
+  #   EVOLVE (0.3-0.49):       ~5-8K tokens (read existing + modify + write back)
+  #   FORGE_NEW (< 0.3):       ~15-20K tokens (full domain analysis + persona generation)
+  # The registry amortizes cost: first story in a domain pays FORGE_NEW, subsequent pay REUSE.
+  output_dir: "{sprint_artifacts}/completions"
+  registry:
+    enabled: true
+    directory: "docs/specialist-registry"
+    index_file: "_index.json"
+    match_thresholds:
+      reuse: 0.5                 # Jaccard >= 0.5 → reuse as-is
+      evolve: 0.3                # 0.3 <= Jaccard < 0.5 → evolve existing
+    max_registry_size: 50        # Safety cap on total specialists
+    eviction:
+      enabled: true
+      strategy: "lru_with_hit_rate" # Evict lowest usage_count * hit_rate when at cap
+      min_age_days: 7              # Don't evict specialists younger than 7 days
+      stale_after_days: 90         # Specialists unused for 90 days are eviction candidates
+      protect_high_performers: true # Never evict specialists with hit_rate > 0.8
+    # Lock configuration for concurrent registry/playbook writes (swarm mode)
+    lock_timeout_seconds: 180     # Stale lock detection threshold
+    lock_retry_delay_ms: 500      # Initial retry delay (doubles with exponential backoff)
+    lock_max_retries: 5           # Maximum lock acquisition attempts
+
+# =============================================================================
+# REVIEWER LIMITS (v7.3)
+# =============================================================================
+# Maximum parallel reviewers for complex/critical stories.
+# The orchestrator asks the user at runtime, using this as the default.
+# 1 = consolidated (single multi-reviewer), 2 = two reviewers, 3 = three reviewers (recommended)
+max_parallel_reviewers:
+  default: 3            # Pre-selected option when asking user
+  ask_at_runtime: true  # Prompt user before Phase 3 parallel review
+
+# =============================================================================
+# MODEL TIERS (v7.3)
+# =============================================================================
+# Controls which model each agent role uses.
+# Opus for deep reasoning (code generation, security/logic analysis).
+# Sonnet for structured/mechanical work (checklists, pattern matching, synthesis).
+model_tier:
+  builder: "opus"               # Writing correct code — mistakes are expensive
+  fixer: "opus"                 # Resumed builder context — same reasoning needs
+  cerberus: "opus"              # Security + logic — subtle bugs need deep reasoning
+  themis: "opus"                # Triage arbiter — judgment calls on issue severity
+  argus: "sonnet"               # Task verification — checklist/mechanical work
+  nemesis: "sonnet"             # Test + quality review — pattern matching
+  pygmalion: "sonnet"           # Persona forging — structured JSON output
+  multi_reviewer: "opus"         # 4 perspectives in one pass — needs deep reasoning
+  forged_specialists: "sonnet"  # Domain reviewers — structured checklist work
+  reflection_reporter: "sonnet" # Synthesis — already sonnet
+
+# =============================================================================
+# AGENT TIMEOUTS
+# =============================================================================
+# Maximum time (in seconds) before an agent spawn is considered hung.
+# The orchestrator should log a warning and consider terminating stalled agents.
+agent_timeouts:
+  builder: 1800          # 30 min — large stories may take time
+  reviewer: 600          # 10 min — review is bounded by diff size
+  validator: 600         # 10 min — similar to reviewer
+  arbiter: 300           # 5 min — triage is structured decision-making
+  pygmalion: 600         # 10 min — persona forging + registry lookup
+  reflection: 300        # 5 min — synthesis of existing artifacts
+  reporter: 300          # 5 min — report generation
 
 # Agent tracking (from GSD)
 agent_history: "{sprint_artifacts}/agent-history.json"
@@ -88,14 +202,26 @@ audit_trail: "{sprint_artifacts}/audit-story-pipeline-{{story_id}}-{{date}}.yaml
 agents:
   # ==========================================================================
   # HYBRID AGENT MAPPING (v5.1)
-  # Strategy: Use Claude Code's specialized agents + layer BSE persona on top
+  # Strategy: Use Claude Code's specialized agents + layer Pantheon persona on top
   # See agent-type-mapping.md for full documentation
   # ==========================================================================
+
+  pygmalion:
+    description: "Persona Forge - analyzes domain, forges specialist personas on-the-fly"
+    steps: [1.5]
+    subagent_type: "general-purpose"
+    model: "{model_tier.pygmalion}"  # sonnet — structured JSON output
+    prompt_file: "{agents_path}/pygmalion.md"
+    fresh_context: true
+    trust_level: "high"
+    timeout: 600
+    output_file: "{sprint_artifacts}/completions/{{story_key}}-pygmalion.json"
+    complexity_gate: "light"  # Skip for trivial/micro
 
   builder:
     description: "Implementation agent - writes code and tests (SMART SPAWNING)"
     steps: [1, 2, 3, 4]
-    model: "opus"  # Builder gets full capability model
+    model: "{model_tier.builder}"  # opus — writing code needs deep reasoning
     # HYBRID: subagent_type is DYNAMICALLY SELECTED based on story content
     # React/Next.js → dev-frontend + frontend-react.md
     # TypeScript API → dev-typescript + backend-typescript.md
@@ -126,7 +252,7 @@ agents:
     description: "Validation agent - independent verification with code citations"
     steps: [5, 6]
     subagent_type: "general-purpose"  # No specialized inspector in Claude Code
-    model: "opus"
+    model: "{model_tier.argus}"  # sonnet — checklist/mechanical verification
     bmad_agent: "{validators_path}/inspector.md"  # Argus - The All-Seeing
     prompt_file: "{agents_path}/inspector.md"
     fresh_context: true
@@ -138,7 +264,7 @@ agents:
     description: "Test quality validation - verifies test coverage and quality"
     steps: [5.5]
     subagent_type: "testing-suite:test-engineer"  # HYBRID: Claude Code test expertise
-    model: "opus"
+    model: "{model_tier.nemesis}"  # sonnet — pattern matching for test gaps
     bmad_agent: "{validators_path}/test-quality.md"  # Nemesis - Test quality persona
     prompt_file: "{agents_path}/test-quality.md"
     fresh_context: true
@@ -148,8 +274,8 @@ agents:
   reviewer:
     description: "Adversarial code review - finds problems (SMART ROUTING)"
     steps: [7]
-    model: "opus"
-    # HYBRID: Each reviewer type uses best Claude Code agent + BSE persona
+    model: "{model_tier.cerberus}"  # opus for security/logic; see model_tier for overrides
+    # HYBRID: Each reviewer type uses best Claude Code agent + Pantheon persona
     subagent_type_by_role:
       security: "auditor-security"        # OWASP expertise + Cerberus persona
       architecture: "architect-reviewer"  # SOLID/patterns + Hestia persona
@@ -163,7 +289,9 @@ agents:
     trust_level: "high"
     timeout: 1800
 
-    review_agent_count:
+    # v7.3: reviewer count now controlled by max_parallel_reviewers (user-configurable)
+    # These legacy counts are ignored when max_parallel_reviewers is set
+    review_agent_count_legacy:
       micro: 2
       standard: 3
       complex: 4
@@ -217,23 +345,14 @@ agents:
           git diff --name-only HEAD~1 | grep -E "\.(tsx|jsx|vue|svelte|css|scss|html)$|components/|pages/|views/"
 
   fixer:
-    description: "Issue resolution - Mason resumes to fix critical/high issues"
+    description: "Issue resolution - Metis resumes to fix critical/high issues"
     steps: [8, 9]
     subagent_type: "general-purpose"
-    bmad_agent: "{project-root}/_bmad/bse/agents/builder.md" # Mason resumes - "Measure twice, cut once"
+    bmad_agent: "{project-root}/_pantheon/agents/builder.md" # Metis resumes - "Measure twice, cut once"
     resume_builder: true # IMPORTANT: Resume Builder agent instead of spawning fresh
     prompt_file: "{agents_path}/fixer.md"
-    trust_level: "medium" # Incentive to minimize work
+    trust_level: "low" # Same as builder — orchestrator handles commits
     timeout: 2400 # 40 minutes
-
-  reflection:
-    description: "Playbook learning - extracts patterns for future agents (DEPRECATED - use reflection_reporter)"
-    steps: [10]
-    subagent_type: "general-purpose"
-    bmad_agent: "{project-root}/_bmad/bse/agents/reflection.md" # Mnemosyne - Titan of Memory
-    prompt_file: "{agents_path}/reflection.md"
-    timeout: 900 # 15 minutes
-    deprecated: true # Use reflection_reporter instead
 
   reflection_reporter:
     description: "Combined reflection + reporting - extracts learnings, updates playbooks, generates completion report"
@@ -252,7 +371,7 @@ agents:
     description: "Consolidated multi-perspective review - Argus + Nemesis + Cerberus + Hestia in one pass"
     steps: [5, 6, 7]
     subagent_type: "general-purpose"
-    model: "opus" # Need full capability for thorough review
+    model: "{model_tier.multi_reviewer}"  # opus — 4 perspectives needs deep reasoning
     prompt_file: "{agents_path}/multi-reviewer.md"
     timeout: 2400 # 40 minutes (doing work of 4 agents)
     output_file: "{sprint_artifacts}/completions/{{story_key}}-review.json"
@@ -265,12 +384,16 @@ agents:
 
 # Reconciliation: orchestrator does this directly (see workflow.md Phase 6)
 
-# Playbook configuration (v4.0)
+# Playbook configuration (v4.0, enhanced v7.4)
 playbooks:
   enabled: true # Set to false in project config to disable
   directory: "docs/implementation-playbooks"
+  index_file: "_index.json" # Structured playbook index for budget-based loading
   bootstrap_mode: true # Auto-initialize if missing
-  max_load: 3
+  token_budget: 7500 # Max tokens of playbook content to load (~30KB)
+  target_size_bytes: [3000, 10000] # Per-playbook size target (3-10KB)
+  compaction_threshold: 10000 # Bytes — above this triggers mandatory compaction
+  max_playbook_count: 50       # Safety cap — evict lowest hit-rate playbooks when exceeded
   auto_apply_updates: false # Require manual review of playbook updates
   discovery:
     enabled: true # Scan git/docs to populate initial playbooks
@@ -287,6 +410,9 @@ quality_gates:
 complexity_level: "standard" # micro | standard | complex
 
 # Complexity routing (v4.2 - token-optimized)
+# Canonical source: src/agent-routing.yaml → complexity_routing
+# This is a workflow-local copy for quick reference. If these drift,
+# agent-routing.yaml is authoritative.
 complexity_routing:
   trivial:
     review_mode: "consolidated" # Use multi_reviewer
@@ -309,21 +435,31 @@ complexity_routing:
     examples: ["API endpoints", "business logic"]
 
   complex:
-    review_mode: "parallel" # Use separate parallel reviewers
-    description: "Enhanced validation - parallel reviewers for thoroughness"
+    review_mode: "parallel" # Reviewer count set by max_parallel_reviewers (user choice)
+    description: "Enhanced validation - consolidated parallel reviewers"
     examples: ["Auth", "payments", "security", "migrations"]
-    agents: ["argus", "nemesis", "cerberus", "apollo", "hestia"]
 
   critical:
-    review_mode: "parallel" # Use separate parallel reviewers + extras
-    description: "Maximum scrutiny - full parallel review team"
+    review_mode: "parallel" # Reviewer count set by max_parallel_reviewers (user choice)
+    description: "Maximum scrutiny - consolidated parallel reviewers"
     examples: ["Payment processing", "encryption", "PII handling"]
-    agents: ["argus", "nemesis", "cerberus", "apollo", "hestia", "arete"]
 
-# Token efficiency summary (v4.2):
+# Token efficiency summary (v7.3):
 # - trivial/micro/light/standard: Use multi_reviewer (saves ~60-70% of Phase 3 tokens)
-# - complex/critical: Use parallel reviewers (thoroughness > efficiency)
+# - complex/critical: Use max_parallel_reviewers consolidated reviewers (user-configurable)
+#   - 3 (default): Argus+Hestia, Cerberus+Apollo, Nemesis+Arete
+#   - 2: Argus+Hestia+Arete, Cerberus+Apollo+Nemesis
+#   - 1: Falls through to consolidated multi-reviewer
+# - All tiers: Digest-first context (inline only top-5 files, Read tool for rest)
 # - All tiers: Use reflection_reporter instead of separate Mnemosyne + Hermes (saves ~5-8K)
+
+# Input validation (H4 security hardening)
+# story_key MUST match pattern: digits-digits (e.g., "17-1", "3-12")
+# story_file MUST be a relative path under sprint_artifacts
+# Orchestrator should validate before interpolating into shell commands
+input_validation:
+  story_key_pattern: "^[0-9]+-[0-9]+$"
+  story_file_pattern: "^docs/sprint-artifacts/story-[0-9]+-[0-9]+\\.md$"
 
 # Final verification checklist (main orchestrator)
 final_verification:
@@ -353,6 +489,7 @@ final_verification:
 fallback_to_v1:
   enabled: true
   condition: "execution_mode == 'single_agent'"
-  workflow: "{project-root}/_bmad/bse/workflows/story-pipeline"
+  workflow: "{project-root}/_pantheon/workflows/story-pipeline"
 
 standalone: true
+web_bundle: false

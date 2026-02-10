@@ -3,11 +3,11 @@
 agent:
   webskip: true
   metadata:
-    id: "_bmad/bse/agents/arbiter.md"
+    id: "_pantheon/agents/arbiter.md"
     name: Themis
     title: Titan of Justice & Fair Judgment
     icon: "⚖️"
-    module: bse
+    module: pantheon
     hasSidecar: false
 
   persona:

@@ -1,7 +1,6 @@
 name: batch-review
 description: "Deep code review and hardening workflow - run repeatedly until bulletproof"
 author: "Jonah Schulte (leveraging BMAD Method)"
-version: "1.0.0"
 
 # ============================================================================
 # BATCH-REVIEW: Hardening Sweep Workflow
@@ -23,11 +22,15 @@ version: "1.0.0"
 # ============================================================================
 
 # Execution parameters
-execution_mode: "multi_agent"
+execution_mode: "multi_agent"  # multi_agent (sequential) | swarm (parallel TeammateTool)
 max_iterations: 5  # Max fix/verify cycles per run
 
+# Critical variables from config
+config_source: "{project-root}/_bmad/bmm/config.yaml"
+sprint_artifacts: "{config_source}:sprint_artifacts"
+
 # Paths
-installed_path: "{project-root}/_bmad/bse/workflows/batch-review"
+installed_path: "{project-root}/_pantheon/workflows/batch-review"
 instructions: "{installed_path}/workflow.md"
 agents_path: "{installed_path}/agents"
 
@@ -119,6 +122,68 @@ agents:
     prompt_file: "{agents_path}/hardening-reporter.md"
     timeout: 600
 
+# =============================================================================
+# AGENT TEAMS MODE (v2.0, updated v2.1)
+# =============================================================================
+# When Agent Teams is available, Phases 2, 4, and 5 use TeammateTool for
+# true parallel execution with non-overlapping file assignments.
+# EXPERIMENTAL: Requires CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 environment variable.
+swarm_config:
+  enabled: true
+  experimental: true                 # Agent Teams is experimental — may change without notice
+  team_prefix: "review"              # Team name: review-{scope_id}
+  delegate_mode: recommended         # Use Shift+Tab delegate mode for the lead
+  single_team_strategy: true         # All worker types (Dike + Asclepius + Aletheia) in ONE team, gated by task dependencies
+  review_workers:
+    perspectives: [security, correctness, architecture, test_quality, accessibility]
+    model: "opus"
+    persona: "{agents_path}/review-worker.md"    # Dike
+    max_workers: 5                   # One per perspective (+ forged specialists)
+  fixer_workers:
+    categories: [frontend, backend, database]
+    model: "opus"
+    persona: "{agents_path}/fixer-worker.md"     # Asclepius
+    max_workers: 3                   # One per category
+  verify_workers:
+    model: "opus"
+    persona: "{agents_path}/verification-worker.md"  # Aletheia
+    max_workers: 3                   # One per category
+  requires:
+    env: CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1  # Must be set before launching Claude Code
+
+# =============================================================================
+# PERSONA FORGING — Pygmalion (v2.0)
+# =============================================================================
+persona_forging:
+  enabled: true
+  complexity_gate:
+    skip_below: "light"              # Skip forging for trivial/micro scopes
+  max_specialists: 3
+  model: "opus"
+  timeout: 600
+  pygmalion_prompt: "{project-root}/_pantheon/workflows/story-pipeline/agents/pygmalion.md"
+  registry:
+    enabled: true
+    directory: "docs/specialist-registry"
+    index_file: "_index.json"
+    match_thresholds:
+      reuse: 0.5                     # Jaccard >= 0.5 → reuse as-is
+      evolve: 0.3                    # 0.3 <= Jaccard < 0.5 → evolve existing
+    max_registry_size: 50            # Safety cap on total specialists
+
+# =============================================================================
+# DEDUPLICATION (v2.0)
+# =============================================================================
+# When multiple reviewers (Pantheon + forged) find the same issue,
+# Themis deduplicates during triage.
+deduplication:
+  enabled: true
+  strategy: "themis_merge"           # Themis merges duplicates during triage
+  merge_criteria:
+    same_file: true                  # Must be in same file
+    line_proximity: 5                # Within 5 lines counts as same location
+    same_root_cause: true            # Must describe same underlying problem
+
 # Issue classification (same as story-pipeline)
 issue_classification:
   MUST_FIX: "Real issues that need fixing"
@@ -135,3 +200,6 @@ output:
 completion:
   clean_pass: true  # Stop when no MUST_FIX issues found
   max_passes: 5     # Safety limit
+
+standalone: true
+web_bundle: false

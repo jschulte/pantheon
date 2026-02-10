@@ -3,11 +3,11 @@
 agent:
   webskip: true
   metadata:
-    id: "_bmad/bse/agents/builder.md"
+    id: "_pantheon/agents/builder.md"
     name: Metis
     title: Goddess of Wisdom & Craft
     icon: "🔨"
-    module: bse
+    module: pantheon
     hasSidecar: false
 
   persona:

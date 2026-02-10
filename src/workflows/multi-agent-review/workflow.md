@@ -1,4 +1,4 @@
-# Multi-Agent Code Review v3.0
+# Multi-Agent Code Review
 
 <purpose>
 Perform unbiased code review using multiple specialized AI agents in fresh context.
@@ -16,7 +16,6 @@ Agent count scales with story complexity. Independent perspective prevents bias.
 
 <config>
 name: multi-agent-review
-version: 3.0.0
 
 agent_selection:
   micro: {count: 2, agents: [security, code_quality]}

@@ -1,4 +1,4 @@
-# Batch Super-Dev v3.0 - Unified Workflow
+# Batch Stories - Unified Workflow
 
 <purpose>
 Interactive story selector for batch implementation. Scan codebase for gaps, select stories, process with story-pipeline, reconcile results.
@@ -17,10 +17,30 @@ Interactive story selector for batch implementation. Scan codebase for gaps, sel
 Orchestrator coordinates. Agents do implementation. Orchestrator does reconciliation.
 </philosophy>
 
+<story_quality_guidance>
+**IMPORTANT: Story File Quality Determines Output Quality**
+
+Before running batch-stories, verify your story files are robust enough:
+
+| File Size | Likely Quality | Recommendation |
+|-----------|---------------|----------------|
+| < 3KB | Too thin | Will produce poor results. Regenerate with more context. |
+| 3-6KB | Minimal | May work for trivial/micro stories only. Enrich for anything larger. |
+| 6-10KB | Adequate | Sufficient for light/standard stories. |
+| 10KB+ | Good | Recommended for standard+ stories. Rich context = better implementation. |
+
+**What makes a story robust:**
+- Detailed Business Context (not just "add a button")
+- Specific Acceptance Criteria with edge cases
+- Technical Requirements mentioning frameworks, patterns, constraints
+- Dev Agent Guardrails with anti-patterns and gotchas
+- Current State describing what exists already
+
+**Rule of thumb:** If the story doesn't give a human developer enough context to implement it well, it won't give an AI agent enough either. Run `npm run validate:stories` before batch processing.
+</story_quality_guidance>
+
 <config>
 name: batch-stories
-version: 3.5.0
-
 modes:
   sequential: {description: "Process one-by-one in this session", recommended_for: "gap analysis"}
   parallel: {description: "Spawn concurrent Task agents", recommended_for: "greenfield batch"}
@@ -171,17 +191,57 @@ Legend: ✅ ready | ❌ missing | 🔄 done but not tracked
 </step>
 
 <step name="validate_stories">
-**Validate story files have required sections**
+**Validate story files have required sections and sufficient depth**
 
 For each story with existing file:
 1. Read story file
 2. Check for 12 BMAD sections (Business Context, Acceptance Criteria, Tasks, etc.)
-3. If invalid: mark for regeneration
+3. Check file size for quality signal
+4. If invalid: mark for regeneration
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🔍 VALIDATING STORY FILES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+**File size quality check:**
+```bash
+for STORY_FILE in ${STORY_FILES[@]}; do
+  FILE_SIZE=$(wc -c < "$STORY_FILE" | tr -d ' ')
+  STORY_NAME=$(basename "$STORY_FILE" .md)
+
+  if [ "$FILE_SIZE" -lt 3000 ]; then
+    echo "⚠️  $STORY_NAME (${FILE_SIZE}B) — TOO THIN: likely insufficient context"
+    THIN_STORIES+=("$STORY_NAME")
+  elif [ "$FILE_SIZE" -lt 6000 ]; then
+    echo "⚠️  $STORY_NAME (${FILE_SIZE}B) — may lack detail for quality implementation"
+    THIN_STORIES+=("$STORY_NAME")
+  else
+    SIZE_KB=$((FILE_SIZE / 1024))
+    echo "✅ $STORY_NAME (${SIZE_KB}KB)"
+  fi
+done
+```
+
+**If thin stories found, prompt user:**
+```
+IF THIN_STORIES.length > 0:
+  Use AskUserQuestion:
+    "Found {{THIN_STORIES.length}} story file(s) under 6KB. Thin stories often
+    produce poor results — they lack the context agents need for quality work.
+    Most stories should be 10KB+ with detailed Business Context, Acceptance
+    Criteria, and Technical Requirements.
+
+    Thin stories: {{THIN_STORIES}}
+
+    What would you like to do?"
+
+    Options:
+    1. "Continue anyway" — Process all stories including thin ones
+    2. "Skip thin stories" — Only process stories >= 6KB
+    3. "Regenerate thin stories first" — Run /create-story-with-gap-analysis on thin ones
+    4. "Cancel" — Stop and review story files manually
 ```
 
 **Note:** Stories with missing files will be auto-created in the execution step.
@@ -249,11 +309,11 @@ For parallel: proceed to `analyze_dependencies`
 </step>
 
 <step name="analyze_dependencies" if="mode == parallel">
-**Dependency Analysis & Smart Wave Planning**
+**Dependency Analysis & Task Graph Creation**
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔗 ANALYZING DEPENDENCIES
+🔗 ANALYZING DEPENDENCIES & BUILDING TASK GRAPH
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
@@ -306,36 +366,63 @@ Dependencies found:
 
 ```bash
 # If circular dependency detected:
-echo "⚠️ CIRCULAR DEPENDENCY: 5-1 → 5-3 → 5-1"
+echo "CIRCULAR DEPENDENCY: 5-1 -> 5-3 -> 5-1"
 echo "Falling back to epic order for these stories"
 ```
 
-### Step 4: Build Smart Waves
+If circular dependency detected, remove the back-edge (the link that creates the cycle) and log a warning.
 
-**Algorithm:**
-1. Start with stories that have no unmet dependencies → Wave 1
-2. After Wave 1 completes, stories whose dependencies are now met → Wave 2
-3. Repeat until all stories are assigned
-4. Respect `max_concurrent` limit per wave
+### Step 4: Create Shared Task List
+
+**Instead of computing waves, create tasks with dependency constraints.**
+
+Workers will dynamically pick up unblocked tasks — no wave planning needed.
+
+For each selected story, create a task:
+
+```
+TaskCreate(
+  subject="Story {{story_key}}: {{story_title}}",
+  description="""
+    story_key: {{story_key}}
+    story_file: {{story_file_path}}
+    complexity_level: {{complexity_level}}
+    story_title: {{story_title}}
+
+    Execute the full story-pipeline for this story.
+    Load the story file, run all 7 phases (PREPARE through REFLECT),
+    and report results via SendMessage to team-lead.
+  """,
+  activeForm="Processing story {{story_key}}"
+)
+```
+
+Then set dependency constraints:
+
+```
+# For each story with dependencies:
+IF story has depends_on:
+  FOR each dependency in depends_on:
+    dep_task_id = task ID of the dependency story
+    TaskUpdate(taskId=this_task_id, addBlockedBy=[dep_task_id])
+```
+
+**Display the task graph:**
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 WAVE PLAN
+📋 TASK GRAPH
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Wave 1 (no dependencies):
-  • 5-1 Polish Catch List View
-  • 5-3 Polish Manual Catch Entry Form
+Task #1: 5-1 Polish Catch List View         [unblocked]
+Task #2: 5-2 Polish Catch Detail View       [blocked by #1]
+Task #3: 5-3 Polish Manual Catch Entry Form [unblocked]
+Task #4: 5-4 Fix Offline Photo Handling     [blocked by #1]
+Task #5: 5-5 Improve Photo Upload Widget    [blocked by #4]
+Task #6: 5-6 Add Catch Edit Functionality   [blocked by #2]
 
-Wave 2 (depends on Wave 1):
-  • 5-2 Polish Catch Detail View (← 5-1)
-  • 5-4 Fix Offline Photo Handling (← 5-1)
-
-Wave 3 (depends on Wave 2):
-  • 5-5 Improve Photo Upload Widget (← 5-4)
-  • 5-6 Add Catch Edit Functionality (← 5-2)
-
-Total: 6 stories in 3 waves
+Unblocked (ready now): 2 stories
+Blocked (waiting):     4 stories
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
@@ -343,15 +430,16 @@ Total: 6 stories in 3 waves
 
 Use AskUserQuestion:
 ```
-Smart wave plan created based on dependency analysis.
+Task graph created with dependency constraints.
+Workers will dynamically claim unblocked tasks.
 
 Options:
-1. Proceed with smart ordering (recommended)
-2. Override: Process in selection order (ignore dependencies)
-3. Adjust max concurrent (currently {{max_concurrent}})
+1. Proceed with task graph (recommended)
+2. Remove all dependencies (process in any order)
+3. Adjust max workers (currently {{max_workers}})
 ```
 
-**Store wave plan for execute_parallel step.**
+**Store task IDs for execute_parallel step.**
 </step>
 
 <step name="execute_sequential" if="mode == sequential">
@@ -432,7 +520,7 @@ echo "✅ Story file exists and ready for implementation"
 Execute the pipeline phases directly so each agent is a visible top-level Task.
 
 **B.1: Load story-pipeline workflow:**
-Read: `{project-root}/_bmad/bse/workflows/story-pipeline/workflow.md`
+Read: `{project-root}/_pantheon/workflows/story-pipeline/workflow.md`
 
 **B.2: Execute each phase as described in workflow.md:**
 The workflow describes spawning these Tasks - spawn them DIRECTLY.
@@ -523,215 +611,414 @@ Use Edit tool: `"{{story_key}}: ready-for-dev"` → `"{{story_key}}: done"`
 </step>
 
 <step name="execute_parallel" if="mode == parallel">
-**Parallel Processing with Smart Wave Pattern**
+**Parallel Processing with TeammateTool Swarm**
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📦 PARALLEL PROCESSING (SMART WAVES)
+📦 PARALLEL PROCESSING (SWARM MODE)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-**Uses wave plan from dependency analysis step.**
+**Requires:** `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` environment variable set before launching Claude Code.
+This feature is **experimental** and may change. See Claude Code Agent Teams documentation.
+**Uses task graph from dependency analysis step.**
 
-**Wave Configuration:**
-- Max concurrent: `{{max_concurrent}}` (default 3, user can override)
-- Smart ordering: Dependencies respected
-- Wait for wave completion before next wave
+Workers self-schedule from the shared task list. Dependencies are enforced via `addBlockedBy`
+constraints — workers automatically skip blocked tasks and grab unblocked ones. No wave
+planning or batch synchronization needed.
 
-**For each wave in wave_plan:**
+### Pre-Flight: Permissions & Delegate Mode
 
-### Step 1: Display Wave Header
+**Pre-approve permissions** in Claude Code settings before starting a batch run. Workers
+operate autonomously and cannot prompt for permission mid-execution. In your settings or
+`CLAUDE.md`, pre-approve:
+- File read/write in the project directory
+- Bash commands for `npm test`, `git add`, `git commit`, `npx`, etc.
+- Task agent spawning (sub-agents within teammates)
+
+**Delegate mode (recommended):** Use `Shift+Tab` to switch the lead session to delegate mode.
+This ensures the orchestrator coordinates work without accidentally implementing stories itself.
+The lead should only manage tasks, monitor progress, and reconcile results.
+
+### Step 1: Create Swarm Team
 
 ```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🌊 WAVE {{wave_number}}/{{total_waves}}: {{story_keys}}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Dependencies satisfied: {{deps_from_previous_waves}}
-Spawning {{count}} parallel pipeline agents...
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Teammate({
+  operation: "spawnTeam",
+  team_name: "batch-{{epic_or_timestamp}}",
+  description: "Batch story implementation for {{story_count}} stories"
+})
 ```
 
-### Step 2: Spawn Task agents (up to 3 parallel)
+The team name uses the epic number if filtering by epic (e.g., `batch-5`), otherwise
+a timestamp (e.g., `batch-20260203`).
+
+### Step 1.5: Spawn Quality Gate Coordinator (Optional)
+
+**When to spawn Hygeia:** If `max_workers >= 2` (parallel workers will contend for CPU),
+spawn Hygeia as a team member before any workers. Hygeia serializes expensive quality
+checks (type-check, build, full test suite) so only one runs at a time.
+
+**Load the coordinator persona:**
+Read: `{installed_path}/agents/hygeia.md`
 
 ```
 Task({
   subagent_type: "general-purpose",
-  description: "🔨 Pipeline: {{story_key}}",
+  team_name: "batch-{{epic_or_timestamp}}",
+  name: "hygeia",
+  model: "sonnet",  # Hygeia just runs bash commands, doesn't need opus
+  run_in_background: true,
   prompt: `
-Execute story-pipeline for story {{story_key}}.
+You are Hygeia, the Quality Gate Coordinator for a batch-stories swarm.
 
-<execution_context>
-@story-pipeline/workflow.md
-</execution_context>
+## Your Instructions
 
-<context>
-Story: [inline story content]
-Complexity: {{complexity_level}}
-</context>
+Read this file NOW, then follow it exactly:
+  {{project_root}}/_pantheon/workflows/batch-stories/agents/hygeia.md
 
-<success_criteria>
-- [ ] All pipeline phases complete
-- [ ] Git commit created
-- [ ] Progress artifact updated at each phase
-- [ ] Return ## AGENT COMPLETE with summary
-</success_criteria>
+## Project Context
+
+- Project root: {{project_root}}
+- Working directory for checks: {{project_root}}/app
+- Team name: batch-{{epic_or_timestamp}}
+
+## Critical Rules
+
+- You ONLY run quality checks. Never modify code.
+- Process messages one at a time (serialization is the point).
+- Cache results when git state hasn't changed.
+- Always respond to every request — workers are waiting.
 `
 })
 ```
 
-### Step 3: Poll Progress While Waiting (Smart Polling)
+Workers will detect Hygeia's presence by reading the team config file and
+route quality check requests through her instead of running checks independently.
 
-**Poll every 30 seconds, but only display when something changes.**
+**Skip Hygeia when:**
+- `max_workers == 1` (no contention with sequential/single worker)
+- User explicitly opts out via prompt argument
 
-**State tracking:**
+### Step 2: Spawn Workers On-Demand (Demand-Based Spawning)
+
+**Do NOT spawn all workers upfront.** Only spawn a worker when there is an unblocked
+task for it to claim. This prevents idle workers from rationalizing work on blocked tasks.
+
+**Load the worker persona once:**
+Read: `{installed_path}/agents/heracles.md`
+
+**Worker naming — Greek hero roster (rotate through as needed):**
+
 ```
-# Track last known state for each story
-LAST_STATE = {}  # { "6-1": "BUILD", "6-3": "PREPARE", ... }
-```
-
-**Polling loop:**
-```
-WHILE any agent still running:
-  SLEEP 30 seconds
-
-  changes_detected = false
-  current_states = {}
-
-  FOR each story in wave:
-    PROGRESS = "docs/sprint-artifacts/completions/${story}-progress.json"
-
-    IF file exists:
-      phase = READ progress artifact -> current_phase
-      details = READ progress artifact -> phases[phase].details
-    ELSE:
-      phase = "STARTING"
-      details = "Initializing..."
-    END IF
-
-    current_states[story] = phase
-
-    IF phase != LAST_STATE[story]:
-      changes_detected = true
-      # Log the transition
-      PRINT "📍 ${story}: ${LAST_STATE[story]} → ${phase}"
-    END IF
-  END FOR
-
-  IF changes_detected:
-    DISPLAY full progress table
-  END IF
-
-  LAST_STATE = current_states
-END WHILE
+HERO_NAMES = ["heracles", "theseus", "perseus", "atalanta", "achilles",
+              "odysseus", "diomedes", "bellerophon", "orion", "patroclus"]
+# Each worker gets the next unused name from the roster.
+# If max_workers=3, the first three spawned are: heracles, theseus, perseus
 ```
 
-**Display on change:**
+**Spawning rules:**
+
+```
+# Count currently unblocked, unclaimed tasks
+UNBLOCKED_TASKS = TaskList() WHERE status=="pending" AND owner==empty AND blockedBy==empty
+ACTIVE_WORKERS = count of currently running workers
+
+# Only spawn enough workers to cover available work (up to max_workers)
+WORKERS_NEEDED = min(UNBLOCKED_TASKS.length, max_workers) - ACTIVE_WORKERS
+
+IF WORKERS_NEEDED <= 0:
+  → No workers needed yet. Wait for tasks to unblock.
+
+FOR i IN 1..WORKERS_NEEDED:
+  HERO_NAME = HERO_NAMES[next_hero_index++]
+
+  Task({
+    subagent_type: "general-purpose",
+    team_name: "batch-{{epic_or_timestamp}}",
+    name: "{{HERO_NAME}}",
+    model: "{{worker_model}}",  # from workflow.yaml (default: opus)
+    run_in_background: true,
+    prompt: `
+You are {{HERO_NAME}}, a story-pipeline worker in a batch-stories swarm.
+
+## Your Instructions
+
+Read these two files NOW, then follow them exactly:
+
+1. **Your persona & self-scheduling loop:**
+   {{project_root}}/_pantheon/workflows/batch-stories/agents/heracles.md
+
+2. **The 7-phase pipeline you execute for each story:**
+   {{project_root}}/_pantheon/workflows/story-pipeline/workflow.md
+
+## Project Context
+
+- Project root: {{project_root}}
+- Sprint artifacts: {{sprint_artifacts_path}}
+- Pipeline config: {{project_root}}/_pantheon/workflows/story-pipeline/workflow.yaml
+- Agent routing: {{project_root}}/_pantheon/workflows/story-pipeline/agent-routing.yaml
+
+## Critical Rules
+
+- Load and follow the workflow files. Do NOT paraphrase or improvise pipeline phases.
+- You CAN and MUST spawn Task sub-agents for BUILD, VERIFY, ASSESS, REFINE, and REFLECT phases.
+  (Note: The "no nested teams" restriction in Agent Teams only prevents calling TeammateTool
+  from within a teammate. It does NOT prevent spawning Task sub-agents — those work normally.)
+- Do NOT write implementation code yourself — delegate to builder agents.
+- Do NOT self-certify code — spawn independent reviewer agents.
+- Do NOT work on blocked tasks. If no unblocked tasks exist, send idle message and stop.
+`
+  })
+```
+
+**Optional: Plan approval gate for complex+ stories:**
+
+For stories scored `complex` or `critical`, you may optionally enable a plan approval gate
+where the orchestrator reviews the Heracles worker's execution plan before it starts building.
+This adds latency but catches misunderstood requirements early:
+
+```
+IF complexity_level in [complex, critical] AND plan_approval_gate enabled:
+  Worker sends plan via SendMessage to team-lead BEFORE Phase 2 BUILD
+  Team-lead reviews and replies with approval or corrections
+  Worker proceeds only after approval
+```
+
+This is opt-in. For most batch runs, autonomous execution is preferred.
+
+**When to spawn additional workers:**
+
+After each worker completes a story and tasks unblock, check if new workers are needed:
+
+```
+ON worker_completion_message:
+  # Completing a story may unblock downstream tasks
+  UNBLOCKED = TaskList() WHERE status=="pending" AND owner==empty AND blockedBy==empty
+  ACTIVE = count of running workers (excluding the one that just finished — it will self-schedule)
+
+  IF UNBLOCKED.length > ACTIVE AND ACTIVE < max_workers:
+    # More unblocked work than active workers — spawn additional
+    SPAWN_COUNT = min(UNBLOCKED.length - ACTIVE, max_workers - ACTIVE)
+    → Spawn SPAWN_COUNT new workers (same prompt as above)
+```
+
+**Example with linear chain (36-1 → 36-2 → 36-3 → 36-4 → fan-out):**
+
+```
+Initial:  1 task unblocked (36-1)  → spawn 1 worker (heracles)
+36-1 done: 1 task unblocked (36-2) → heracles self-schedules, no new spawn needed
+36-2 done: 1 task unblocked (36-3) → heracles self-schedules, no new spawn needed
+36-3 done: 1 task unblocked (36-4) → heracles self-schedules, no new spawn needed
+36-4 done: 5 tasks unblock (36-5 through 36-9) → spawn 2 more (theseus, perseus)
+```
+
+This avoids spawning 3 workers when only 1 has work, which wastes tokens and creates
+the "idle worker works on blocked task" problem.
+
+### Step 3: Monitor Progress via Idle Notifications
+
+> **WARNING: No Session Resumption for Teammates**
+>
+> If the lead session crashes or is interrupted, `/resume` does **NOT** restore teammates.
+> Teammates and their context are lost. The **only** recovery path is through progress
+> artifacts (`completions/*-progress.json`). After resuming the lead session:
+> 1. Read progress artifacts to determine which stories completed
+> 2. Mark completed stories as done
+> 3. Create a new team and re-spawn workers for remaining stories
+> This is why progress artifacts are written after EVERY phase — they are the crash recovery mechanism.
+
+**Workers send messages automatically.** The orchestrator receives:
+
+- **Completion messages** — Worker reports story results via `SendMessage`
+- **Failure messages** — Worker reports story failure with phase and reason
+- **Blocker messages** — Worker requests help from team lead
+- **Idle notifications** — Automatic when a worker has no more work to do
+
+**No polling loop needed.** Messages are delivered automatically as new conversation turns.
+
+**When a completion message arrives:**
+
+```
+Received from heracles:
+  "Story 5-1 COMPLETE - 25 tests, 97.6% cov, 4->0 issues, commit 8a1a0f0"
+
+→ VERIFY ARTIFACTS FIRST (see below)
+→ Log to progress tracker
+→ Reconcile story (Step 5)
+→ Check if completed story unblocks new tasks → spawn additional workers if needed
+→ Check if all stories done
+```
+
+**Artifact Verification (MANDATORY before accepting completion):**
+
+Before trusting a worker's completion report, verify that the pipeline actually ran:
+
+```
+story_key = extract from completion message (e.g., "5-1")
+artifacts_dir = "{sprint_artifacts}/completions/"
+
+# 1. Progress artifact must exist and show COMPLETE
+progress = Read("{artifacts_dir}/{story_key}-progress.json")
+IF progress missing OR progress.status != "SUCCESS":
+  → Flag: "Worker reported success but progress artifact missing/incomplete"
+  → Do NOT mark story as done
+
+# 2. Builder artifact must exist (proves BUILD phase ran with sub-agent)
+builder_exists = Glob("{artifacts_dir}/{story_key}-metis.json") OR
+                 Glob("{artifacts_dir}/{story_key}-apollo.json") OR
+                 Glob("{artifacts_dir}/{story_key}-hephaestus.json")
+IF NOT builder_exists:
+  → Flag: "No builder artifact — worker may have self-implemented without spawning builder"
+
+# 3. Review artifact must exist (proves VERIFY phase ran independently)
+review_exists = Glob("{artifacts_dir}/{story_key}-review.json") OR
+                Glob("{artifacts_dir}/{story_key}-argus.json") OR
+                Glob("{artifacts_dir}/{story_key}-multi-review.json")
+IF NOT review_exists:
+  → Flag: "No review artifact — worker may have self-certified without independent review"
+
+# 4. If any flags raised:
+IF any_flags:
+  → SendMessage to worker: "Completion rejected — missing artifacts: {list}. Re-run missing phases."
+  → Do NOT mark task as completed
+  → Worker should resume pipeline from the missing phase
+ELSE:
+  → Accept completion, proceed with reconciliation
+```
+
+**When a failure message arrives:**
+
+```
+Received from theseus:
+  "Story 5-3 FAILED at Phase VERIFY - Cerberus found critical security issue"
+
+→ Log failure
+→ Decide: retry, skip, or halt
+→ If retry: reset task status so another worker can claim it
+```
+
+**When a blocker message arrives:**
+
+```
+Received from perseus:
+  "Story 5-5 BLOCKED - dependency 5-4 failed, cannot proceed"
+
+→ Assess blocker
+→ Either fix the dependency or mark story as skipped
+→ Reply via SendMessage to unblock worker
+```
+
+### Step 4: Track Running Progress
+
+Maintain a progress table that updates as messages arrive:
+
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🌊 WAVE {{wave_number}} IN PROGRESS ({{elapsed}})
+SWARM PROGRESS ({{completed}}/{{total}} stories)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-📍 6-1: BUILD → VERIFY (phase changed)
+  5-1  heracles  COMPLETE  25 tests  97.6% cov  8a1a0f0
+  5-2  theseus   BUILD     ...working...
+  5-3  heracles  VERIFY    ...working...
+  5-4  --        pending   blocked by #1
+  5-5  --        pending   blocked by #4
+  5-6  --        pending   blocked by #2
 
-  6-1   👁️ VERIFY    4 reviewers checking...
-  6-3   🔨 BUILD     Metis implementing...
-  6-6   📋 PREPARE   Loading playbooks...
-
+Heroes: 3 active | Stories: 1 done, 2 active, 3 waiting
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+Optionally read progress artifacts for more detail:
+```bash
+PROGRESS="docs/sprint-artifacts/completions/${story}-progress.json"
 ```
 
 **Phase status icons:**
 ```
-⏳ STARTING   Agent initializing
-📋 PREPARE    Loading story & playbooks
-🔨 BUILD      Metis implementing
-👁️ VERIFY     Reviewers checking
-⚖️ ASSESS     Themis triaging
-🔧 REFINE     Fixing issues
-💾 COMMIT     Reconciling & committing
-📚 REFLECT    Mnemosyne learning
-✅ COMPLETE   Done
+STARTING   Agent initializing
+PREPARE    Loading story & playbooks
+BUILD      Metis implementing
+VERIFY     Reviewers checking
+ASSESS     Themis triaging
+REFINE     Fixing issues
+COMMIT     Reconciling & committing
+REFLECT    Mnemosyne learning
+COMPLETE   Done
+FAILED     Pipeline failed
 ```
 
-**Polling behavior:**
-- **Frequency:** Every 30 seconds
-- **Display:** Only when phase changes detected
-- **Quiet mode:** No output if nothing changed (avoids spam)
-- **Completion:** Show final status when agent finishes
+### Step 5: Orchestrator Reconciles Each Completed Story
 
-**Transition announcements:**
-When a story changes phase, announce it inline:
-```
-📍 6-1: BUILD → VERIFY
-📍 6-3: PREPARE → BUILD
-📍 6-6: VERIFY → ASSESS
-✅ 6-1: COMPLETE (3m 42s)
-```
+As each worker reports completion:
 
-This gives real-time feel without flooding the screen with unchanged status.
+1. Read the story's completion artifact (`{{story_key}}-progress.json`)
+2. Check off completed tasks in story file (`- [ ]` to `- [x]`)
+3. Fill Dev Agent Record with metrics from artifact
+4. Update sprint-status.yaml: story status to `done`
 
-### Step 4: Display Wave Summary
+**This happens incrementally** — as soon as a story is reported complete, reconcile it.
+Don't wait for all stories to finish.
 
-After all agents complete, read progress artifacts and display detailed summary:
+> **Detailed reconciliation protocol:** See `step-4.5-reconcile-story-status.md` for the
+> full step-by-step reconciliation procedure (task check-off logic, Dev Agent Record filling,
+> sprint-status.yaml updates, and edge case handling).
 
-```bash
-# Read progress files for this wave
-for story in {{wave_stories}}; do
-  PROGRESS="docs/sprint-artifacts/completions/${story}-progress.json"
-  if [ -f "$PROGRESS" ]; then
-    cat "$PROGRESS"
-  fi
-done
-```
+### Step 6: Wait for All Workers to Finish
 
-**Display format (terminal-friendly):**
+Workers send idle notifications automatically when they have no more tasks to claim.
+Once all workers are idle (or all tasks are completed/failed):
+
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🌊 WAVE {{wave_number}} COMPLETE
+SWARM COMPLETE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  5-1  ✅ done   25 tests   97.6% cov   4→0 issues   8a1a0f0
-  5-2  ✅ done   22 tests   100% cov    2→0 issues   481c7fd
-  5-3  ✅ done   32 tests   89.2% cov   6→0 issues   e94460c
+  5-1  heracles  DONE    25 tests  97.6% cov  4->0 issues  8a1a0f0
+  5-2  theseus   DONE    22 tests  100% cov   2->0 issues  481c7fd
+  5-3  heracles  DONE    32 tests  89.2% cov  6->0 issues  e94460c
+  5-4  perseus   DONE    18 tests  94.1% cov  3->0 issues  f2b9a1c
+  5-5  theseus   DONE    12 tests  91.3% cov  1->0 issues  7d3e4f2
+  5-6  heracles  FAILED  Phase VERIFY - critical security issue
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Wave Summary: {{success}}/{{total}} succeeded
+Summary: 5/6 succeeded, 1 failed
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
 **Column format:** `Story  Status  Tests  Coverage  Issues  Commit`
-- **Tests**: Number of tests (e.g., "25 tests")
-- **Coverage**: Line coverage (e.g., "97.6% cov")
-- **Issues**: found→remaining (e.g., "4→0 issues")
-- **Commit**: Short git hash
 
 **For failures, show phase details:**
 ```
-5-3 (FAILED):
-  ✓ PREPARE: standard, 2 playbooks
-  ✓ BUILD: 8 files, 423 lines
-  ✗ VERIFY: Cerberus found critical security issue
-  ⏳ ASSESS: Skipped
-  ⏳ REFINE: Skipped
-  ⏳ COMMIT: Skipped
+5-6 (FAILED):
+  PREPARE: standard, 2 playbooks
+  BUILD: 8 files, 423 lines
+  VERIFY: Cerberus found critical security issue [FAILED]
+  ASSESS: Skipped
+  REFINE: Skipped
+  COMMIT: Skipped
 ```
 
-**Status icons:**
-- ✓ = Complete
-- ⚠ = Completed with warnings
-- ✗ = Failed
-- ⏳ = Pending/Skipped
+### Step 7: Shutdown Workers and Cleanup
 
-**Coverage must always be populated.** If missing, it indicates a bug in the pipeline - the coverage gate in Phase 4 should always capture this metric.
+Request graceful shutdown of all workers, then clean up the team:
 
-### Step 5: Orchestrator reconciles each completed story
+```
+# For each active worker (by their hero name):
+SendMessage({
+  type: "request",
+  subtype: "shutdown",
+  recipient: "heracles",
+  content: "All stories processed. Shutting down."
+})
+# Repeat for theseus, perseus, etc. — whichever workers were spawned
 
-For each successful story:
-- Check off tasks in story file
-- Fill Dev Agent Record
-- Update sprint-status to done
+# After all workers confirm shutdown:
+Teammate({ operation: "cleanup" })
+```
 
-### Step 6: Continue to next wave or summary
+### Step 8: Continue to Summary
+
+Proceed to `summary` step with aggregated results from all completed stories.
 </step>
 
 <step name="summary">
@@ -770,7 +1057,7 @@ done
 ### Step 2: Spawn Hermes (Session Reporter)
 
 **Load persona:**
-Read: `{project-root}/_bmad/bse/workflows/batch-stories/agents/session-reporter.md`
+Read: `{project-root}/_pantheon/workflows/batch-stories/agents/session-reporter.md`
 
 ```
 Task({

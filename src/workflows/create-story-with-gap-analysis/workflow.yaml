@@ -1,6 +1,6 @@
 name: create-story-with-gap-analysis
 description: "Create/regenerate story with SYSTEMATIC codebase gap analysis using verified file scanning (Glob/Read tools)"
-author: "Jonah Schulte"
+author: "Jonah Schulte (leveraging BMAD Method)"
 
 # Critical variables from config
 config_source: "{project-root}/_bmad/bmm/config.yaml"
@@ -13,7 +13,7 @@ output_folder: "{implementation_artifacts}"
 story_dir: "{implementation_artifacts}"
 
 # Workflow components
-installed_path: "{project-root}/_bmad/bse/workflows/create-story-with-gap-analysis"
+installed_path: "{project-root}/_pantheon/workflows/create-story-with-gap-analysis"
 instructions: "{installed_path}/workflow.md"
 
 # Variables

@@ -1,4 +1,4 @@
-# Create Story with Gap Analysis v3.0 - Verified Story Generation
+# Create Story with Gap Analysis - Verified Story Generation
 
 <purpose>
 Regenerate story with VERIFIED codebase gap analysis.
@@ -18,7 +18,6 @@ Checkboxes reflect reality, not guesses.
 
 <config>
 name: create-story-with-gap-analysis
-version: 3.0.0
 
 verification_status:
   verified: "[x]"      # File exists, real implementation, tests exist

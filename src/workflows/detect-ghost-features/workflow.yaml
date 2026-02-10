@@ -1,7 +1,6 @@
 name: detect-ghost-features
 description: "Reverse gap analysis: Find functionality in codebase that has no corresponding story (vibe-coded or undocumented features). Propose backfill stories."
-author: "BMad"
-version: "1.0.0" # Who you gonna call? GHOST-FEATURE-BUSTERS! 👻
+author: "Jonah Schulte (leveraging BMAD Method)"
 
 # Critical variables from config
 config_source: "{project-root}/_bmad/bmm/config.yaml"
@@ -10,7 +9,7 @@ sprint_artifacts: "{output_folder}/sprint-artifacts"
 sprint_status: "{output_folder}/sprint-status.yaml"
 
 # Workflow paths
-installed_path: "{project-root}/_bmad/bse/workflows/detect-ghost-features"
+installed_path: "{project-root}/_pantheon/workflows/detect-ghost-features"
 instructions: "{installed_path}/workflow.md"
 
 # Input parameters
@@ -58,3 +57,4 @@ output:
   suggest_epic_assignment: true # Suggest which epic orphans belong to
 
 standalone: true
+web_bundle: false

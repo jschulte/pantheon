@@ -1,4 +1,4 @@
-# Gap Analysis v3.0 - Verify Story Tasks Against Codebase
+# Gap Analysis - Verify Story Tasks Against Codebase
 
 <purpose>
 Validate story checkbox claims against actual codebase reality.
@@ -18,7 +18,6 @@ Checkboxes lie. Code doesn't.
 
 <config>
 name: gap-analysis
-version: 3.0.0
 
 defaults:
   auto_update: false
