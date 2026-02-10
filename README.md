@@ -28,9 +28,9 @@ Pantheon is a [BMAD Method](https://github.com/bmadcode/BMAD-METHOD) plugin that
 
 ## The Problem
 
-AI coding assistants are fast but sloppy. You paste a story into Claude, it churns out code, and you spend the next few hours hunting down the bugs it introduced. The multi-tenant isolation is missing. The error handling is `catch { return [] }`. The tests mock everything and test nothing.
+AI coding assistants generate code fast, but speed without structure leaves gaps — missing validations, shallow error handling, tests that don't exercise real behavior. BMAD workflows address this, but they're only as good as the story is thorough and require numerous commands and back-and-forth to get through a single story. When you have dozens of epics and hundreds of stories, orchestrating agents through the right steps, in the right sequence, for the right stories, with proper quality gates — it becomes tedious and time-consuming to manage by hand.
 
-**The bottleneck isn't code generation. It's everything else** — gap analysis, multi-perspective review, test quality validation, security scanning, learning from past mistakes. Pantheon automates all of it.
+**Pantheon automates all of it** — gap analysis, multi-perspective review, test quality validation, security scanning, and learning from past mistakes — across entire epics in a single command.
 
 ---
 
@@ -61,7 +61,7 @@ Each agent has a clear role boundary. Builders build. Reviewers review. The arbi
 
 ## What Makes Pantheon Different
 
-### It processes entire epics, not just single prompts
+### It processes entire epics or even entire projects, not just single stories or prompts
 
 The `batch-stories` workflow analyzes dependencies between stories, organizes them into parallel waves, and spawns concurrent workers — each running the full 7-phase pipeline independently.
 
@@ -71,15 +71,15 @@ Wave 2: Stories 6-2, 6-4  (depend on Wave 1)
 Wave 3: Stories 6-5, 6-6  (depend on Wave 2)
 ```
 
-Hand it an epic. Walk away. Come back to production-ready code with 80%+ test coverage, multi-perspective reviews, and zero unresolved MUST_FIX issues across every story.
+Hand it an epic. Walk away. Come back to production-ready code with 80%+ test coverage (configurable), multi-perspective reviews, and zero unresolved MUST_FIX issues across every story.
 
 ### It's built for Claude Code agent swarms
 
-> **Experimental:** Swarm mode requires Claude Code's Agent Teams feature (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`), which is experimental and may change without notice. Sequential mode works without it.
+> **Experimental:** Swarm mode can optionally use Claude Code's Agent Teams feature (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`), which is experimental and may change without notice. Without it, swarm mode still works using standard Task tool subagent coordination.
 
 Pantheon is designed from the ground up to work with Claude Code's multi-agent capabilities. In swarm mode, it spawns **Heracles workers** — each one an independent agent running the full story pipeline. Workers coordinate through shared task lists, claim stories automatically, and commit in parallel using a lock file protocol.
 
-**Hygeia**, the Quality Gate Coordinator, serializes expensive checks (type-check, build, test suite) across workers with intelligent caching. When three workers all need `tsc --noEmit`, Hygeia runs it once and serves cached results — keeping your machine responsive while agents build in parallel.
+**Hygeia**, the Quality Gate Coordinator, serializes expensive checks (type-check, build, test suite) across workers. When three workers all need `tsc --noEmit`, they queue up and Hygeia runs it once against the current filesystem — then serves the same fresh result to all waiting workers. No caching, no stale results — just serialized execution with batch notification, keeping your machine responsive while agents build in parallel.
 
 ### It gets smarter with every story
 
@@ -125,7 +125,7 @@ Run the full 7-phase pipeline on one story. Builder selection is automatic — R
 /story-pipeline story_key=17-1
 ```
 
-### `/batch-stories` — Implement an entire epic
+### `/batch-stories` — Implement entire epic(s) or specific list of stories
 
 Process all stories in an epic with dependency-aware wave parallelism. Sequential or swarm mode.
 
@@ -136,12 +136,13 @@ Process all stories in an epic with dependency-aware wave parallelism. Sequentia
 
 ### `/batch-review` — Harden existing code
 
-Deep multi-perspective review of existing implementations. Run repeatedly with different focuses until bulletproof.
+Deep multi-perspective review of existing implementations. Run repeatedly with different focuses to achieve highest quality.
 
 ```bash
 /batch-review epic=17                              # General sweep
 /batch-review epic=17 focus="security"             # Security audit
 /batch-review epic=17 focus="accessibility"        # WCAG compliance
+/batch-review Epics 17-23                          # Review across multiple epics
 /batch-review path="src/api" focus="performance"   # Targeted optimization
 ```
 
@@ -155,7 +156,7 @@ Reverse gap analysis that scans your codebase for components, endpoints, models,
 
 ### `/create-story-with-gap-analysis` — Generate stories from your codebase
 
-Interactive story generation with systematic codebase scanning. Auto-populates all 12 BMAD sections with verified file references.
+Interactive story generation with systematic codebase scanning. Auto-populates all 12 BMAD sections with verified file references and checked tasks for already-complete functionality.
 
 ---
 
