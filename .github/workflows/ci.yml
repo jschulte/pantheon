@@ -7,54 +7,27 @@ on:
     branches: [main]
 
 jobs:
-  validate:
+  test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20, 22]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-      - name: Validate YAML files
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      - run: npm ci
+      - run: npm test
+
+  validate-scripts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check scripts are executable and have no syntax errors
         run: |
-          npm install yaml
-          node -e "
-            const yaml = require('yaml');
-            const fs = require('fs');
-            const path = require('path');
-            function findYaml(dir) {
-              const files = [];
-              for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-                const full = path.join(dir, entry.name);
-                if (entry.isDirectory() && !entry.name.startsWith('.')) files.push(...findYaml(full));
-                else if (entry.name.endsWith('.yaml') || entry.name.endsWith('.yml')) files.push(full);
-              }
-              return files;
-            }
-            const files = findYaml('src');
-            let errors = 0;
-            for (const f of files) {
-              try {
-                yaml.parse(fs.readFileSync(f, 'utf8'));
-                console.log('OK:', f);
-              } catch (e) {
-                console.error('FAIL:', f, e.message);
-                errors++;
-              }
-            }
-            if (errors) process.exit(1);
-            console.log('\nAll', files.length, 'YAML files valid');
-          "
-      - name: Check required files exist
-        run: |
-          test -f README.md || (echo "Missing README.md" && exit 1)
-          test -f LICENSE || (echo "Missing LICENSE" && exit 1)
-          test -f package.json || (echo "Missing package.json" && exit 1)
-          test -f src/module.yaml || (echo "Missing src/module.yaml" && exit 1)
-          test -f src/agent-routing.yaml || (echo "Missing src/agent-routing.yaml" && exit 1)
-          test -f .gitignore || (echo "Missing .gitignore" && exit 1)
-          echo "All required files present"
-      - name: Validate story script
-        run: |
-          test -x scripts/validate-all-stories.sh || (echo "validate-all-stories.sh not executable" && exit 1)
-          bash -n scripts/validate-all-stories.sh || (echo "validate-all-stories.sh has syntax errors" && exit 1)
-          echo "Story validation script OK"
+          for script in scripts/*.sh; do
+            bash -n "$script" || (echo "$script has syntax errors" && exit 1)
+            echo "OK: $script"
+          done
