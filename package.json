@@ -47,6 +47,11 @@
   "peerDependencies": {
     "bmad-method": ">=6.0.0"
   },
+  "peerDependenciesMeta": {
+    "bmad-method": {
+      "optional": true
+    }
+  },
   "bmad": {
     "type": "module",
     "moduleDefinition": "src/module.yaml",
