@@ -48,6 +48,29 @@ Use AskUserQuestion with options:
 
 If file >= 3KB, proceed without prompting (the note above is just informational).
 
+### 1.2.5 Already-Implemented Check
+
+Count checked vs unchecked tasks to detect stories that are already fully implemented:
+
+```bash
+CHECKED=$(grep -c "^- \[x\]" "$STORY_FILE" || true)
+UNCHECKED=$(grep -c "^- \[ \]" "$STORY_FILE" || true)
+```
+
+```
+IF UNCHECKED == 0 AND CHECKED > 0:
+  → Story is fully implemented — all tasks are checked off
+  → Set ALREADY_DONE=true
+  → Skip remaining PREPARE steps
+  → Return early with status "ALREADY_DONE"
+
+  Display:
+    "⏭️ Story {{story_key}} is fully implemented ({{CHECKED}} tasks checked, 0 unchecked). Skipping pipeline."
+
+  This allows the orchestrator (or Heracles worker) to skip the entire pipeline.
+  The worker writes a progress artifact with status ALREADY_DONE and moves on.
+```
+
 ### 1.3 Determine Complexity (6-tier scale)
 
 ```bash

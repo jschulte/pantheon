@@ -173,7 +173,25 @@ If no available stories: report "All stories complete!" and exit.
 
 For each story:
 1. Check if story file exists in `docs/sprint-artifacts/`
-2. Try patterns: `story-{epic}.{story}.md`, `{epic}-{story}.md`, `{story_key}.md`
+2. Try patterns in order (first match wins):
+   ```
+   # Exact key match
+   {story_key}.md                          # e.g., 18b-3-migrate-navigation.md
+   story-{story_key}.md                    # e.g., story-18b-3-migrate-navigation.md
+
+   # Numeric prefix match (handles slug mismatches between sprint-status and filename)
+   {epic}-{story_number}-*.md              # e.g., 18b-3-*.md via glob
+   story-{epic}-{story_number}-*.md        # e.g., story-18b-3-*.md via glob
+
+   # Dot-separated variant
+   story-{epic}.{story_number}.md          # e.g., story-18b.3.md
+   ```
+
+   **Use Glob for fuzzy matching.** Sprint-status keys often differ from filenames
+   (e.g., key `18b-3-migrate-navigation-profiles-service` vs file
+   `story-18b-3-migrate-profile-services.md`). The glob `*{epic}-{story_number}-*.md`
+   catches these mismatches. If multiple files match a glob, warn and use the first.
+
 3. Mark status: ✅ exists, ❌ missing, 🔄 already implemented
 
 ```markdown
@@ -288,20 +306,50 @@ Validate selection against available stories.
 </step>
 
 <step name="choose_mode">
-**Choose execution mode**
+**Choose execution mode (auto-detects Agent Teams)**
 
-Use AskUserQuestion:
+### Auto-Detection (MANDATORY)
+
+Before asking the user, check if Agent Teams is available:
+
+```
+IF TeamCreate tool is available AND swarm_config.enabled == true:
+  → Auto-select parallel/swarm mode
+  → Display:
+    "🐝 Agent Teams detected. Using swarm mode for parallel execution.
+     Workers will self-schedule from shared task list with dependency constraints."
+  → Proceed directly to analyze_dependencies (skip mode selection question)
+
+ELSE:
+  → Fall back to sequential mode
+  → Display:
+    "ℹ️ Agent Teams not available. Using sequential mode.
+     To enable swarm mode, set CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1
+     before launching Claude Code."
+  → Proceed to execute_sequential
+```
+
+**Why auto-detect:** When Agent Teams is enabled, swarm mode provides:
+- Parallel story execution with dynamic work-claiming
+- Dependency-aware scheduling (workers skip blocked tasks)
+- Quality gate coordination via Hygeia
+- Crash recovery via progress artifacts
+
+There is no scenario where sequential mode is preferred when teams are available.
+Manual mode selection is only shown as a fallback when teams is NOT available.
+
+### Fallback: Manual Selection (only when teams unavailable)
+
+If teams is NOT available, use AskUserQuestion:
 ```
 How should stories be processed?
 
 Options:
-1. Sequential (recommended for gap analysis)
-   - Process one-by-one in this session
+1. Sequential (process one-by-one in this session)
    - Verify code → build gaps → check boxes → next
 
-2. Parallel (for greenfield batch)
-   - Spawn Task agents concurrently
-   - Faster but harder to monitor
+2. Parallel (spawn concurrent Task agents — limited without Agent Teams)
+   - Faster but no inter-agent coordination
 ```
 
 For sequential: proceed to `execute_sequential`
@@ -372,54 +420,85 @@ echo "Falling back to epic order for these stories"
 
 If circular dependency detected, remove the back-edge (the link that creates the cycle) and log a warning.
 
-### Step 4: Create Shared Task List
+### Step 3.5: Pre-Flight Already-Implemented Check
 
-**Instead of computing waves, create tasks with dependency constraints.**
-
-Workers will dynamically pick up unblocked tasks — no wave planning needed.
-
-For each selected story, create a task:
+Before adding stories to the dependency graph, check each story file for signs it was
+already implemented. This avoids wasting tokens spawning workers that immediately discover
+the story is done.
 
 ```
-TaskCreate(
-  subject="Story {{story_key}}: {{story_title}}",
-  description="""
-    story_key: {{story_key}}
-    story_file: {{story_file_path}}
-    complexity_level: {{complexity_level}}
-    story_title: {{story_title}}
+ALREADY_DONE = []
 
-    Execute the full story-pipeline for this story.
-    Load the story file, run all 7 phases (PREPARE through REFLECT),
-    and report results via SendMessage to team-lead.
-  """,
-  activeForm="Processing story {{story_key}}"
-)
+FOR EACH story IN selected_stories:
+  STORY_FILE = story.file_path
+
+  # Check 1: All tasks checked off
+  CHECKED = grep -c "^- \[x\]" "$STORY_FILE" || 0
+  UNCHECKED = grep -c "^- \[ \]" "$STORY_FILE" || 0
+
+  # Check 2: Dev Agent Record has a git commit (proves pipeline completed)
+  HAS_COMMIT = grep -q "Git Commit.*[0-9a-f]\{7,\}" "$STORY_FILE"
+
+  IF UNCHECKED == 0 AND CHECKED > 0:
+    ALREADY_DONE += story
+  ELIF HAS_COMMIT:
+    ALREADY_DONE += story
 ```
 
-Then set dependency constraints:
+**If already-implemented stories found:**
 
 ```
-# For each story with dependencies:
-IF story has depends_on:
-  FOR each dependency in depends_on:
-    dep_task_id = task ID of the dependency story
-    TaskUpdate(taskId=this_task_id, addBlockedBy=[dep_task_id])
+IF ALREADY_DONE is not empty:
+  Display:
+    "⏭️ {{ALREADY_DONE.length}} stories appear already implemented:"
+    FOR EACH story IN ALREADY_DONE:
+      "  • {{story.story_key}} — {{CHECKED}} tasks checked, {{UNCHECKED}} unchecked"
+
+  Use AskUserQuestion:
+    "These stories have completed Dev Agent Records or all tasks checked off.
+     What would you like to do?"
+
+    Options:
+    1. "Skip them (recommended)" — Remove from task graph, mark done in sprint-status
+    2. "Re-run anyway" — Include them for re-verification
+    3. "Review individually" — Let me choose which to skip
+
+  IF skip:
+    → Remove ALREADY_DONE stories from selected_stories
+    → Update sprint-status.yaml: mark each as "done"
+    → Log: "Skipped {{ALREADY_DONE.length}} already-implemented stories"
 ```
 
-**Display the task graph:**
+### Step 4: Store Dependency Graph (In-Memory Only)
+
+**Do NOT call TaskCreate here.** Task creation must happen AFTER TeamCreate in `execute_parallel`
+so that tasks land in the team's task list context (`~/.claude/tasks/{team-name}/`).
+Tasks created before the team exists land in the default context and are invisible to workers.
+
+Store the dependency graph as an in-memory data structure for use by `execute_parallel`:
+
+```
+DEPENDENCY_GRAPH = {
+  "5-1": { story_key: "5-1", story_title: "...", story_file: "...", complexity: "...", depends_on: [] },
+  "5-2": { story_key: "5-2", story_title: "...", story_file: "...", complexity: "...", depends_on: ["5-1"] },
+  "5-3": { story_key: "5-3", story_title: "...", story_file: "...", complexity: "...", depends_on: [] },
+  ...
+}
+```
+
+**Display the planned dependency graph:**
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 TASK GRAPH
+📋 PLANNED DEPENDENCY GRAPH
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Task #1: 5-1 Polish Catch List View         [unblocked]
-Task #2: 5-2 Polish Catch Detail View       [blocked by #1]
-Task #3: 5-3 Polish Manual Catch Entry Form [unblocked]
-Task #4: 5-4 Fix Offline Photo Handling     [blocked by #1]
-Task #5: 5-5 Improve Photo Upload Widget    [blocked by #4]
-Task #6: 5-6 Add Catch Edit Functionality   [blocked by #2]
+  5-1 Polish Catch List View         [unblocked]
+  5-2 Polish Catch Detail View       [depends on 5-1]
+  5-3 Polish Manual Catch Entry Form [unblocked]
+  5-4 Fix Offline Photo Handling     [depends on 5-1]
+  5-5 Improve Photo Upload Widget    [depends on 5-4]
+  5-6 Add Catch Edit Functionality   [depends on 5-2]
 
 Unblocked (ready now): 2 stories
 Blocked (waiting):     4 stories
@@ -430,16 +509,16 @@ Blocked (waiting):     4 stories
 
 Use AskUserQuestion:
 ```
-Task graph created with dependency constraints.
-Workers will dynamically claim unblocked tasks.
+Dependency graph analyzed. Tasks will be created in the team context
+after TeamCreate (in execute_parallel).
 
 Options:
-1. Proceed with task graph (recommended)
+1. Proceed with dependency graph (recommended)
 2. Remove all dependencies (process in any order)
 3. Adjust max workers (currently {{max_workers}})
 ```
 
-**Store task IDs for execute_parallel step.**
+**Pass DEPENDENCY_GRAPH to execute_parallel.** No TaskCreate calls happen in this step.
 </step>
 
 <step name="execute_sequential" if="mode == sequential">
@@ -520,7 +599,7 @@ echo "✅ Story file exists and ready for implementation"
 Execute the pipeline phases directly so each agent is a visible top-level Task.
 
 **B.1: Load story-pipeline workflow:**
-Read: `{project-root}/_pantheon/workflows/story-pipeline/workflow.md`
+Read: `{project-root}/_bmad/pantheon/workflows/story-pipeline/workflow.md`
 
 **B.2: Execute each phase as described in workflow.md:**
 The workflow describes spawning these Tasks - spawn them DIRECTLY.
@@ -621,7 +700,8 @@ Use Edit tool: `"{{story_key}}: ready-for-dev"` → `"{{story_key}}: done"`
 
 **Requires:** `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` environment variable set before launching Claude Code.
 This feature is **experimental** and may change. See Claude Code Agent Teams documentation.
-**Uses task graph from dependency analysis step.**
+**Uses dependency graph from analysis step.** Tasks are created in Step 1.5 (after TeamCreate)
+to ensure they land in the team's task list context.
 
 Workers self-schedule from the shared task list. Dependencies are enforced via `addBlockedBy`
 constraints — workers automatically skip blocked tasks and grab unblocked ones. No wave
@@ -643,8 +723,7 @@ The lead should only manage tasks, monitor progress, and reconcile results.
 ### Step 1: Create Swarm Team
 
 ```
-Teammate({
-  operation: "spawnTeam",
+TeamCreate({
   team_name: "batch-{{epic_or_timestamp}}",
   description: "Batch story implementation for {{story_count}} stories"
 })
@@ -653,7 +732,65 @@ Teammate({
 The team name uses the epic number if filtering by epic (e.g., `batch-5`), otherwise
 a timestamp (e.g., `batch-20260203`).
 
-### Step 1.5: Spawn Quality Gate Coordinator (Optional)
+### Step 1.5: Populate Team Task List
+
+**Prerequisites:** TeamCreate completed (Step 1). DEPENDENCY_GRAPH available from `analyze_dependencies`.
+
+Now that the team exists, create tasks in the team context so workers can see them.
+Tasks created here land in `~/.claude/tasks/{team-name}/` — the shared task list that
+workers access via TaskList.
+
+```
+# Create a task for each story in the dependency graph
+TASK_IDS = {}  # Map story_key → task_id
+
+FOR EACH story IN DEPENDENCY_GRAPH:
+  task = TaskCreate(
+    subject="Story {{story.story_key}}: {{story.story_title}}",
+    description="""
+      story_key: {{story.story_key}}
+      story_file: {{story.story_file}}
+      complexity_level: {{story.complexity}}
+      story_title: {{story.story_title}}
+
+      Execute the full story-pipeline for this story.
+      Load the story file, run all 7 phases (PREPARE through REFLECT),
+      and report results via SendMessage to team-lead.
+    """,
+    activeForm="Processing story {{story.story_key}}"
+  )
+  TASK_IDS[story.story_key] = task.id
+
+# Set dependency constraints using stored task IDs
+FOR EACH story IN DEPENDENCY_GRAPH:
+  IF story.depends_on is not empty:
+    FOR EACH dep_key IN story.depends_on:
+      TaskUpdate(
+        taskId=TASK_IDS[story.story_key],
+        addBlockedBy=[TASK_IDS[dep_key]]
+      )
+```
+
+**Verify tasks are in team context:**
+
+```
+VERIFY = TaskList()
+IF VERIFY has no tasks:
+  → ERROR: "Task list is empty after population. TaskCreate calls may have
+     landed in wrong context. Verify TeamCreate completed before TaskCreate."
+  → HALT
+
+UNBLOCKED = VERIFY WHERE status=="pending" AND owner==empty AND blockedBy==empty
+IF UNBLOCKED is empty:
+  → WARN: "All tasks are blocked. Check dependency graph for circular dependencies."
+  → HALT
+
+Display:
+  "✅ {{VERIFY.length}} tasks created in team context.
+   {{UNBLOCKED.length}} unblocked and ready for workers."
+```
+
+### Step 1.75: Spawn Quality Gate Coordinator (Optional)
 
 **When to spawn Hygeia:** If `max_workers >= 2` (parallel workers will contend for CPU),
 spawn Hygeia as a team member before any workers. Hygeia serializes expensive quality
@@ -675,7 +812,7 @@ You are Hygeia, the Quality Gate Coordinator for a batch-stories swarm.
 ## Your Instructions
 
 Read this file NOW, then follow it exactly:
-  {{project_root}}/_pantheon/workflows/batch-stories/agents/hygeia.md
+  {{project_root}}/_bmad/pantheon/workflows/batch-stories/agents/hygeia.md
 
 ## Project Context
 
@@ -701,6 +838,23 @@ route quality check requests through her instead of running checks independently
 - User explicitly opts out via prompt argument
 
 ### Step 2: Spawn Workers On-Demand (Demand-Based Spawning)
+
+**Prerequisites:**
+- TeamCreate completed (Step 1)
+- Tasks populated in team context (Step 1.5)
+- At least 1 unblocked task verified via TaskList
+
+```
+VERIFY = TaskList()
+IF VERIFY has no tasks:
+  → ERROR: "Task list is empty after population. Check TaskCreate calls."
+  → HALT
+
+UNBLOCKED = VERIFY WHERE status=="pending" AND owner==empty AND blockedBy==empty
+IF UNBLOCKED is empty:
+  → WARN: "All tasks are blocked. Check dependency graph for issues."
+  → HALT
+```
 
 **Do NOT spawn all workers upfront.** Only spawn a worker when there is an unblocked
 task for it to claim. This prevents idle workers from rationalizing work on blocked tasks.
@@ -747,17 +901,17 @@ You are {{HERO_NAME}}, a story-pipeline worker in a batch-stories swarm.
 Read these two files NOW, then follow them exactly:
 
 1. **Your persona & self-scheduling loop:**
-   {{project_root}}/_pantheon/workflows/batch-stories/agents/heracles.md
+   {{project_root}}/_bmad/pantheon/workflows/batch-stories/agents/heracles.md
 
 2. **The 7-phase pipeline you execute for each story:**
-   {{project_root}}/_pantheon/workflows/story-pipeline/workflow.md
+   {{project_root}}/_bmad/pantheon/workflows/story-pipeline/workflow.md
 
 ## Project Context
 
 - Project root: {{project_root}}
 - Sprint artifacts: {{sprint_artifacts_path}}
-- Pipeline config: {{project_root}}/_pantheon/workflows/story-pipeline/workflow.yaml
-- Agent routing: {{project_root}}/_pantheon/workflows/story-pipeline/agent-routing.yaml
+- Pipeline config: {{project_root}}/_bmad/pantheon/workflows/story-pipeline/workflow.yaml
+- Agent routing: {{project_root}}/_bmad/pantheon/workflows/story-pipeline/agent-routing.yaml
 
 ## Critical Rules
 
@@ -1005,15 +1159,14 @@ Request graceful shutdown of all workers, then clean up the team:
 ```
 # For each active worker (by their hero name):
 SendMessage({
-  type: "request",
-  subtype: "shutdown",
+  type: "shutdown_request",
   recipient: "heracles",
   content: "All stories processed. Shutting down."
 })
 # Repeat for theseus, perseus, etc. — whichever workers were spawned
 
 # After all workers confirm shutdown:
-Teammate({ operation: "cleanup" })
+TeamDelete()
 ```
 
 ### Step 8: Continue to Summary
@@ -1057,7 +1210,7 @@ done
 ### Step 2: Spawn Hermes (Session Reporter)
 
 **Load persona:**
-Read: `{project-root}/_pantheon/workflows/batch-stories/agents/session-reporter.md`
+Read: `{project-root}/_bmad/pantheon/workflows/batch-stories/agents/session-reporter.md`
 
 ```
 Task({

@@ -3,14 +3,21 @@ description: "Interactive batch selector for story-pipeline with complexity-base
 author: "Jonah Schulte (leveraging BMAD Method)"
 
 # Critical variables from config
+# NOTE: config_source resolves at runtime to the BMM config in the installed project.
+# Pantheon requires BMM (see module.yaml), so _bmad/bmm/config.yaml should exist.
+# If it doesn't, the adapter's install.sh should create it.
 config_source: "{project-root}/_bmad/bmm/config.yaml"
 output_folder: "{config_source}:output_folder"
-sprint_artifacts: "{config_source}:sprint_artifacts"
 communication_language: "{config_source}:communication_language"
 date: system-generated
 
+# Sprint artifacts — hardcoded path, not pulled from config
+# (BMM config does not define sprint_artifacts; this is a Pantheon convention)
+sprint_artifacts: "docs/sprint-artifacts"
+
 # Workflow paths
-installed_path: "{project-root}/_pantheon/workflows/batch-stories"
+# NOTE: After installation, Pantheon lives at {project-root}/_bmad/pantheon/
+installed_path: "{project-root}/_bmad/pantheon/workflows/batch-stories"
 instructions: "{installed_path}/workflow.md"
 
 # State management
@@ -31,7 +38,7 @@ resource_limits:
 # Story-pipeline invocation settings
 batch_settings:
   mode: "batch" # Always use batch mode for autonomous execution
-  workflow_path: "{project-root}/_pantheon/workflows/story-pipeline"
+  workflow_path: "{project-root}/_bmad/pantheon/workflows/story-pipeline"
 
 # Story validation settings (NEW in v1.2.0)
 validation:
