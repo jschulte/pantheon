@@ -3,7 +3,7 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="images/pantheon-logo-dark-mode.jpg">
   <source media="(prefers-color-scheme: light)" srcset="images/pantheon-logo.jpg">
-  <img src="images/pantheon-logo.jpg" alt="Pantheon" width="700" style="max-width: 100%;">
+  <img src="images/pantheon-logo.jpg" alt="Pantheon" width="450" style="max-width: 100%;">
 </picture>
 
 **Turn Claude Code into a self-improving engineering team.**
