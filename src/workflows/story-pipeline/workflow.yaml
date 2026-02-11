@@ -43,7 +43,7 @@ execution_mode: "multi_agent" # multi_agent | single_agent (fallback)
 # =============================================================================
 
 # Critical variables from config
-config_source: "{project-root}/pantheon/config.yaml"
+config_source: "{project-root}/_bmad/pantheon/config.yaml"
 output_folder: "{project-root}/_bmad-output"
 sprint_artifacts: "{output_folder}/sprint-artifacts"
 communication_language: "{config_source}:communication_language"

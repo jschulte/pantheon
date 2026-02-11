@@ -252,6 +252,14 @@ EOF
     if [ -d "$TARGET_DIR/_bmad/pantheon" ]; then
       echo -e "${GREEN}Pantheon is already installed!${NC}"
       echo ""
+
+      # Preserve user config on upgrade
+      CONFIG_FILE="$TARGET_DIR/_bmad/pantheon/config.yaml"
+      if [ -f "$CONFIG_FILE" ]; then
+        echo -e "${YELLOW}  Preserving existing config.yaml (user customizations kept)${NC}"
+        cp "$CONFIG_FILE" "$CONFIG_FILE.bak"
+      fi
+
       echo "Usage:"
       echo "  /bmad_pantheon_story-pipeline STORY-001"
     else

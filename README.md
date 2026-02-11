@@ -8,18 +8,6 @@
 
 **Turn Claude Code into a self-improving engineering team.**
 
-v1.0.0
-
-<p>
-  <a href="https://github.com/sponsors/jschulte"><img src="https://img.shields.io/badge/Sponsor-GitHub-ea4aaa?style=for-the-badge&logo=github" alt="GitHub Sponsors"></a>
-  <a href="https://ko-fi.com/jschulte"><img src="https://img.shields.io/badge/Support-Ko--fi-ff5e5b?style=for-the-badge&logo=ko-fi&logoColor=white" alt="Ko-fi"></a>
-</p>
-
-<p>
-  <a href="https://github.com/jonahschulte/pantheon/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>
-  <img src="https://img.shields.io/badge/Node.js-%3E%3D18.0.0-green" alt="Node.js">
-</p>
-
 </div>
 
 Pantheon is a [BMAD Method](https://github.com/bmadcode/BMAD-METHOD) plugin that wraps every feature story in a structured, multi-agent pipeline — the same way a well-run engineering team operates. It works with **Claude Code** (best experience — native parallel agents and swarm support), **OpenCode**, **GitHub Copilot**, and **Codex CLI** — with specialized agents that build, review, triage, fix, and learn in parallel. The result: production-grade code, not "works on my machine" code.
@@ -201,7 +189,7 @@ Interactive story generation with systematic codebase scanning. Auto-populates a
 
 1. Clone this repo somewhere on your machine:
    ```bash
-   git clone https://github.com/jonahschulte/pantheon.git ~/git/pantheon
+   git clone git@ghe.coxautoinc.com:DDC-AI/pantheon.git ~/git/pantheon
    ```
 
 2. In your target project, run the BMAD installer:
@@ -229,7 +217,7 @@ Pantheon works on multiple AI coding platforms, with Claude Code as the primary 
 
 ## Configuration
 
-In your project's config:
+In your project's `_bmad/pantheon/config.yaml` (ships with good defaults, modify as needed):
 
 ```yaml
 pantheon:

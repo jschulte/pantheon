@@ -20,7 +20,7 @@ author: "Jonah Schulte (leveraging BMAD Method)"
 # ============================================================================
 
 # Paths
-config_source: "{project-root}/pantheon/config.yaml"
+config_source: "{project-root}/_bmad/pantheon/config.yaml"
 installed_path: "{project-root}/_bmad/pantheon/workflows/plan-team-sprint"
 instructions: "{installed_path}/workflow.md"
 templates_path: "{installed_path}/templates"

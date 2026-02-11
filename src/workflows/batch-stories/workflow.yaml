@@ -3,9 +3,9 @@ description: "Interactive batch selector for story-pipeline with complexity-base
 author: "Jonah Schulte (leveraging BMAD Method)"
 
 # Critical variables from config
-# Config lives at {project-root}/pantheon/config.yaml — survives `rm -rf _bmad` reinstalls.
+# Config lives at {project-root}/_bmad/pantheon/config.yaml (ships with defaults; user can override).
 # Artifacts live in _bmad-output/ (the standard BMAD output directory).
-config_source: "{project-root}/pantheon/config.yaml"
+config_source: "{project-root}/_bmad/pantheon/config.yaml"
 output_folder: "{project-root}/_bmad-output"
 communication_language: "{config_source}:communication_language"
 date: system-generated
