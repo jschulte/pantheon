@@ -17,7 +17,7 @@ Which workflow were you running?
 - [ ] batch-stories
 - [ ] batch-review
 - [ ] detect-ghost-features
-- [ ] plan-team-sprint
+- [ ] plan-execution
 - [ ] Other: ___
 
 ## Steps to Reproduce

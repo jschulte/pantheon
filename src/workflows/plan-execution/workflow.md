@@ -1,4 +1,4 @@
-# Plan Team Sprint v1.0 - Team Execution Planner
+# Plan Execution v1.0 - Team Execution Planner
 
 <purpose>
 Analyze epics and architecture to build a dependency DAG and generate an optimal team execution
@@ -18,7 +18,7 @@ Supports initial planning (greenfield/brownfield) and mid-project rebalancing.
 </philosophy>
 
 <config>
-name: plan-team-sprint
+name: plan-execution
 execution_mode: interactive
 
 steps:
