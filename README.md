@@ -120,6 +120,7 @@ Process all stories in an epic with dependency-aware wave parallelism. Sequentia
 ```bash
 /batch-stories epic=17                 # Sequential
 /batch-stories epic=17 mode=parallel   # Parallel swarm
+/batch-stories Epics 17-23             # Multiple epics in one run
 ```
 
 ### `/batch-review` — Harden existing code
@@ -136,7 +137,21 @@ Deep multi-perspective review of existing implementations. Run repeatedly with d
 
 ### `/plan-team-sprint` — Plan work for a real team
 
-Interactive sprint planner that takes your epics, architecture, and team composition and produces an optimized execution plan. Builds a dependency DAG, computes parallel work streams, identifies risk zones (file conflicts), and generates coordination checkpoints. Supports rebalancing mid-sprint when plans change.
+Give it your epics, architecture, and team composition. It builds a dependency DAG across every story, maps stories to architecture domains (frontend, backend, database, infrastructure), and computes optimal parallel work streams — matching developer specializations to domain affinity so each person primarily works in one area of the codebase.
+
+```bash
+/plan-team-sprint team_size=4
+/plan-team-sprint team_size=3 project_type=greenfield
+```
+
+The output is a complete execution plan with:
+- **Execution phases** — Foundation (greenfield scaffolding), Fan-out (parallel streams open), Steady State (full parallelism), Convergence (integration)
+- **Per-developer work streams** — stories grouped by domain, balanced by effort, respecting all dependency constraints
+- **Coordination checkpoints** — explicit handoff points where one developer's output unblocks another
+- **Risk zones** — files touched by multiple developers, with mitigation strategies (sequence the work, define interfaces first, use feature flags)
+- **Mermaid dependency graph** — visual DAG with foundation/parallel/convergence color coding and critical path identification
+
+The workflow is interactive at every step — it shows you the domain mapping, dependency graph, and work assignments, and lets you adjust before finalizing. Supports mid-project rebalancing by reading `sprint-status.yaml` to filter out completed work and recompute from what remains.
 
 ### `/detect-ghost-features` — Find undocumented functionality
 
