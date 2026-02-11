@@ -32,12 +32,12 @@ Generate a **Story Completion Report** for a single story that includes:
 
 For story `{{story_key}}`:
 
-- `docs/sprint-artifacts/{{story_key}}.md` - Story file with context
-- `docs/sprint-artifacts/completions/{{story_key}}-progress.json` - Pipeline metrics
-- `docs/sprint-artifacts/completions/{{story_key}}-metis.json` - Builder output
-- `docs/sprint-artifacts/completions/{{story_key}}-argus.json` - Verification evidence
-- `docs/sprint-artifacts/completions/{{story_key}}-themis.json` - Issue triage
-- `docs/sprint-artifacts/completions/{{story_key}}-mnemosyne.json` - Learnings
+- `{{sprint_artifacts}}/{{story_key}}.md` - Story file with context
+- `{{sprint_artifacts}}/completions/{{story_key}}-progress.json` - Pipeline metrics
+- `{{sprint_artifacts}}/completions/{{story_key}}-metis.json` - Builder output
+- `{{sprint_artifacts}}/completions/{{story_key}}-argus.json` - Verification evidence
+- `{{sprint_artifacts}}/completions/{{story_key}}-themis.json` - Issue triage
+- `{{sprint_artifacts}}/completions/{{story_key}}-mnemosyne.json` - Learnings
 
 ---
 
@@ -291,7 +291,7 @@ curl -X {{METHOD}} http://localhost:3000/api/{{path}} \
 ### Save Report
 
 ```bash
-REPORT_PATH="docs/sprint-artifacts/completions/{{story_key}}-summary.md"
+REPORT_PATH="{{sprint_artifacts}}/completions/{{story_key}}-summary.md"
 ```
 
 Use Write tool to save the complete report.
@@ -302,7 +302,7 @@ Use Write tool to save the complete report.
 {
   "agent": "hermes",
   "story_key": "{{story_key}}",
-  "report_path": "docs/sprint-artifacts/completions/{{story_key}}-summary.md",
+  "report_path": "{{sprint_artifacts}}/completions/{{story_key}}-summary.md",
   "tldr": "{{One paragraph summary for batch aggregation}}",
   "quick_stats": {
     "files_changed": {{n}},
@@ -316,7 +316,7 @@ Use Write tool to save the complete report.
 }
 ```
 
-Save to: `docs/sprint-artifacts/completions/{{story_key}}-hermes.json`
+Save to: `{{sprint_artifacts}}/completions/{{story_key}}-hermes.json`
 
 ### Display Terminal Summary
 

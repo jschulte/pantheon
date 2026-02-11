@@ -142,7 +142,7 @@ Security issues are almost always **MUST_FIX**:
 }
 ```
 
-**Save to:** `docs/sprint-artifacts/completions/{{story_key}}-cerberus.json`
+**Save to:** `{{sprint_artifacts}}/completions/{{story_key}}-cerberus.json`
 
 ## Severity Mapping
 

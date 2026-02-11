@@ -24,7 +24,7 @@ name: playbook-migration
 
 parameters:
   playbook_dir: "docs/implementation-playbooks"
-  artifacts_dir: "docs/sprint-artifacts/completions"
+  artifacts_dir: "{{sprint_artifacts}}/completions"
   dry_run: false
   backfill: true
   max_artifact_scan: 50

@@ -43,14 +43,14 @@ execution_mode: "multi_agent" # multi_agent | single_agent (fallback)
 # =============================================================================
 
 # Critical variables from config
-config_source: "{project-root}/_bmad/bmm/config.yaml"
-output_folder: "{config_source}:output_folder"
-sprint_artifacts: "{config_source}:sprint_artifacts"
+config_source: "{project-root}/pantheon/config.yaml"
+output_folder: "{project-root}/_bmad-output"
+sprint_artifacts: "{output_folder}/sprint-artifacts"
 communication_language: "{config_source}:communication_language"
 date: system-generated
 
 # Workflow paths
-installed_path: "{project-root}/_pantheon/workflows/story-pipeline"
+installed_path: "{project-root}/_bmad/pantheon/workflows/story-pipeline"
 instructions: "{installed_path}/workflow.md"
 agents_path: "{installed_path}/agents"
 
@@ -60,10 +60,10 @@ agents_path: "{installed_path}/agents"
 # Agent routing configuration determines which specialized builder to spawn
 # based on story content, file patterns, and project configuration.
 agent_routing:
-  config_file: "{project-root}/_pantheon/agent-routing.yaml"
-  builders_path: "{project-root}/_pantheon/agents/builders"
-  reviewers_path: "{project-root}/_pantheon/agents/reviewers"
-  validators_path: "{project-root}/_pantheon/agents/validators"
+  config_file: "{project-root}/_bmad/pantheon/agent-routing.yaml"
+  builders_path: "{project-root}/_bmad/pantheon/agents/builders"
+  reviewers_path: "{project-root}/_bmad/pantheon/agents/reviewers"
+  validators_path: "{project-root}/_bmad/pantheon/agents/validators"
 
   # Project-level override (set in project's _bmad/_config/pantheon.yaml)
   # If set, always use this builder regardless of detection
@@ -348,7 +348,7 @@ agents:
     description: "Issue resolution - Metis resumes to fix critical/high issues"
     steps: [8, 9]
     subagent_type: "general-purpose"
-    bmad_agent: "{project-root}/_pantheon/agents/builder.md" # Metis resumes - "Measure twice, cut once"
+    bmad_agent: "{project-root}/_bmad/pantheon/agents/builder.md" # Metis resumes - "Measure twice, cut once"
     resume_builder: true # IMPORTANT: Resume Builder agent instead of spawning fresh
     prompt_file: "{agents_path}/fixer.md"
     trust_level: "low" # Same as builder — orchestrator handles commits
@@ -459,7 +459,7 @@ complexity_routing:
 # Orchestrator should validate before interpolating into shell commands
 input_validation:
   story_key_pattern: "^[0-9]+-[0-9]+$"
-  story_file_pattern: "^docs/sprint-artifacts/story-[0-9]+-[0-9]+\\.md$"
+  story_file_pattern: "^{{sprint_artifacts}}/story-[0-9]+-[0-9]+\\.md$"
 
 # Final verification checklist (main orchestrator)
 final_verification:
@@ -489,7 +489,7 @@ final_verification:
 fallback_to_v1:
   enabled: true
   condition: "execution_mode == 'single_agent'"
-  workflow: "{project-root}/_pantheon/workflows/story-pipeline"
+  workflow: "{project-root}/_bmad/pantheon/workflows/story-pipeline"
 
 standalone: true
 web_bundle: false

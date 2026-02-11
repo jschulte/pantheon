@@ -46,7 +46,7 @@ Review the implementation from FOUR perspectives:
 ### Step 1: Load Context
 
 Read the story file and all files from the builder artifact:
-- `docs/sprint-artifacts/{{story_key}}.md`
+- `{{sprint_artifacts}}/{{story_key}}.md`
 - All files listed in `{{story_key}}-metis.json`
 
 ### Step 2: Run Quality Checks
@@ -101,7 +101,7 @@ When a `<playbook_guidance>` block is provided:
 
 ## Output Format
 
-Save to: `docs/sprint-artifacts/completions/{{story_key}}-review.json`
+Save to: `{{sprint_artifacts}}/completions/{{story_key}}-review.json`
 
 ```json
 {

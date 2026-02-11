@@ -3,7 +3,7 @@
 agent:
   webskip: true
   metadata:
-    id: "_pantheon/agents/reviewer.md"
+    id: "_bmad/pantheon/agents/reviewer.md"
     name: Reviewers
     title: The Greek Pantheon Reviewers
     icon: "🔴"
@@ -74,7 +74,7 @@ agent:
       - "SHOULD_FIX Issues"
       - "STYLE Issues"
       - "Summary with MUST_FIX count"
-    save_to: "docs/sprint-artifacts/completions/{{story_key}}-review.md"
+    save_to: "{{sprint_artifacts}}/completions/{{story_key}}-review.md"
 
   menu:
     - trigger: review

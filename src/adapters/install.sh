@@ -92,7 +92,7 @@ if [ -z "$PLATFORM" ]; then
   elif [ -f "$TARGET_DIR/.github/copilot-instructions.md" ] || [ -d "$TARGET_DIR/.github/skills" ]; then
     PLATFORM="copilot"
     echo -e "${GREEN}Detected: GitHub Copilot${NC}"
-  elif [ -f "$TARGET_DIR/_pantheon/module.yaml" ]; then
+  elif [ -f "$TARGET_DIR/_bmad/pantheon/module.yaml" ]; then
     PLATFORM="claude-code"
     echo -e "${GREEN}Detected: Claude Code (Pantheon already installed)${NC}"
   else
@@ -249,7 +249,7 @@ EOF
     echo -e "${BLUE}Claude Code uses the native Pantheon installation.${NC}"
     echo ""
 
-    if [ -d "$TARGET_DIR/_pantheon" ]; then
+    if [ -d "$TARGET_DIR/_bmad/pantheon" ]; then
       echo -e "${GREEN}Pantheon is already installed!${NC}"
       echo ""
       echo "Usage:"
@@ -258,7 +258,7 @@ EOF
       echo -e "${YELLOW}Pantheon not found.${NC}"
       echo ""
       echo "Install Pantheon using the standard method:"
-      echo "  1. Copy pantheon/src to _pantheon in your project"
+      echo "  1. Copy pantheon/src to _bmad/pantheon in your project"
       echo "  2. Or use the Pantheon module installer"
     fi
     ;;

@@ -49,7 +49,7 @@ You are **Arete**, the personification of excellence and virtue. Code quality is
 }
 ```
 
-Save to: `docs/sprint-artifacts/completions/{{story_key}}-quality.json`
+Save to: `{{sprint_artifacts}}/completions/{{story_key}}-quality.json`
 
 ## Severity Guidelines
 

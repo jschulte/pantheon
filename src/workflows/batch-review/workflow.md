@@ -177,7 +177,7 @@ Input: {{scope_input}}
   "estimated_complexity": "medium"
 }
 
-Save to: docs/sprint-artifacts/hardening/{{scope_id}}-scope.json
+Save to: {{sprint_artifacts}}/hardening/{{scope_id}}-scope.json
 `
 })
 ```
@@ -234,11 +234,11 @@ IF persona_forging.enabled AND estimated_complexity >= "light":
   </project_context>
 
   Output your analysis as the Pygmalion JSON artifact.
-  Save to: docs/sprint-artifacts/hardening/{{scope_id}}-pygmalion.json
+  Save to: {{sprint_artifacts}}/hardening/{{scope_id}}-pygmalion.json
   `
   })
 
-  FORGED_SPECS = read("docs/sprint-artifacts/hardening/{{scope_id}}-pygmalion.json")
+  FORGED_SPECS = read("{{sprint_artifacts}}/hardening/{{scope_id}}-pygmalion.json")
 
   # --- VALIDATE OUTPUT (see story-pipeline/phases/phase-1.5-forge.md for full validation logic) ---
   # Validate against: src/schemas/pygmalion-output.schema.json
@@ -431,7 +431,7 @@ Idle notifications arrive automatically as workers finish.
 
 ```
 all_findings = []
-FOR EACH perspective_artifact IN docs/sprint-artifacts/reviews/{{scope_id}}-*.json:
+FOR EACH perspective_artifact IN {{sprint_artifacts}}/reviews/{{scope_id}}-*.json:
   all_findings.extend(artifact.issues)
 ```
 
@@ -469,7 +469,7 @@ Gotchas: {{spec.known_gotchas}}
 </additional_perspectives>
 {{ENDIF}}
 
-Save to: docs/sprint-artifacts/hardening/{{scope_id}}-review.json
+Save to: {{sprint_artifacts}}/hardening/{{scope_id}}-review.json
 `
 })
 ```
@@ -547,7 +547,7 @@ Multiple reviewers may find the same underlying issue. Merge duplicates:
   }
 }
 
-Save to: docs/sprint-artifacts/hardening/{{scope_id}}-triage.json
+Save to: {{sprint_artifacts}}/hardening/{{scope_id}}-triage.json
 </output>
 `
 })
@@ -658,7 +658,7 @@ FOR EACH category WITH issues:
   {{List of MUST_FIX issues for this category}}
   </issues_to_fix>
 
-  Save to: docs/sprint-artifacts/hardening/{{scope_id}}-fixes-{{category}}.json
+  Save to: {{sprint_artifacts}}/hardening/{{scope_id}}-fixes-{{category}}.json
   `
   })
 ```
@@ -751,7 +751,7 @@ Verify that all fixes were correctly applied and no regressions introduced.
 {{test-output.txt}}
 </test_output>
 
-Save to: docs/sprint-artifacts/hardening/{{scope_id}}-verification.json
+Save to: {{sprint_artifacts}}/hardening/{{scope_id}}-verification.json
 `
 })
 ```
@@ -868,12 +868,12 @@ Generate a comprehensive hardening report.
 Consider running again with a different focus to find other issue types.
 {{ELSE}}
 ⚠️ **Issues remain.** Consider running `/batch-review` again.
-Remaining issues logged to: docs/sprint-artifacts/hardening/{{scope_id}}-remaining.json
+Remaining issues logged to: {{sprint_artifacts}}/hardening/{{scope_id}}-remaining.json
 {{ENDIF}}
 
 ---
 
-Save to: docs/sprint-artifacts/hardening/{{scope_id}}-report.md
+Save to: {{sprint_artifacts}}/hardening/{{scope_id}}-report.md
 `
 })
 ```
@@ -953,7 +953,7 @@ IF swarm_config.enabled AND team was created:
 {{ENDIF}}
 
 📄 Full Report:
-   docs/sprint-artifacts/hardening/{{scope_id}}-report.md
+   {{sprint_artifacts}}/hardening/{{scope_id}}-report.md
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```

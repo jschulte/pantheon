@@ -71,7 +71,7 @@ Classify each issue as MUST_FIX / SHOULD_FIX / STYLE.
 </context>
 
 Save consolidated findings to:
-docs/sprint-artifacts/completions/{{story_key}}-review.json
+{{sprint_artifacts}}/completions/{{story_key}}-review.json
 `
 })
 ```
@@ -107,7 +107,7 @@ Issue Classification:
 <files_to_review>[list from metis.json]</files_to_review>
 
 Output your findings in standard reviewer JSON format.
-Save to: docs/sprint-artifacts/completions/{{story_key}}-{{spec.id}}.json
+Save to: {{sprint_artifacts}}/completions/{{story_key}}-{{spec.id}}.json
 `
     })
 ```
@@ -318,7 +318,7 @@ For EACH issue you find, classify it:
 - STYLE: Preference only
 </issue_classification>
 
-Save to: docs/sprint-artifacts/completions/{{story_key}}-argus.json
+Save to: {{sprint_artifacts}}/completions/{{story_key}}-argus.json
 `
 })
 ```
@@ -356,7 +356,7 @@ Review test files for quality:
 Classify each issue: MUST_FIX / SHOULD_FIX / STYLE
 </issue_classification>
 
-Save to: docs/sprint-artifacts/completions/{{story_key}}-nemesis.json
+Save to: {{sprint_artifacts}}/completions/{{story_key}}-nemesis.json
 `
 })
 ```
@@ -388,7 +388,7 @@ Classify each issue: MUST_FIX / SHOULD_FIX / STYLE
 Security issues are almost always MUST_FIX.
 </issue_classification>
 
-Save to: docs/sprint-artifacts/completions/{{story_key}}-cerberus.json
+Save to: {{sprint_artifacts}}/completions/{{story_key}}-cerberus.json
 `
 })
 ```
@@ -419,7 +419,7 @@ Focus: Logic bugs, edge cases, performance bottlenecks, algorithmic issues.
 Classify each issue: MUST_FIX / SHOULD_FIX / STYLE
 </issue_classification>
 
-Save to: docs/sprint-artifacts/completions/{{story_key}}-apollo.json
+Save to: {{sprint_artifacts}}/completions/{{story_key}}-apollo.json
 `
 })
 ```
@@ -448,7 +448,7 @@ Focus: Patterns, integration, route structure, code organization.
 Classify each issue: MUST_FIX / SHOULD_FIX / STYLE
 </issue_classification>
 
-Save to: docs/sprint-artifacts/completions/{{story_key}}-hestia.json
+Save to: {{sprint_artifacts}}/completions/{{story_key}}-hestia.json
 `
 })
 ```
@@ -480,7 +480,7 @@ Classify each issue: MUST_FIX / SHOULD_FIX / STYLE
 Be honest - not everything is MUST_FIX.
 </issue_classification>
 
-Save to: docs/sprint-artifacts/completions/{{story_key}}-arete.json
+Save to: {{sprint_artifacts}}/completions/{{story_key}}-arete.json
 `
 })
 ```
@@ -527,7 +527,7 @@ Issue Classification:
 {{spec.issue_classification_guidance}}
 
 Output your findings in standard reviewer JSON format.
-Save to: docs/sprint-artifacts/completions/{{story_key}}-{{spec.id}}.json
+Save to: {{sprint_artifacts}}/completions/{{story_key}}-{{spec.id}}.json
 `
     })
 ```
@@ -542,7 +542,7 @@ Collect completion artifacts and store agent_ids for potential resume.
 
 ### Update Progress
 
-Update `docs/sprint-artifacts/completions/{{story_key}}-progress.json`:
+Update `{{sprint_artifacts}}/completions/{{story_key}}-progress.json`:
 ```json
 {
   "current_phase": "ASSESS",

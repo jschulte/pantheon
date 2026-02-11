@@ -84,7 +84,7 @@ After parsing the story, determine complexity:
 ## Progress Tracking
 
 Update progress file after each phase:
-`docs/sprint-artifacts/completions/{{story_key}}-progress.json`
+`{{sprint_artifacts}}/completions/{{story_key}}-progress.json`
 
 ## Error Handling
 

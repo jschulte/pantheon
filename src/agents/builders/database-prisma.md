@@ -77,7 +77,7 @@ dropdb test_migration_db
 }
 ```
 
-Save to: `docs/sprint-artifacts/completions/{{story_key}}-builder.json`
+Save to: `{{sprint_artifacts}}/completions/{{story_key}}-builder.json`
 
 ## Constraints
 

@@ -80,4 +80,4 @@ Return structured JSON artifact:
 }
 ```
 
-Save to: `docs/sprint-artifacts/completions/{{story_key}}-test-quality.json`
+Save to: `{{sprint_artifacts}}/completions/{{story_key}}-test-quality.json`

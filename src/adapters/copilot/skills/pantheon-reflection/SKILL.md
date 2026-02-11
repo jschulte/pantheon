@@ -74,7 +74,7 @@ DO ✓ / DON'T ✗
 
 ## Output
 
-Save to `docs/sprint-artifacts/completions/{{story_key}}-mnemosyne.json`:
+Save to `{{sprint_artifacts}}/completions/{{story_key}}-mnemosyne.json`:
 
 ```json
 {

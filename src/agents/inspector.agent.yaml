@@ -3,7 +3,7 @@
 agent:
   webskip: true
   metadata:
-    id: "_pantheon/agents/inspector.md"
+    id: "_bmad/pantheon/agents/inspector.md"
     name: Argus
     title: The All-Seeing Giant
     icon: "👁️"
@@ -62,7 +62,7 @@ agent:
       - task_verification (array with file:line for each)
       - checks (type_check, lint, build, tests with actual output)
       - coverage_percentage
-    save_to: "docs/sprint-artifacts/completions/{{story_key}}-inspector.json"
+    save_to: "{{sprint_artifacts}}/completions/{{story_key}}-inspector.json"
 
   menu:
     - trigger: inspect

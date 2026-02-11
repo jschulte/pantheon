@@ -66,7 +66,7 @@ CRITICAL: Use Write tool (full replacement), NOT Edit tool (append). This preven
 
 See agents/reflection-reporter.md for full compaction protocol details and standardized format template.
 
-Save reflection artifact to: docs/sprint-artifacts/completions/{{story_key}}-mnemosyne.json
+Save reflection artifact to: {{sprint_artifacts}}/completions/{{story_key}}-mnemosyne.json
 
 ---
 
@@ -95,8 +95,8 @@ Generate report including:
 5. **Verification Guide** - Manual testing checklist with specific steps
 6. **Learnings Captured** - Playbook updates from Mnemosyne role
 
-Save report to: docs/sprint-artifacts/completions/{{story_key}}-summary.md
-Save hermes artifact to: docs/sprint-artifacts/completions/{{story_key}}-hermes.json
+Save report to: {{sprint_artifacts}}/completions/{{story_key}}-summary.md
+Save hermes artifact to: {{sprint_artifacts}}/completions/{{story_key}}-hermes.json
 
 ---
 
@@ -113,7 +113,7 @@ Save hermes artifact to: docs/sprint-artifacts/completions/{{story_key}}-hermes.
 
 ### Final Progress Update
 
-Update `docs/sprint-artifacts/completions/{{story_key}}-progress.json`:
+Update `{{sprint_artifacts}}/completions/{{story_key}}-progress.json`:
 ```json
 {
   "current_phase": "COMPLETE",
@@ -165,7 +165,7 @@ Update `docs/sprint-artifacts/completions/{{story_key}}-progress.json`:
    {{verification_items}} items in manual testing checklist
 
 📄 Full Report:
-   docs/sprint-artifacts/completions/{{story_key}}-summary.md
+   {{sprint_artifacts}}/completions/{{story_key}}-summary.md
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```

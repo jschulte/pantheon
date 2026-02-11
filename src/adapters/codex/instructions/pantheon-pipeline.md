@@ -27,7 +27,7 @@ The pipeline ensures code quality through:
 
 **You perform directly.**
 
-1. Load story file: `docs/sprint-artifacts/{{story_key}}.md`
+1. Load story file: `{{sprint_artifacts}}/{{story_key}}.md`
 2. Count tasks and check for risk keywords
 3. Validate story structure
 4. Load relevant playbooks from `docs/implementation-playbooks/`
@@ -62,7 +62,7 @@ The pipeline ensures code quality through:
 }
 ```
 
-Save to `docs/sprint-artifacts/completions/{{story_key}}-metis.json`
+Save to `{{sprint_artifacts}}/completions/{{story_key}}-metis.json`
 
 ## Phase 3: VERIFY (Argus + Reviewers)
 
@@ -167,7 +167,7 @@ If iteration > 3: Escalate to user.
 
 4. Git commit:
    ```bash
-   git add docs/sprint-artifacts/
+   git add {{sprint_artifacts}}/
    git commit -m "chore({{story_key}}): reconcile story completion"
    ```
 

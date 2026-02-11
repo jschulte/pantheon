@@ -79,7 +79,7 @@ Report any failures as MUST_FIX issues.
 }
 ```
 
-Save to: `docs/sprint-artifacts/completions/{{story_key}}-inspector.json`
+Save to: `{{sprint_artifacts}}/completions/{{story_key}}-inspector.json`
 
 ## Constraints
 

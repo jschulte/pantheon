@@ -167,7 +167,7 @@ IF ITERATION == 1:
   2. Did the fix introduce NEW issues?
   3. Check technology_checklist items again.
 
-  Save to: docs/sprint-artifacts/completions/{{story_key}}-{{spec.id}}-verify.json
+  Save to: {{sprint_artifacts}}/completions/{{story_key}}-{{spec.id}}-verify.json
   `
       })
 ```
@@ -215,7 +215,7 @@ This is IN ADDITION to the compact verification above — fresh eyes catch what 
 
 ### Update Progress
 
-Update `docs/sprint-artifacts/completions/{{story_key}}-progress.json`:
+Update `{{sprint_artifacts}}/completions/{{story_key}}-progress.json`:
 ```json
 {
   "current_phase": "COMMIT",
@@ -239,7 +239,7 @@ After all MUST_FIX issues are resolved, commit the implementation:
 ```bash
 # Stage ONLY files from the builder completion artifact (targeted git add)
 # This prevents accidentally committing debug code, temp files, or parallel work
-BUILDER_ARTIFACT="docs/sprint-artifacts/completions/{{story_key}}-metis.json"
+BUILDER_ARTIFACT="{{sprint_artifacts}}/completions/{{story_key}}-metis.json"
 if [ -f "$BUILDER_ARTIFACT" ]; then
   # Extract file lists from builder artifact and stage them
   FILES_CREATED=$(node -e "const a=JSON.parse(require('fs').readFileSync('$BUILDER_ARTIFACT'));(a.files_created||[]).forEach(f=>console.log(f))")
@@ -251,7 +251,7 @@ else
 fi
 git add package.json package-lock.json tsconfig.json
 # Stage sprint artifacts
-git add docs/sprint-artifacts/
+git add {{sprint_artifacts}}/
 
 git commit -m "$(cat <<'EOF'
 feat({{story_key}}): {{story_title}}

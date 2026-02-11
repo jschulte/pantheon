@@ -47,7 +47,7 @@ The native `dev-frontend` agent brings Vue 3 Composition API, Nuxt 3, Pinia, and
 }
 ```
 
-Save to: `docs/sprint-artifacts/completions/{{story_key}}-builder.json`
+Save to: `{{sprint_artifacts}}/completions/{{story_key}}-builder.json`
 
 ## Constraints
 

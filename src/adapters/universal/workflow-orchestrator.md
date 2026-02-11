@@ -40,7 +40,7 @@ ELIF running in Codex:
 
 ### 1.1 Load Story
 ```
-Read story file: docs/sprint-artifacts/{{story_key}}.md
+Read story file: {{sprint_artifacts}}/{{story_key}}.md
 Parse: task count, acceptance criteria, keywords
 ```
 
@@ -258,9 +258,9 @@ Add to story file:
 ### 6.4 Git Commit
 
 ```bash
-git add docs/sprint-artifacts/{{story_key}}.md
-git add docs/sprint-artifacts/sprint-status.yaml
-git add docs/sprint-artifacts/completions/
+git add {{sprint_artifacts}}/{{story_key}}.md
+git add {{sprint_artifacts}}/sprint-status.yaml
+git add {{sprint_artifacts}}/completions/
 git commit -m "chore({{story_key}}): reconcile story completion"
 ```
 

@@ -55,7 +55,7 @@ Based on scan_scope (epic/sprint/codebase):
 
 ```bash
 # Get all story files
-STORIES=$(ls docs/sprint-artifacts/*.md | grep -v "epic-")
+STORIES=$(ls {{sprint_artifacts}}/*.md | grep -v "epic-")
 ```
 
 For each story:
@@ -193,7 +193,7 @@ For each orphan (prioritized by severity):
    - [S] Skip this orphan
    - [H] Halt
 
-4. **Write story file:** `docs/sprint-artifacts/backfill-{{type}}-{{name}}.md`
+4. **Write story file:** `{{sprint_artifacts}}/backfill-{{type}}-{{name}}.md`
 
 5. **Update sprint-status.yaml** (if enabled)
 </step>
@@ -222,7 +222,7 @@ Options:
 <step name="generate_report" if="create_report">
 **Write comprehensive ghost features report**
 
-Write to: `docs/sprint-artifacts/ghost-features-report-{{timestamp}}.md`
+Write to: `{{sprint_artifacts}}/ghost-features-report-{{timestamp}}.md`
 
 Include:
 - Executive summary

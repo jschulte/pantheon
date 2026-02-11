@@ -44,6 +44,6 @@ Review code for architectural quality:
 
 ## Output
 
-Save to `docs/sprint-artifacts/completions/{{story_key}}-hestia.json`
+Save to `{{sprint_artifacts}}/completions/{{story_key}}-hestia.json`
 
 *"A house on sand will not stand."*

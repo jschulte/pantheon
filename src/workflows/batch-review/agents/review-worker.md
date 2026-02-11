@@ -114,7 +114,7 @@ Review using:
 
 ## Output Format
 
-Save to: `docs/sprint-artifacts/reviews/{{scope_id}}-{{perspective}}.json`
+Save to: `{{sprint_artifacts}}/reviews/{{scope_id}}-{{perspective}}.json`
 
 ```json
 {
