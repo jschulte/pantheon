@@ -135,13 +135,13 @@ Deep multi-perspective review of existing implementations. Run repeatedly with d
 /batch-review path="src/api" focus="performance"   # Targeted optimization
 ```
 
-### `/plan-team-sprint` — Plan work for a real team
+### `/plan-execution` — Plan work for a real team
 
 Give it your epics, architecture, and team composition. It builds a dependency DAG across every story, maps stories to architecture domains (frontend, backend, database, infrastructure), and computes optimal parallel work streams — matching developer specializations to domain affinity so each person primarily works in one area of the codebase.
 
 ```bash
-/plan-team-sprint team_size=4
-/plan-team-sprint team_size=3 project_type=greenfield
+/plan-execution team_size=4
+/plan-execution team_size=3 project_type=greenfield
 ```
 
 The output is a complete execution plan with:
@@ -300,7 +300,7 @@ pantheon/
 │   │   ├── story-pipeline/       # Core 7-phase implementation
 │   │   ├── batch-stories/        # Epic-level batch orchestration
 │   │   ├── batch-review/         # Hardening workflow
-│   │   ├── plan-team-sprint/     # Sprint planning
+│   │   ├── plan-execution/       # Team execution planning
 │   │   ├── detect-ghost-features/# Reverse gap analysis
 │   │   └── ...                   # Additional workflows
 │   └── adapters/                 # Multi-platform support

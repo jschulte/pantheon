@@ -1,9 +1,9 @@
-name: plan-team-sprint
+name: plan-execution
 description: "Team work distribution and parallelization planner - dependency DAG + optimal developer assignment"
 author: "Jonah Schulte (leveraging BMAD Method)"
 
 # ============================================================================
-# PLAN-TEAM-SPRINT: Team Execution Planning Workflow
+# PLAN-EXECUTION: Team Execution Planning Workflow
 # ============================================================================
 # Purpose: Analyze epics + architecture, build a dependency DAG, and generate
 # a team execution plan assigning work across N developers with maximum
@@ -14,14 +14,14 @@ author: "Jonah Schulte (leveraging BMAD Method)"
 #   - Mid-project rebalancing (reads sprint-status.yaml for completed work)
 #
 # Usage:
-#   /plan-team-sprint
-#   /plan-team-sprint team_size=3
-#   /plan-team-sprint team_size=4 project_type=greenfield
+#   /plan-execution
+#   /plan-execution team_size=3
+#   /plan-execution team_size=4 project_type=greenfield
 # ============================================================================
 
 # Paths
 config_source: "{project-root}/_bmad/pantheon/config.yaml"
-installed_path: "{project-root}/_bmad/pantheon/workflows/plan-team-sprint"
+installed_path: "{project-root}/_bmad/pantheon/workflows/plan-execution"
 instructions: "{installed_path}/workflow.md"
 templates_path: "{installed_path}/templates"
 
