@@ -3,7 +3,7 @@ description: "Create/regenerate story with SYSTEMATIC codebase gap analysis usin
 author: "Jonah Schulte (leveraging BMAD Method)"
 
 # Critical variables from config
-config_source: "{project-root}/pantheon/config.yaml"
+config_source: "{project-root}/_bmad/pantheon/config.yaml"
 user_name: "{config_source}:user_name"
 communication_language: "{config_source}:communication_language"
 date: system-generated
