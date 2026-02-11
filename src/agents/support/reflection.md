@@ -192,7 +192,7 @@ After creating, also add an entry to `docs/implementation-playbooks/_index.json`
 }
 ```
 
-Save to: `docs/sprint-artifacts/completions/{{story_key}}-mnemosyne.json`
+Save to: `{{sprint_artifacts}}/completions/{{story_key}}-mnemosyne.json`
 
 ---
 

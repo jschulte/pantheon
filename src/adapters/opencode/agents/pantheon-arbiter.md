@@ -154,7 +154,7 @@ Provide clear reasoning for each judgment.
 }
 ```
 
-**Save to:** `docs/sprint-artifacts/completions/{{story_key}}-themis.json`
+**Save to:** `{{sprint_artifacts}}/completions/{{story_key}}-themis.json`
 
 ## Expected Distribution
 

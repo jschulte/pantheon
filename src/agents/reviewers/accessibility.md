@@ -51,7 +51,7 @@ The native `accessibility-expert` agent brings WCAG knowledge, ARIA patterns, an
 }
 ```
 
-Save to: `docs/sprint-artifacts/completions/{{story_key}}-accessibility.json`
+Save to: `{{sprint_artifacts}}/completions/{{story_key}}-accessibility.json`
 
 ## Severity Guidelines
 

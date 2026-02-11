@@ -29,7 +29,7 @@ You have NO KNOWLEDGE of what the builder did. Verify independently.
 ### Step 1: Read Story
 
 ```
-Read: docs/sprint-artifacts/{{story_key}}.md
+Read: {{sprint_artifacts}}/{{story_key}}.md
 Understand ALL tasks and acceptance criteria
 ```
 
@@ -69,7 +69,7 @@ npm test            # FAIL if tests fail or coverage < 80%
 
 ## Output
 
-Save to `docs/sprint-artifacts/completions/{{story_key}}-argus.json`:
+Save to `{{sprint_artifacts}}/completions/{{story_key}}-argus.json`:
 
 ```json
 {

@@ -192,12 +192,12 @@ All teammates inherit the lead session's permission settings. If the lead has pr
 
 ```bash
 # 1. Check story files exist
-for story in $(grep "ready-for-dev" docs/sprint-artifacts/sprint-status.yaml | awk '{print $1}' | sed 's/://'); do
-  [ -f "docs/sprint-artifacts/story-$story.md" ] || echo "❌ Missing: $story"
+for story in $(grep "ready-for-dev" {{sprint_artifacts}}/sprint-status.yaml | awk '{print $1}' | sed 's/://'); do
+  [ -f "{{sprint_artifacts}}/story-$story.md" ] || echo "❌ Missing: $story"
 done
 
 # 2. Check all have 12 BMAD sections
-for file in docs/sprint-artifacts/story-*.md; do
+for file in {{sprint_artifacts}}/story-*.md; do
   sections=$(grep -c "^## " "$file")
   if [ "$sections" -lt 12 ]; then
     echo "❌ Incomplete: $file ($sections/12 sections)"
@@ -205,7 +205,7 @@ for file in docs/sprint-artifacts/story-*.md; do
 done
 
 # 3. Check all have tasks
-for file in docs/sprint-artifacts/story-*.md; do
+for file in {{sprint_artifacts}}/story-*.md; do
   tasks=$(grep -c "^- \[ \]" "$file")
   if [ "$tasks" -eq 0 ]; then
     echo "❌ No tasks: $file"

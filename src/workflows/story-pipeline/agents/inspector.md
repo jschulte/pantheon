@@ -151,7 +151,7 @@ Verdict: IMPLEMENTED
 }
 ```
 
-**Save to:** `docs/sprint-artifacts/completions/{{story_key}}-inspector.json`
+**Save to:** `{{sprint_artifacts}}/completions/{{story_key}}-inspector.json`
 
 ---
 

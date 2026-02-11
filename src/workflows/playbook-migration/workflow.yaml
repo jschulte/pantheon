@@ -3,18 +3,19 @@ description: "One-time migration utility: converts legacy playbooks to v1 standa
 author: "Jonah Schulte (leveraging BMAD Method)"
 
 # Critical variables from config
-config_source: "{project-root}/_bmad/bmm/config.yaml"
+config_source: "{project-root}/pantheon/config.yaml"
 implementation_artifacts: "{config_source}:implementation_artifacts"
-sprint_artifacts: "{config_source}:sprint_artifacts"
+output_folder: "{project-root}/_bmad-output"
+sprint_artifacts: "{output_folder}/sprint-artifacts"
 
 # Workflow components
-installed_path: "{project-root}/_pantheon/workflows/playbook-migration"
+installed_path: "{project-root}/_bmad/pantheon/workflows/playbook-migration"
 instructions: "{installed_path}/workflow.md"
 
 # Input variables
 variables:
   playbook_dir: "docs/implementation-playbooks" # Where playbooks live
-  artifacts_dir: "docs/sprint-artifacts/completions" # Where mnemosyne/themis/review artifacts live
+  artifacts_dir: "{{sprint_artifacts}}/completions" # Where mnemosyne/themis/review artifacts live
   dry_run: false # If true, report what WOULD change without writing files
   backfill: true # If true, scan historical artifacts for uncaptured learnings
   max_artifact_scan: 50 # Max historical artifacts to scan (most recent first)

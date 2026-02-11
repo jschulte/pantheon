@@ -44,6 +44,6 @@ Review test files for quality and completeness:
 
 ## Output
 
-Save to `docs/sprint-artifacts/completions/{{story_key}}-nemesis.json`
+Save to `{{sprint_artifacts}}/completions/{{story_key}}-nemesis.json`
 
 *"Balance demands every path be tested."*

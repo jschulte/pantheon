@@ -267,7 +267,7 @@ These are friendly status updates - not verbose, just enough to orient the user.
 When running in parallel (batch mode), each pipeline writes progress to a JSON file.
 This allows the batch orchestrator to report detailed wave summaries.
 
-**File:** `docs/sprint-artifacts/completions/{{story_key}}-progress.json`
+**File:** `{{sprint_artifacts}}/completions/{{story_key}}-progress.json`
 
 **Structure:**
 ```json
@@ -305,7 +305,7 @@ This allows the batch orchestrator to report detailed wave summaries.
 
 **Write with:**
 ```bash
-PROGRESS_FILE="docs/sprint-artifacts/completions/{{story_key}}-progress.json"
+PROGRESS_FILE="{{sprint_artifacts}}/completions/{{story_key}}-progress.json"
 cat > "$PROGRESS_FILE" << 'EOF'
 { ... updated JSON ... }
 EOF

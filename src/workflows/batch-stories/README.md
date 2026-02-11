@@ -298,7 +298,7 @@ Creating story 3-3-vehicle-compare with codebase gap analysis...
 Regenerate story with codebase scan? (yes/no): yes
 
 Regenerating story 3-4-vehicle-details with gap analysis...
-→ Backing up to docs/sprint-artifacts/3-4-vehicle-details.md.backup
+→ Backing up to {{sprint_artifacts}}/3-4-vehicle-details.md.backup
 → Scanning codebase for VehicleDetails implementation...
 → Found: packages/widgets/vehicle-details-v2 (partial)
 → Analyzing gap: 8 files exist, 3 need creation
@@ -470,7 +470,7 @@ All: all (processes all ready-for-dev stories)
 
 ## Workflow Configuration
 
-**File:** `_pantheon/workflows/batch-stories/workflow.yaml`
+**File:** `_bmad/pantheon/workflows/batch-stories/workflow.yaml`
 
 ### Key Settings
 
@@ -574,7 +574,7 @@ See: `step-4.5-reconcile-story-status.md` for detailed algorithm
 
 ### Batch Log
 
-**Location:** `docs/sprint-artifacts/batch-stories-{date}.log`
+**Location:** `{{sprint_artifacts}}/batch-stories-{date}.log`
 
 **Contains:**
 - Start/end timestamps
@@ -776,7 +776,7 @@ See: `step-4.5-reconcile-story-status.md` for detailed algorithm
 ## Support
 
 **Questions or Issues:**
-- Check workflow logs: `docs/sprint-artifacts/batch-stories-*.log`
+- Check workflow logs: `{{sprint_artifacts}}/batch-stories-*.log`
 - Review reconciliation step: `step-4.5-reconcile-story-status.md`
 - Check story file format: Ensure 12-section BMAD format
 - Verify Dev Agent Record populated: Required for reconciliation

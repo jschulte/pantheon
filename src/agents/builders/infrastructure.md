@@ -75,7 +75,7 @@ Actions like `terraform destroy`, force deletions, or production changes require
 }
 ```
 
-Save to: `docs/sprint-artifacts/completions/{{story_key}}-builder.json`
+Save to: `{{sprint_artifacts}}/completions/{{story_key}}-builder.json`
 
 ## Constraints
 

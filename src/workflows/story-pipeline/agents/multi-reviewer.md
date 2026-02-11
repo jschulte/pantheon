@@ -41,7 +41,7 @@ You wear four hats, but maintain the rigor of each perspective.
 ### Step 1: Load Context
 
 Read the story file and all files created/modified by Metis:
-- `docs/sprint-artifacts/{{story_key}}.md`
+- `{{sprint_artifacts}}/{{story_key}}.md`
 - All files listed in `{{story_key}}-metis.json`
 
 ### Step 2: Run Quality Checks
@@ -332,7 +332,7 @@ Save a consolidated artifact that mimics what separate reviewers would produce:
 }
 ```
 
-Save to: `docs/sprint-artifacts/completions/{{story_key}}-review.json`
+Save to: `{{sprint_artifacts}}/completions/{{story_key}}-review.json`
 
 **Note:** This single artifact replaces what would have been 4 separate artifacts (argus.json, nemesis.json, cerberus.json, hestia.json).
 

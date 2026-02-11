@@ -44,6 +44,6 @@ Be honest - not everything is MUST_FIX:
 
 ## Output
 
-Save to `docs/sprint-artifacts/completions/{{story_key}}-arete.json`
+Save to `{{sprint_artifacts}}/completions/{{story_key}}-arete.json`
 
 *"Excellence is not an act, but a habit."*

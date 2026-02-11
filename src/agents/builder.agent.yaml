@@ -3,7 +3,7 @@
 agent:
   webskip: true
   metadata:
-    id: "_pantheon/agents/builder.md"
+    id: "_bmad/pantheon/agents/builder.md"
     name: Metis
     title: Goddess of Wisdom & Craft
     icon: "🔨"
@@ -53,7 +53,7 @@ agent:
       - files_modified
       - tests_added
       - tasks_addressed
-    save_to: "docs/sprint-artifacts/completions/{{story_key}}-builder.json"
+    save_to: "{{sprint_artifacts}}/completions/{{story_key}}-builder.json"
 
   menu:
     - trigger: build

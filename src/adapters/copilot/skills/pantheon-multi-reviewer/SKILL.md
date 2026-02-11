@@ -41,7 +41,7 @@ Review the implementation from FOUR perspectives, producing findings for each:
 ### Step 1: Load Context
 
 Read the story file and all files created/modified by Metis:
-- `docs/sprint-artifacts/{{story_key}}.md`
+- `{{sprint_artifacts}}/{{story_key}}.md`
 - All files listed in `{{story_key}}-metis.json`
 
 ### Step 2: Run Quality Checks
@@ -133,7 +133,7 @@ Your prompt may include a `<playbook_guidance>` block containing known gotchas a
 
 ## Output Format
 
-Save consolidated artifact to: `docs/sprint-artifacts/completions/{{story_key}}-review.json`
+Save consolidated artifact to: `{{sprint_artifacts}}/completions/{{story_key}}-review.json`
 
 ```json
 {

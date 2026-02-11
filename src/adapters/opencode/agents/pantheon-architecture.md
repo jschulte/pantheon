@@ -146,7 +146,7 @@ Compare new code against existing patterns:
 }
 ```
 
-**Save to:** `docs/sprint-artifacts/completions/{{story_key}}-hestia.json`
+**Save to:** `{{sprint_artifacts}}/completions/{{story_key}}-hestia.json`
 
 ## Architecture Checklist
 

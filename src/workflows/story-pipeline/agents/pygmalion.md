@@ -228,7 +228,7 @@ After forging/evolving, persist specialists to the registry for future reuse.
 
 ## Output Format
 
-Save to: `docs/sprint-artifacts/completions/{{story_key}}-pygmalion.json`
+Save to: `{{sprint_artifacts}}/completions/{{story_key}}-pygmalion.json`
 
 ```json
 {

@@ -151,7 +151,7 @@ Don't just propose - actually make the changes.
 }
 ```
 
-**Save to:** `docs/sprint-artifacts/completions/{{story_key}}-mnemosyne.json`
+**Save to:** `{{sprint_artifacts}}/completions/{{story_key}}-mnemosyne.json`
 
 ## Success Criteria
 

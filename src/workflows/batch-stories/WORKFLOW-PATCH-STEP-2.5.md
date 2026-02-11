@@ -79,7 +79,7 @@ This workflow requires:
 
 3. **Validate story format:**
    ```
-   ./scripts/validate-bmad-format.sh docs/sprint-artifacts/story-{{story_key}}.md
+   ./scripts/validate-bmad-format.sh {{sprint_artifacts}}/story-{{story_key}}.md
    ```
    Must show: "✅ All 12 sections present"
 
@@ -157,7 +157,7 @@ This workflow requires:
 
 set -e
 
-STORIES=$(grep "ready-for-dev" docs/sprint-artifacts/sprint-status.yaml | awk '{print $1}' | sed 's/://')
+STORIES=$(grep "ready-for-dev" {{sprint_artifacts}}/sprint-status.yaml | awk '{print $1}' | sed 's/://')
 
 echo "=========================================="
 echo "  Pantheon Story Format Validation"
@@ -169,7 +169,7 @@ VALID=0
 INVALID=0
 
 for story in $STORIES; do
-  STORY_FILE="docs/sprint-artifacts/story-$story.md"
+  STORY_FILE="{{sprint_artifacts}}/story-$story.md"
 
   if [ ! -f "$STORY_FILE" ]; then
     echo "❌ $story - FILE MISSING"
@@ -222,7 +222,7 @@ fi
 
 ## Documentation Update
 
-**Add to:** `_pantheon/workflows/batch-stories/README.md`
+**Add to:** `_bmad/pantheon/workflows/batch-stories/README.md`
 
 ```markdown
 # Batch Stories Workflow

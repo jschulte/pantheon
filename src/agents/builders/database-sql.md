@@ -47,7 +47,7 @@ The native `database-administrator` agent brings SQL expertise across PostgreSQL
 }
 ```
 
-Save to: `docs/sprint-artifacts/completions/{{story_key}}-builder.json`
+Save to: `{{sprint_artifacts}}/completions/{{story_key}}-builder.json`
 
 ## Constraints
 

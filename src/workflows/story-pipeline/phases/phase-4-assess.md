@@ -116,7 +116,7 @@ If your STYLE count exceeds 10%, you're filtering too aggressively.
   }
 }
 
-Save to: docs/sprint-artifacts/completions/{{story_key}}-themis.json
+Save to: {{sprint_artifacts}}/completions/{{story_key}}-themis.json
 </completion_format>
 `
 })
@@ -229,7 +229,7 @@ Triage:
 
 ### Update Progress
 
-Update `docs/sprint-artifacts/completions/{{story_key}}-progress.json`:
+Update `{{sprint_artifacts}}/completions/{{story_key}}-progress.json`:
 ```json
 {
   "current_phase": "REFINE",

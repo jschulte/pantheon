@@ -3,7 +3,7 @@
 agent:
   webskip: true
   metadata:
-    id: "_pantheon/agents/test-quality.md"
+    id: "_bmad/pantheon/agents/test-quality.md"
     name: Nemesis
     title: Goddess of Retribution & Balance
     icon: "🧪"
@@ -54,7 +54,7 @@ agent:
       - test_files_reviewed
       - issues
       - coverage_analysis
-    save_to: "docs/sprint-artifacts/completions/{{story_key}}-test-quality.json"
+    save_to: "{{sprint_artifacts}}/completions/{{story_key}}-test-quality.json"
 
   menu:
     - trigger: test-quality

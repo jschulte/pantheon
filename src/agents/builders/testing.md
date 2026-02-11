@@ -48,7 +48,7 @@ The native `dev-testing` agent brings expertise in unit testing, integration tes
 }
 ```
 
-Save to: `docs/sprint-artifacts/completions/{{story_key}}-builder.json`
+Save to: `{{sprint_artifacts}}/completions/{{story_key}}-builder.json`
 
 ## Constraints
 

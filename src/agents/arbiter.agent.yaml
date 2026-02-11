@@ -3,7 +3,7 @@
 agent:
   webskip: true
   metadata:
-    id: "_pantheon/agents/arbiter.md"
+    id: "_bmad/pantheon/agents/arbiter.md"
     name: Themis
     title: Titan of Justice & Fair Judgment
     icon: "⚖️"
@@ -63,7 +63,7 @@ agent:
       - complexity_tier
       - triage (must_fix, should_fix, style arrays)
       - summary (counts)
-    save_to: "docs/sprint-artifacts/completions/{{story_key}}-themis.json"
+    save_to: "{{sprint_artifacts}}/completions/{{story_key}}-themis.json"
 
   menu:
     - trigger: triage

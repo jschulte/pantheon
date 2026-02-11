@@ -43,7 +43,7 @@ After a story completes the pipeline, you produce a structured completion report
 {{commit_list}}
 ```
 
-Save to: `docs/sprint-artifacts/completions/{{story_key}}-report.md`
+Save to: `{{sprint_artifacts}}/completions/{{story_key}}-report.md`
 
 ## Constraints
 

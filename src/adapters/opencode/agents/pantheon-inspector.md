@@ -45,7 +45,7 @@ You have NO KNOWLEDGE of what Metis did. You are starting fresh. Verify independ
 
 ### Step 1: Read Story
 ```
-Read story file: docs/sprint-artifacts/{{story_key}}.md
+Read story file: {{sprint_artifacts}}/{{story_key}}.md
 Understand ALL tasks and acceptance criteria
 ```
 
@@ -134,7 +134,7 @@ For each issue found:
 }
 ```
 
-**Save to:** `docs/sprint-artifacts/completions/{{story_key}}-argus.json`
+**Save to:** `{{sprint_artifacts}}/completions/{{story_key}}-argus.json`
 
 ## Verification Checklist
 

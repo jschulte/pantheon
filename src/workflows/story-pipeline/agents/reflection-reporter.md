@@ -215,7 +215,7 @@ Bootstrap: If `_index.json` doesn't exist, create `{"version":"1.0","token_budge
 }
 ```
 
-Save to: `docs/sprint-artifacts/completions/{{story_key}}-mnemosyne.json`
+Save to: `{{sprint_artifacts}}/completions/{{story_key}}-mnemosyne.json`
 
 ---
 
@@ -369,7 +369,7 @@ No new anti-patterns discovered in this story cycle.
 ```
 
 **Save Report:**
-`docs/sprint-artifacts/completions/{{story_key}}-summary.md`
+`{{sprint_artifacts}}/completions/{{story_key}}-summary.md`
 
 **Save Hermes Artifact:**
 
@@ -377,7 +377,7 @@ No new anti-patterns discovered in this story cycle.
 {
   "agent": "hermes",
   "story_key": "{{story_key}}",
-  "report_path": "docs/sprint-artifacts/completions/{{story_key}}-summary.md",
+  "report_path": "{{sprint_artifacts}}/completions/{{story_key}}-summary.md",
   "tldr": "{{One paragraph summary}}",
   "quick_stats": {
     "files_changed": {{n}},
@@ -391,7 +391,7 @@ No new anti-patterns discovered in this story cycle.
 }
 ```
 
-Save to: `docs/sprint-artifacts/completions/{{story_key}}-hermes.json`
+Save to: `{{sprint_artifacts}}/completions/{{story_key}}-hermes.json`
 
 ---
 

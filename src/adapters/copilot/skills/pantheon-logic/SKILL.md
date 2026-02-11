@@ -58,6 +58,6 @@ await prisma.counter.update({ data: { count: { increment: 1 } } })
 
 ## Output
 
-Save to `docs/sprint-artifacts/completions/{{story_key}}-apollo.json`
+Save to `{{sprint_artifacts}}/completions/{{story_key}}-apollo.json`
 
 *"In the light of reason, no flaw can hide."*
