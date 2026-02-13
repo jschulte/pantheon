@@ -48,7 +48,7 @@ Find security vulnerabilities. The native `auditor-security` agent brings OWASP 
 **Recommendation:** BLOCK_RELEASE | FIX_BEFORE_RELEASE | ACCEPTABLE_RISK
 ```
 
-Save to: `docs/sprint-artifacts/completions/{{story_key}}-security.json`
+Save to: `{{sprint_artifacts}}/completions/{{story_key}}-security.json`
 
 ## Constraints
 

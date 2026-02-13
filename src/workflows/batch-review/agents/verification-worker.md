@@ -114,7 +114,7 @@ npm run lint
 
 ## Output Format
 
-Save to: `docs/sprint-artifacts/reviews/{{scope_id}}-verify-{{category}}.json`
+Save to: `{{sprint_artifacts}}/reviews/{{scope_id}}-verify-{{category}}.json`
 
 ```json
 {

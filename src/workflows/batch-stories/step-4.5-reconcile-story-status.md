@@ -54,7 +54,7 @@ Store the output - you'll need it for the next steps.
 
 ### Step 2: Read Story File
 
-Use Read tool on: `docs/sprint-artifacts/{{story_key}}.md`
+Use Read tool on: `{{sprint_artifacts}}/{{story_key}}.md`
 
 Find these sections:
 - **Tasks** (lines starting with `- [ ]` or `- [x]`)
@@ -66,7 +66,7 @@ For EACH task in the Tasks section that relates to files changed:
 
 Use Edit tool:
 ```
-file_path: docs/sprint-artifacts/{{story_key}}.md
+file_path: {{sprint_artifacts}}/{{story_key}}.md
 old_string: "- [ ] Create the SomeComponent"
 new_string: "- [x] Create the SomeComponent"
 ```
@@ -81,7 +81,7 @@ new_string: "- [x] Create the SomeComponent"
 Use Edit tool to replace the placeholder record:
 
 ```
-file_path: docs/sprint-artifacts/{{story_key}}.md
+file_path: {{sprint_artifacts}}/{{story_key}}.md
 old_string: "### Dev Agent Record
 - **Agent Model Used:** [Not set]
 - **Implementation Date:** [Not set]
@@ -108,7 +108,7 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "🔍 RECONCILIATION VERIFICATION"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-STORY_FILE="docs/sprint-artifacts/{{story_key}}.md"
+STORY_FILE="{{sprint_artifacts}}/{{story_key}}.md"
 
 # Count checked tasks
 CHECKED=$(grep -c "^- \[x\]" "$STORY_FILE" 2>/dev/null || echo "0")
@@ -153,7 +153,7 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 
 ### Step 6: Update Sprint Status
 
-Use Read tool: `docs/sprint-artifacts/sprint-status.yaml`
+Use Read tool: `{{sprint_artifacts}}/sprint-status.yaml`
 
 Find the entry for {{story_key}} and use Edit tool to update:
 

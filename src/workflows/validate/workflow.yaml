@@ -3,13 +3,13 @@ description: "Unified validation workflow. Validates stories against codebase, d
 author: "Jonah Schulte (leveraging BMAD Method)"
 
 # Critical variables from config
-config_source: "{project-root}/_bmad/bmm/config.yaml"
+config_source: "{project-root}/_bmad/pantheon/config.yaml"
 implementation_artifacts: "{config_source}:implementation_artifacts"
 story_dir: "{implementation_artifacts}"
 sprint_status: "{implementation_artifacts}/sprint-status.yaml"
 
 # Workflow components
-installed_path: "{project-root}/_pantheon/workflows/validate"
+installed_path: "{project-root}/_bmad/pantheon/workflows/validate"
 instructions: "{installed_path}/workflow.md"
 
 # Input variables

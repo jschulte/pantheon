@@ -150,7 +150,7 @@ The story-pipeline ensures proper verification, testing, and quality gates. Spaw
 **Load and parse sprint-status.yaml**
 
 ```bash
-SPRINT_STATUS="docs/sprint-artifacts/sprint-status.yaml"
+SPRINT_STATUS="{{sprint_artifacts}}/sprint-status.yaml"
 [ -f "$SPRINT_STATUS" ] || { echo "ERROR: sprint-status.yaml not found"; exit 1; }
 ```
 
@@ -172,7 +172,7 @@ If no available stories: report "All stories complete!" and exit.
 **Display available stories with file status**
 
 For each story:
-1. Check if story file exists in `docs/sprint-artifacts/`
+1. Check if story file exists in `{{sprint_artifacts}}/`
 2. Try patterns in order (first match wins):
    ```
    # Exact key match
@@ -540,7 +540,7 @@ For each selected story:
 ```
 
 ```bash
-STORY_FILE="docs/sprint-artifacts/{{story_key}}.md"
+STORY_FILE="{{sprint_artifacts}}/{{story_key}}.md"
 
 echo "🔍 Checking prerequisites..."
 ```
@@ -1045,7 +1045,7 @@ Heroes: 3 active | Stories: 1 done, 2 active, 3 waiting
 
 Optionally read progress artifacts for more detail:
 ```bash
-PROGRESS="docs/sprint-artifacts/completions/${story}-progress.json"
+PROGRESS="{{sprint_artifacts}}/completions/${story}-progress.json"
 ```
 
 **Phase status icons:**
@@ -1152,7 +1152,7 @@ Hermes compiling comprehensive session summary...
 
 ```bash
 SESSION_TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-REPORT_DIR="docs/sprint-artifacts/session-reports"
+REPORT_DIR="{{sprint_artifacts}}/session-reports"
 mkdir -p "$REPORT_DIR"
 
 # Collect all artifacts for processed stories
@@ -1160,13 +1160,13 @@ for story in {{all_stories}}; do
   echo "Gathering artifacts for $story..."
 
   # Progress artifact
-  cat "docs/sprint-artifacts/completions/${story}-progress.json" 2>/dev/null
+  cat "{{sprint_artifacts}}/completions/${story}-progress.json" 2>/dev/null
 
   # Agent artifacts
-  cat "docs/sprint-artifacts/completions/${story}-metis.json" 2>/dev/null
-  cat "docs/sprint-artifacts/completions/${story}-argus.json" 2>/dev/null
-  cat "docs/sprint-artifacts/completions/${story}-themis.json" 2>/dev/null
-  cat "docs/sprint-artifacts/completions/${story}-mnemosyne.json" 2>/dev/null
+  cat "{{sprint_artifacts}}/completions/${story}-metis.json" 2>/dev/null
+  cat "{{sprint_artifacts}}/completions/${story}-argus.json" 2>/dev/null
+  cat "{{sprint_artifacts}}/completions/${story}-themis.json" 2>/dev/null
+  cat "{{sprint_artifacts}}/completions/${story}-mnemosyne.json" 2>/dev/null
 done
 ```
 
@@ -1256,7 +1256,7 @@ The report should be 1-2 pages and include:
    - Pre-deployment checklist
 
 Save the full report to:
-  docs/sprint-artifacts/session-reports/session-{{timestamp}}.md
+  {{sprint_artifacts}}/session-reports/session-{{timestamp}}.md
 
 Then output a condensed terminal summary.
 `
@@ -1309,7 +1309,7 @@ After Hermes completes, display condensed results showing each story's TL;DR:
    npm run dev           # Start dev server and explore
 
    Per-story verification guides in:
-   docs/sprint-artifacts/completions/{{story}}-summary.md
+   {{sprint_artifacts}}/completions/{{story}}-summary.md
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📄 REPORTS
@@ -1335,7 +1335,7 @@ Options:
 ```
 
 **If user selects "View full report":**
-Read and display `docs/sprint-artifacts/session-reports/session-{{timestamp}}.md`
+Read and display `{{sprint_artifacts}}/session-reports/session-{{timestamp}}.md`
 
 ### Alternative: Orchestrator-Generated Summary
 
@@ -1351,7 +1351,7 @@ TOTAL_TESTS=0
 COVERAGE_SUM=0
 
 for story in {{all_stories}}; do
-  PROGRESS="docs/sprint-artifacts/completions/${story}-progress.json"
+  PROGRESS="{{sprint_artifacts}}/completions/${story}-progress.json"
   if [ -f "$PROGRESS" ]; then
     FILES=$(jq '.metrics.files_changed // 0' "$PROGRESS")
     LINES=$(jq '.metrics.lines_added // 0' "$PROGRESS")
@@ -1369,7 +1369,7 @@ AVG_COVERAGE=$((COVERAGE_SUM / {{story_count}}))
 ```
 
 **Generate markdown report:**
-Use Write tool to create `docs/sprint-artifacts/session-reports/session-{{timestamp}}.md`
+Use Write tool to create `{{sprint_artifacts}}/session-reports/session-{{timestamp}}.md`
 following the template structure in `session-reporter.md`.
 
 **Display terminal summary:**
@@ -1387,12 +1387,12 @@ IF epic provided (e.g., epic=17):
   EPIC_KEY="epic-{{epic}}"
 
   # Get all stories in this epic from sprint-status.yaml
-  EPIC_STORIES=$(grep "^  {{epic}}-" docs/sprint-artifacts/sprint-status.yaml | cut -d: -f1 | tr -d ' ')
+  EPIC_STORIES=$(grep "^  {{epic}}-" {{sprint_artifacts}}/sprint-status.yaml | cut -d: -f1 | tr -d ' ')
 
   # Check if ALL stories are "done"
   ALL_DONE=true
   for story in $EPIC_STORIES; do
-    STATUS=$(grep "^  $story:" docs/sprint-artifacts/sprint-status.yaml | cut -d: -f2 | tr -d ' ')
+    STATUS=$(grep "^  $story:" {{sprint_artifacts}}/sprint-status.yaml | cut -d: -f2 | tr -d ' ')
     if [ "$STATUS" != "done" ]; then
       ALL_DONE=false
       break
@@ -1418,7 +1418,7 @@ ENDIF
 
 ```bash
 IF epic marked as done:
-  git add docs/sprint-artifacts/sprint-status.yaml
+  git add {{sprint_artifacts}}/sprint-status.yaml
 
   git commit -m "$(cat <<'EOF'
 chore(epic-{{epic}}): mark epic as complete

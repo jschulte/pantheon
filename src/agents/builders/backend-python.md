@@ -47,7 +47,7 @@ The native `dev-backend` agent brings Python expertise across Django, FastAPI, F
 }
 ```
 
-Save to: `docs/sprint-artifacts/completions/{{story_key}}-builder.json`
+Save to: `{{sprint_artifacts}}/completions/{{story_key}}-builder.json`
 
 ## Constraints
 

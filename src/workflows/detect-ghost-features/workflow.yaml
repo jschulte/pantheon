@@ -3,13 +3,13 @@ description: "Reverse gap analysis: Find functionality in codebase that has no c
 author: "Jonah Schulte (leveraging BMAD Method)"
 
 # Critical variables from config
-config_source: "{project-root}/_bmad/bmm/config.yaml"
-output_folder: "{config_source}:output_folder"
+config_source: "{project-root}/_bmad/pantheon/config.yaml"
+output_folder: "{project-root}/_bmad-output"
 sprint_artifacts: "{output_folder}/sprint-artifacts"
 sprint_status: "{output_folder}/sprint-status.yaml"
 
 # Workflow paths
-installed_path: "{project-root}/_pantheon/workflows/detect-ghost-features"
+installed_path: "{project-root}/_bmad/pantheon/workflows/detect-ghost-features"
 instructions: "{installed_path}/workflow.md"
 
 # Input parameters

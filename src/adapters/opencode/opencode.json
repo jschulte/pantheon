@@ -11,7 +11,7 @@
   },
 
   "instructions": {
-    "story-pipeline": "When implementing stories, use the 7-phase Pantheon pipeline: PREPARE → BUILD → VERIFY → ASSESS → REFINE → COMMIT → REFLECT. Stories are in docs/sprint-artifacts/*.md. Save artifacts to docs/sprint-artifacts/completions/."
+    "story-pipeline": "When implementing stories, use the 7-phase Pantheon pipeline: PREPARE → BUILD → VERIFY → ASSESS → REFINE → COMMIT → REFLECT. Stories are in {{sprint_artifacts}}/*.md. Save artifacts to {{sprint_artifacts}}/completions/."
   },
 
   "tools": {

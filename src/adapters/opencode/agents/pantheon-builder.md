@@ -113,7 +113,7 @@ When complete, save artifact:
 }
 ```
 
-**Save to:** `docs/sprint-artifacts/completions/{{story_key}}-metis.json`
+**Save to:** `{{sprint_artifacts}}/completions/{{story_key}}-metis.json`
 
 ## Remember
 

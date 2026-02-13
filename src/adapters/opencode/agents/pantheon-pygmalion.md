@@ -125,7 +125,7 @@ For each gap classified as FORGE_NEW, create a spec with:
 
 ## Output Format
 
-Save to: `docs/sprint-artifacts/completions/{{story_key}}-pygmalion.json`
+Save to: `{{sprint_artifacts}}/completions/{{story_key}}-pygmalion.json`
 
 ```json
 {

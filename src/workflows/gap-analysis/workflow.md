@@ -224,10 +224,10 @@ Checkbox Accuracy: {{accuracy}}%
 <examples>
 ```bash
 # Quick gap analysis of single story
-/gap-analysis story_file=docs/sprint-artifacts/2-5-auth.md
+/gap-analysis story_file={{sprint_artifacts}}/2-5-auth.md
 
 # With auto-update enabled
-/gap-analysis story_file=docs/sprint-artifacts/2-5-auth.md auto_update=true
+/gap-analysis story_file={{sprint_artifacts}}/2-5-auth.md auto_update=true
 ```
 </examples>
 

@@ -1,4 +1,4 @@
-# Plan Team Sprint v1.0 - Team Execution Planner
+# Plan Execution v1.0 - Team Execution Planner
 
 <purpose>
 Analyze epics and architecture to build a dependency DAG and generate an optimal team execution
@@ -18,7 +18,7 @@ Supports initial planning (greenfield/brownfield) and mid-project rebalancing.
 </philosophy>
 
 <config>
-name: plan-team-sprint
+name: plan-execution
 execution_mode: interactive
 
 steps:
@@ -71,8 +71,8 @@ ELSE:
 ### 1.3 Check for Sprint Status (Rebalance Mode)
 
 ```
-IF exists("docs/sprint-artifacts/sprint-status.yaml"):
-  SPRINT_STATUS = Read("docs/sprint-artifacts/sprint-status.yaml")
+IF exists("{{sprint_artifacts}}/sprint-status.yaml"):
+  SPRINT_STATUS = Read("{{sprint_artifacts}}/sprint-status.yaml")
   REBALANCE_MODE = true
 
   # Parse completed stories
@@ -886,7 +886,7 @@ Write to: docs/team-execution-plan.md
 ### 8.2 Enrich Sprint Status (Optional)
 
 ```
-IF exists("docs/sprint-artifacts/sprint-status.yaml"):
+IF exists("{{sprint_artifacts}}/sprint-status.yaml"):
   # Add team_assignments section
   Append to sprint-status.yaml:
 
@@ -931,7 +931,7 @@ IF exists("docs/sprint-artifacts/sprint-status.yaml"):
   Output:
     docs/team-execution-plan.md
     {{IF sprint_status_enriched}}
-    docs/sprint-artifacts/sprint-status.yaml (enriched)
+    {{sprint_artifacts}}/sprint-status.yaml (enriched)
     {{ENDIF}}
 
   Next Steps:

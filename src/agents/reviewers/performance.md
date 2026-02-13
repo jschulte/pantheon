@@ -50,7 +50,7 @@ The native `optimizer-performance` agent brings profiling expertise, algorithmic
 }
 ```
 
-Save to: `docs/sprint-artifacts/completions/{{story_key}}-performance.json`
+Save to: `{{sprint_artifacts}}/completions/{{story_key}}-performance.json`
 
 ## Constraints
 

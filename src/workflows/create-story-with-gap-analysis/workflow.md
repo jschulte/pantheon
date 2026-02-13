@@ -265,7 +265,7 @@ Next Steps:
 > Which story? 1.9
 
 # With explicit story file
-/create-story-with-gap-analysis story_file=docs/sprint-artifacts/story-1.9.md
+/create-story-with-gap-analysis story_file={{sprint_artifacts}}/story-1.9.md
 ```
 </examples>
 

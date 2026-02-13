@@ -133,7 +133,7 @@ If an issue spans categories (e.g., API route + database query), fix only your c
 
 ## Output Format
 
-Save to: `docs/sprint-artifacts/reviews/{{scope_id}}-fixes-{{category}}.json`
+Save to: `{{sprint_artifacts}}/reviews/{{scope_id}}-fixes-{{category}}.json`
 
 ```json
 {

@@ -13,7 +13,7 @@ Smart Builder Selection + TDD Implementation
 
 **Load the agent routing configuration:**
 ```
-Read: {project-root}/_pantheon/agent-routing.yaml
+Read: {project-root}/_bmad/pantheon/agent-routing.yaml
 ```
 
 **Analyze story for routing signals:**
@@ -31,7 +31,7 @@ Read: {project-root}/_pantheon/agent-routing.yaml
 **Load the matched specialized builder prompt:**
 ```
 # Example: If story touches app/api/** files
-Read: {project-root}/_pantheon/agents/builders/backend-typescript.md
+Read: {project-root}/_bmad/pantheon/agents/builders/backend-typescript.md
 BUILDER_NAME = "Hephaestus"
 BUILDER_EMOJI = "🔥"
 BUILDER_SPECIALTY = "Backend TypeScript API Development"
@@ -97,7 +97,7 @@ Implement story {{story_key}} following your agent definition process.
   "playbooks_reviewed": ["playbook1.md", ...]
 }
 
-Save to: docs/sprint-artifacts/completions/{{story_key}}-metis.json
+Save to: {{sprint_artifacts}}/completions/{{story_key}}-metis.json
 </completion_format>
 `
 })
@@ -109,7 +109,7 @@ BUILDER_AGENT_ID = {{extract agent_id from Task result}}
 
 ### Update Progress
 
-Use Write tool to update `docs/sprint-artifacts/completions/{{story_key}}-progress.json`:
+Use Write tool to update `{{sprint_artifacts}}/completions/{{story_key}}-progress.json`:
 ```json
 {
   "current_phase": "VERIFY",

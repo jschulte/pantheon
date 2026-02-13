@@ -98,7 +98,7 @@ For maximum hardening, run multiple passes:
 
 ## Artifacts
 
-Saved to `docs/sprint-artifacts/hardening/`:
+Saved to `{{sprint_artifacts}}/hardening/`:
 - `{{scope_id}}-review.json` - All findings
 - `{{scope_id}}-triage.json` - Classified issues
 - `{{scope_id}}-fixes.json` - Applied fixes

@@ -34,7 +34,7 @@ Perform directly:
 
 ```bash
 # Load story
-STORY_FILE="docs/sprint-artifacts/{{story_key}}.md"
+STORY_FILE="{{sprint_artifacts}}/{{story_key}}.md"
 
 # Count tasks
 TASK_COUNT=$(grep -c "^- \[ \]" "$STORY_FILE")
@@ -121,7 +121,7 @@ Perform directly:
 4. Git commit
 
 ```bash
-git add docs/sprint-artifacts/
+git add {{sprint_artifacts}}/
 git commit -m "chore({{story_key}}): reconcile story completion"
 ```
 

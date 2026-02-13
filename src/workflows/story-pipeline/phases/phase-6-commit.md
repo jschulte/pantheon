@@ -11,7 +11,7 @@ Eunomia reconciles → Hard gate validates → Commit
 
 ### 6.1 Load completion artifacts
 
-Read all artifacts from `docs/sprint-artifacts/completions/{{story_key}}-*.json`
+Read all artifacts from `{{sprint_artifacts}}/completions/{{story_key}}-*.json`
 
 ### 6.2 Spawn Eunomia reconciliation agent
 
@@ -103,9 +103,9 @@ Use the status decision logic from `step-4.5-reconcile-story-status.md`:
 ### 6.5 Commit reconciliation
 
 ```bash
-git add docs/sprint-artifacts/{{story_key}}.md
-git add docs/sprint-artifacts/sprint-status.yaml
-git add docs/sprint-artifacts/completions/
+git add {{sprint_artifacts}}/{{story_key}}.md
+git add {{sprint_artifacts}}/sprint-status.yaml
+git add {{sprint_artifacts}}/completions/
 
 git commit -m "$(cat <<'EOF'
 chore({{story_key}}): reconcile story completion
@@ -119,7 +119,7 @@ EOF
 
 ### Update Progress
 
-Update `docs/sprint-artifacts/completions/{{story_key}}-progress.json`:
+Update `{{sprint_artifacts}}/completions/{{story_key}}-progress.json`:
 ```json
 {
   "current_phase": "REFLECT",
