@@ -1,16 +1,31 @@
-# Step 4.5: Story Reconciliation (Orchestrator-Driven)
+# Step 4.5: Story Reconciliation
 
 **Execute:** AFTER story-pipeline completes, BEFORE marking story done
-**Who:** Orchestrator (YOU) - not an agent
+**Primary method:** Phase 6 spawns **Eunomia** (reconciliation agent) + hard validation gate
+**Fallback:** Manual orchestrator-driven reconciliation (steps below)
 
 ---
 
-## Why Orchestrator Does This
+## Primary: Agent-Driven Reconciliation (Phase 6)
 
-Agents ignore reconciliation instructions. The orchestrator:
-- Has full context of what just happened
-- Can use tools directly (Bash, Read, Edit)
-- Won't skip "boring" bookkeeping tasks
+Phase 6 of the story-pipeline now spawns **Eunomia** 📋, a dedicated reconciliation agent.
+Eunomia reads completion artifacts, checks off tasks with evidence, fills the Dev Agent Record,
+and outputs a structured JSON artifact (`{{story_key}}-reconciler.json`).
+
+After Eunomia returns, Phase 6 runs a **hard validation gate**:
+- **Zero tasks checked → HALT.** Cannot mark story done. Escalate to user.
+- **<50% tasks checked → WARN.** Ask user to continue or investigate.
+- **50%+ tasks checked → PROCEED** with status decision logic.
+
+This gate makes it structurally impossible for a story to complete the pipeline
+without its tasks being checked off.
+
+---
+
+## Fallback: Manual Orchestrator Reconciliation
+
+If Eunomia fails to spawn, returns no artifact, or the agent approach fails for
+any reason, the orchestrator falls back to the manual procedure below.
 
 ---
 
@@ -103,9 +118,17 @@ echo "Tasks: $CHECKED/$TOTAL checked"
 
 if [ "$CHECKED" -eq 0 ]; then
   echo ""
-  echo "❌ BLOCKER: Zero tasks checked off"
+  echo "❌ HARD GATE: Zero tasks checked off — cannot mark story done"
+  echo "This matches the Phase 6 Eunomia hard gate."
   echo "You MUST go back to Step 3 and check off tasks"
   exit 1
+fi
+
+# Warn if less than 50% checked (matches Eunomia hard gate threshold)
+if [ "$TOTAL" -gt 0 ] && [ $((CHECKED * 100 / TOTAL)) -lt 50 ]; then
+  echo ""
+  echo "⚠️ WARNING: Only $((CHECKED * 100 / TOTAL))% tasks checked ($CHECKED/$TOTAL)"
+  echo "Review before continuing — less than 50% reconciled"
 fi
 
 # Check Dev Agent Record filled
