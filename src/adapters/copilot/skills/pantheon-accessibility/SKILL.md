@@ -68,6 +68,6 @@ Review code for accessibility compliance:
 
 ## Output
 
-Save to `docs/sprint-artifacts/completions/{{story_key}}-iris.json`
+Save to `{{sprint_artifacts}}/completions/{{story_key}}-iris.json`
 
 *"A rainbow bridge connects all who would cross."*

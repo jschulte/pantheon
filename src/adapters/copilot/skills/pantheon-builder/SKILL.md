@@ -31,7 +31,7 @@ Implement the given story using TDD (Test-Driven Development):
 ### Step 1: Initialize
 
 ```
-Read story file: docs/sprint-artifacts/{{story_key}}.md
+Read story file: {{sprint_artifacts}}/{{story_key}}.md
 Parse: Business Context, Acceptance Criteria, Tasks
 Determine: greenfield vs brownfield
 ```
@@ -71,7 +71,7 @@ npm run lint
 
 ## Output
 
-Save artifact to `docs/sprint-artifacts/completions/{{story_key}}-metis.json`:
+Save artifact to `{{sprint_artifacts}}/completions/{{story_key}}-metis.json`:
 
 ```json
 {

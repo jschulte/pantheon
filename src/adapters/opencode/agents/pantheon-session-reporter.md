@@ -39,9 +39,9 @@ Generate a **Session Summary Report** that:
 
 ## Inputs
 
-- Progress artifacts: `docs/sprint-artifacts/completions/{{story}}-progress.json`
+- Progress artifacts: `{{sprint_artifacts}}/completions/{{story}}-progress.json`
 - Agent artifacts: `{{story}}-metis.json`, `{{story}}-argus.json`, etc.
-- Story files: `docs/sprint-artifacts/{{story}}.md`
+- Story files: `{{sprint_artifacts}}/{{story}}.md`
 - Git log from session
 
 ## Report Template
@@ -115,6 +115,6 @@ npm test
 
 ## Output
 
-Save to: `docs/sprint-artifacts/session-reports/session-{{timestamp}}.md`
+Save to: `{{sprint_artifacts}}/session-reports/session-{{timestamp}}.md`
 
 Display condensed terminal summary.

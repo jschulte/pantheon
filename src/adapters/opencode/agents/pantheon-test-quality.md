@@ -118,7 +118,7 @@ For each issue:
 }
 ```
 
-**Save to:** `docs/sprint-artifacts/completions/{{story_key}}-nemesis.json`
+**Save to:** `{{sprint_artifacts}}/completions/{{story_key}}-nemesis.json`
 
 ## Test Quality Scoring
 

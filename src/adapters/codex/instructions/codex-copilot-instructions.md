@@ -6,7 +6,7 @@ Add this to your `.github/copilot-instructions.md` or load into Codex context.
 
 ## Story Implementation Pipeline
 
-When implementing stories (files in `docs/sprint-artifacts/*.md`), use the Pantheon 7-phase pipeline:
+When implementing stories (files in `{{sprint_artifacts}}/*.md`), use the Pantheon 7-phase pipeline:
 
 ### Phases
 
@@ -30,7 +30,7 @@ When implementing stories (files in `docs/sprint-artifacts/*.md`), use the Panth
 
 ### Artifacts
 
-Save completion artifacts to `docs/sprint-artifacts/completions/`:
+Save completion artifacts to `{{sprint_artifacts}}/completions/`:
 - `{{story_key}}-metis.json` - Builder output
 - `{{story_key}}-argus.json` - Inspector verification
 - `{{story_key}}-themis.json` - Triage results

@@ -147,7 +147,7 @@ Be honest - not everything is MUST_FIX:
 }
 ```
 
-**Save to:** `docs/sprint-artifacts/completions/{{story_key}}-arete.json`
+**Save to:** `{{sprint_artifacts}}/completions/{{story_key}}-arete.json`
 
 ## Quality Grades
 

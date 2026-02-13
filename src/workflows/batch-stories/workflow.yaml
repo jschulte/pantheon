@@ -3,17 +3,15 @@ description: "Interactive batch selector for story-pipeline with complexity-base
 author: "Jonah Schulte (leveraging BMAD Method)"
 
 # Critical variables from config
-# NOTE: config_source resolves at runtime to the BMM config in the installed project.
-# Pantheon requires BMM (see module.yaml), so _bmad/bmm/config.yaml should exist.
-# If it doesn't, the adapter's install.sh should create it.
-config_source: "{project-root}/_bmad/bmm/config.yaml"
-output_folder: "{config_source}:output_folder"
+# Config lives at {project-root}/_bmad/pantheon/config.yaml (ships with defaults; user can override).
+# Artifacts live in _bmad-output/ (the standard BMAD output directory).
+config_source: "{project-root}/_bmad/pantheon/config.yaml"
+output_folder: "{project-root}/_bmad-output"
 communication_language: "{config_source}:communication_language"
 date: system-generated
 
-# Sprint artifacts — hardcoded path, not pulled from config
-# (BMM config does not define sprint_artifacts; this is a Pantheon convention)
-sprint_artifacts: "docs/sprint-artifacts"
+# Sprint artifacts
+sprint_artifacts: "{output_folder}/sprint-artifacts"
 
 # Workflow paths
 # NOTE: After installation, Pantheon lives at {project-root}/_bmad/pantheon/

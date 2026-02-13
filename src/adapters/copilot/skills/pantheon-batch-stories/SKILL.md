@@ -31,7 +31,7 @@ description: Sequential batch implementation of multiple stories with dependency
 ## Step 1: Load Sprint Status
 
 ```bash
-SPRINT_STATUS="docs/sprint-artifacts/sprint-status.yaml"
+SPRINT_STATUS="{{sprint_artifacts}}/sprint-status.yaml"
 ```
 
 Read sprint-status.yaml. Extract stories with status `ready-for-dev` or `backlog`. Exclude epics and retrospectives. Sort by epic number, then story number.
@@ -39,7 +39,7 @@ Read sprint-status.yaml. Extract stories with status `ready-for-dev` or `backlog
 ## Step 2: Display & Select Stories
 
 Show available stories with file status:
-- Check if story file exists in `docs/sprint-artifacts/`
+- Check if story file exists in `{{sprint_artifacts}}/`
 - Mark: ✅ exists, ❌ missing, 🔄 already implemented
 
 Ask user which stories to implement:

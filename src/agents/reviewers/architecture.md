@@ -50,7 +50,7 @@ The native `architect-reviewer` agent brings SOLID principles, design pattern re
 }
 ```
 
-Save to: `docs/sprint-artifacts/completions/{{story_key}}-architecture.json`
+Save to: `{{sprint_artifacts}}/completions/{{story_key}}-architecture.json`
 
 ## Constraints
 

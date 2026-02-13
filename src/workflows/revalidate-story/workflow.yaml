@@ -3,12 +3,12 @@ description: "Clear checkboxes and re-verify story against actual codebase imple
 author: "Jonah Schulte (leveraging BMAD Method)"
 
 # Critical variables from config
-config_source: "{project-root}/_bmad/bmm/config.yaml"
-output_folder: "{config_source}:output_folder"
+config_source: "{project-root}/_bmad/pantheon/config.yaml"
+output_folder: "{project-root}/_bmad-output"
 sprint_artifacts: "{output_folder}/sprint-artifacts"
 
 # Workflow paths
-installed_path: "{project-root}/_pantheon/workflows/revalidate-story"
+installed_path: "{project-root}/_bmad/pantheon/workflows/revalidate-story"
 instructions: "{installed_path}/workflow.md"
 
 # Input parameters

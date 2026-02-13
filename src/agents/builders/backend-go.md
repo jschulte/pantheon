@@ -47,7 +47,7 @@ The native `dev-backend` agent brings Go expertise across net/http, goroutines, 
 }
 ```
 
-Save to: `docs/sprint-artifacts/completions/{{story_key}}-builder.json`
+Save to: `{{sprint_artifacts}}/completions/{{story_key}}-builder.json`
 
 ## Constraints
 

@@ -1,0 +1,24 @@
+# Pantheon Configuration — _bmad/pantheon/config.yaml
+# Ships with good defaults. Modify to match your project's needs.
+# On reinstall/upgrade, the installer preserves your customizations.
+
+# General
+user_name: ""
+communication_language: "en"
+
+# Artifact locations (relative to project root)
+planning_artifacts: "docs/planning"
+implementation_artifacts: "docs/implementation"
+output_folder: "_bmad-output"
+
+# Pantheon pipeline settings
+pantheon:
+  coverage_threshold: 80          # Minimum test coverage %
+  require_code_citations: true    # file:line evidence required
+  enable_playbooks: true          # Compound learning system
+  bootstrap_mode: true            # Auto-init playbooks from codebase
+  enable_batch_processing: true
+  parallel_config:
+    max_concurrent: 3             # Stories per wave
+    smart_ordering: true          # Auto-detect dependencies
+  use_consolidated_review: "auto" # Complexity-based routing

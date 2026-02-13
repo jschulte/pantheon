@@ -12,7 +12,7 @@ Story quality gate + Playbook query
 ### 1.1 Load and Parse Story
 
 ```bash
-STORY_FILE="docs/sprint-artifacts/{{story_key}}.md"
+STORY_FILE="{{sprint_artifacts}}/{{story_key}}.md"
 [ -f "$STORY_FILE" ] || { echo "ERROR: Story file not found"; exit 1; }
 ```
 
@@ -271,7 +271,7 @@ Store loaded playbook content and IDs for Metis (Phase 2) and hit-rate tracking 
 ### 1.7 Update Progress
 
 ```bash
-cat > "docs/sprint-artifacts/completions/{{story_key}}-progress.json" << EOF
+cat > "{{sprint_artifacts}}/completions/{{story_key}}-progress.json" << EOF
 {
   "story_key": "{{story_key}}",
   "started_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",

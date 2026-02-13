@@ -132,7 +132,7 @@ Display results
 
 ## Artifacts
 
-Save to `docs/sprint-artifacts/hardening/`:
+Save to `{{sprint_artifacts}}/hardening/`:
 - `{{scope_id}}-scope.json`
 - `{{scope_id}}-review.json`
 - `{{scope_id}}-triage.json`

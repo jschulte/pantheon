@@ -3,7 +3,7 @@
 agent:
   webskip: true
   metadata:
-    id: "_pantheon/agents/reflection.md"
+    id: "_bmad/pantheon/agents/reflection.md"
     name: Mnemosyne
     title: Titan of Memory
     icon: "📚"

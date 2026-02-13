@@ -52,7 +52,7 @@ You orchestrate batch implementation of multiple stories using wave-based execut
 ### Step 1: Load Sprint Status
 
 ```bash
-SPRINT_STATUS="docs/sprint-artifacts/sprint-status.yaml"
+SPRINT_STATUS="{{sprint_artifacts}}/sprint-status.yaml"
 ```
 
 Read and extract stories with status `ready-for-dev` or `backlog`. Sort by epic, then story number.

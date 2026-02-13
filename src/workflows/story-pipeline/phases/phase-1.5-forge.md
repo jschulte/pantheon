@@ -61,7 +61,7 @@ Max specialists: {{max_specialists_for_tier}}
 </project_context>
 
 Output your analysis as the Pygmalion JSON artifact.
-Save to: docs/sprint-artifacts/completions/{{story_key}}-pygmalion.json
+Save to: {{sprint_artifacts}}/completions/{{story_key}}-pygmalion.json
 `
 })
 ```
@@ -72,7 +72,7 @@ Before consuming Pygmalion's output, the orchestrator validates structure and sa
 This prevents malicious story content from propagating through forged specialist prompts.
 
 ```
-FORGED_SPECS = read("docs/sprint-artifacts/completions/{{story_key}}-pygmalion.json")
+FORGED_SPECS = read("{{sprint_artifacts}}/completions/{{story_key}}-pygmalion.json")
 
 # --- STRUCTURAL VALIDATION ---
 # Required top-level fields

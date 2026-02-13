@@ -270,7 +270,7 @@ Save structured JSON:
 }
 ```
 
-**Save to:** `docs/sprint-artifacts/completions/{{story_key}}-themis.json`
+**Save to:** `{{sprint_artifacts}}/completions/{{story_key}}-themis.json`
 
 ---
 

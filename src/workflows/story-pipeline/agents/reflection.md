@@ -171,7 +171,7 @@ Brief description of what this playbook covers.
 }
 ```
 
-Save to: `docs/sprint-artifacts/completions/{{story_key}}-mnemosyne.json`
+Save to: `{{sprint_artifacts}}/completions/{{story_key}}-mnemosyne.json`
 
 ---
 

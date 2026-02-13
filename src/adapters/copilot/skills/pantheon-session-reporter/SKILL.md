@@ -22,7 +22,7 @@ After a batch session completes, generate a comprehensive summary report.
 
 ## Data Sources
 
-Read from `docs/sprint-artifacts/completions/`:
+Read from `{{sprint_artifacts}}/completions/`:
 - `{{story}}-progress.json` - metrics
 - `{{story}}-metis.json` - files created
 - `{{story}}-argus.json` - verification
@@ -31,7 +31,7 @@ Read from `docs/sprint-artifacts/completions/`:
 ## Output
 
 1. Save full report:
-   `docs/sprint-artifacts/session-reports/session-{{timestamp}}.md`
+   `{{sprint_artifacts}}/session-reports/session-{{timestamp}}.md`
 
 2. Display terminal summary:
 ```
