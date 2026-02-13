@@ -112,6 +112,19 @@ Follow the phases exactly as defined in workflow.md: PREPARE → FORGE → BUILD
 
 **You ARE the pipeline orchestrator.** You coordinate phases sequentially and spawn Task sub-agents for each phase as the workflow specifies.
 
+### CRITICAL: Phase 6 COMMIT Is Mandatory
+
+**After Phase 5 REFINE, you MUST execute Phase 6 COMMIT which spawns Eunomia for reconciliation.**
+
+Phase 6 includes a **hard validation gate** — if Eunomia reports zero tasks checked,
+the story CANNOT be marked done. In this case:
+- Report the reconciliation failure to team-lead instead of reporting success
+- Do NOT update sprint-status.yaml
+- Do NOT skip Phase 6 even if all other phases passed
+
+Phase 6 is what turns implementation work into a properly tracked, verified story completion.
+Without it, task checkboxes stay unchecked and the story appears unfinished despite working code.
+
 ### Already-Implemented Detection
 
 During PREPARE, if the story file shows ALL tasks already checked off (`- [x]`),

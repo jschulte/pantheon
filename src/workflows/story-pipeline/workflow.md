@@ -40,6 +40,7 @@ Measure twice, cut once. Trust but verify. Evidence-based validation. Self-impro
 | Reflection | **Mnemosyne** | Titan of memory | 📚 |
 | Accessibility | **Iris** | Goddess of the rainbow, bridges realms | 🌈 |
 | Persona Forge | **Pygmalion** | The sculptor who brought the perfect being to life | 🗿 |
+| Reconciler | **Eunomia** | Goddess of lawful conduct and good order | 📋 |
 | *Forged Specialists* | *Dynamic* | *Domain-specific experts created by Pygmalion* | *Varies* |
 </agents>
 
@@ -86,6 +87,7 @@ Agent Teams is **experimental** and may change without notice. The sequential fa
   - `Task(resume: builder_id)` → Metis fixes MUST_FIX
   - `Task(resume: reviewer_id)` → Original reviewers verify their issues
   - `Task(subagent_type: ...)` → Fresh eyes (iteration 2+)
+- Phase 6 COMMIT: `Task(subagent_type: "general-purpose")` → Eunomia (Reconciler) + hard validation gate
 - Phase 7 REFLECT: `Task(subagent_type: ...)` → Mnemosyne (Reflection)
 
 ### NEVER DO THIS (applies in BOTH contexts):
@@ -156,8 +158,8 @@ When the orchestrator includes step-by-step instructions:
 ### Exceptions
 
 Phase 1 (PREPARE) runs in the orchestrator's own context — no agents to instruct.
-Phase 6 (COMMIT) also runs in the orchestrator's context.
-These phases can have detailed steps since the orchestrator IS the executor.
+Phase 6 (COMMIT) spawns Eunomia for reconciliation + runs a hard validation gate.
+Phase 1 and the Phase 6 validation gate have detailed steps since the orchestrator IS the executor.
 </orchestration_discipline>
 
 <config>
@@ -171,7 +173,7 @@ phases:
   phase_3: VERIFY (Argus + Nemesis + reviewers + forged specialists in parallel)
   phase_4: ASSESS (coverage gate + Themis triage)
   phase_5: REFINE (Metis fixes + iterate until clean)
-  phase_6: COMMIT (reconcile story, update status)
+  phase_6: COMMIT (Eunomia reconciles story + hard validation gate + update status)
   phase_7: REFLECT (Mnemosyne updates playbooks)
 
 issue_classification:
@@ -346,7 +348,8 @@ Load only the current phase, execute it, then load the next.
 **Themis upholds MUST_FIX (Phase 4):** Enter refinement loop (Phase 5).
 **Iteration limit reached (Phase 5):** Escalate to user with remaining issues.
 **Metis resume fails (Phase 5):** Report unfixed issues. Manual intervention.
-**Reconciliation fails (Phase 6):** Fix with Edit tool, re-verify.
+**Eunomia reports zero tasks (Phase 6):** Hard gate blocks completion. Escalate to user.
+**Eunomia reports <50% tasks (Phase 6):** Warn user, allow continue or investigate.
 </failure_handling>
 
 <complexity_routing>
@@ -375,6 +378,7 @@ Load only the current phase, execute it, then load the next.
 - **Hermes** 📜 (Reflect+Report) - Updates playbooks AND generates completion report.
 - **Iris** 🌈 (Accessibility) - WCAG, ARIA, a11y (conditional, frontend only).
 - **Pygmalion** 🗿 (Persona Forge) - Analyzes domain, forges specialist personas. Invoked in Phase 1.5 for complexity >= light.
+- **Eunomia** 📋 (Reconciler) - Checks off story tasks with evidence, fills Dev Agent Record. Invoked in Phase 6. Includes hard validation gate (zero tasks = block, <50% = warn).
 - **Forged Specialists** (Dynamic) - Domain-specific reviewers created by Pygmalion. Same artifact format as Pantheon reviewers.
 </complexity_routing>
 

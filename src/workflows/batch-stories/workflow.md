@@ -626,63 +626,23 @@ Phase 7: REFLECT - Task({ description: "📚 Mnemosyne reflecting on {{story_key
 
 **Why this matters:** By NOT wrapping the pipeline in a Task, each agent spawn becomes a top-level Task that the user can see in Claude Code's UI.
 
-**Step C: Reconcile Using Completion Artifacts (orchestrator does this directly)**
+**Step C: Execute Phase 6 COMMIT (Eunomia reconciliation + hard gate)**
 
-After story-pipeline completes:
+Phase 6 is defined in `story-pipeline/phases/phase-6-commit.md`. It:
 
-**C1. Load Fixer completion artifact:**
-```bash
-FIXER_COMPLETION="docs/sprint-artifacts/completions/{{story_key}}-fixer.json"
+1. Loads completion artifacts from `docs/sprint-artifacts/completions/{{story_key}}-*.json`
+2. **Spawns Eunomia** — a dedicated reconciliation agent that:
+   - Checks off tasks with implementation evidence (`- [ ]` → `- [x]`)
+   - Fills the Dev Agent Record with pipeline metrics
+   - Outputs `{{story_key}}-reconciler.json` with structured counts
+3. **Runs the hard validation gate:**
+   - If `tasks_checked == 0` → HALT. Do NOT mark story done. Escalate to user.
+   - If `tasks_checked / tasks_total < 0.5` → WARN. Ask user to continue or investigate.
+4. Updates sprint-status.yaml using status decision logic (95%+ = done, 80-94% = review, etc.)
+5. Commits reconciliation
 
-if [ ! -f "$FIXER_COMPLETION" ]; then
-  echo "❌ WARNING: No completion artifact, using fallback"
-  # Fallback to git diff if completion artifact missing
-else
-  echo "✅ Using completion artifact"
-fi
-```
-
-Use Read tool on: `docs/sprint-artifacts/completions/{{story_key}}-fixer.json`
-
-**C2. Parse completion data:**
-Extract from JSON:
-- files_created and files_modified arrays
-- git_commit hash
-- quality_checks results
-- tests counts
-- fixes_applied list
-
-**C3. Read story file:**
-Use Read tool: `docs/sprint-artifacts/{{story_key}}.md`
-
-**C4. Check off completed tasks:**
-For each task:
-- Match task to files in completion artifact
-- If file was created/modified: check off task
-- Use Edit tool: `"- [ ]"` → `"- [x]"`
-
-**C5. Fill Dev Agent Record:**
-Use Edit tool with data from completion.json:
-```markdown
-### Dev Agent Record
-**Implementation Date:** {{timestamp from json}}
-**Agent Model:** Claude Sonnet 4.5 (multi-agent pipeline)
-**Git Commit:** {{git_commit from json}}
-
-**Files:** {{files_created + files_modified from json}}
-**Tests:** {{tests.passing}}/{{tests.total}} passing ({{tests.coverage}}%)
-**Issues Fixed:** {{issues_fixed.total}} issues
-```
-
-**C6. Verify updates:**
-```bash
-CHECKED=$(grep -c "^- \[x\]" "$STORY_FILE")
-[ "$CHECKED" -gt 0 ] || { echo "❌ Zero tasks checked"; exit 1; }
-echo "✅ Reconciled: $CHECKED tasks"
-```
-
-**C7. Update sprint-status.yaml:**
-Use Edit tool: `"{{story_key}}: ready-for-dev"` → `"{{story_key}}: done"`
+**Manual fallback:** If Eunomia fails to spawn or returns no artifact, fall back to
+the manual reconciliation procedure in `step-4.5-reconcile-story-status.md`.
 
 **Step D: Next story or complete**
 - If more stories: continue loop
@@ -1107,16 +1067,19 @@ FAILED     Pipeline failed
 As each worker reports completion:
 
 1. Read the story's completion artifact (`{{story_key}}-progress.json`)
-2. Check off completed tasks in story file (`- [ ]` to `- [x]`)
-3. Fill Dev Agent Record with metrics from artifact
-4. Update sprint-status.yaml: story status to `done`
+2. **Execute Phase 6 from story-pipeline** (which spawns Eunomia + hard validation gate)
+3. Eunomia checks off tasks, fills Dev Agent Record, outputs reconciler artifact
+4. Hard gate validates: zero tasks checked = BLOCK, <50% = WARN
+5. Update sprint-status.yaml using status decision logic
 
 **This happens incrementally** — as soon as a story is reported complete, reconcile it.
 Don't wait for all stories to finish.
 
+**Reconciliation includes a hard validation gate** — if Eunomia reports zero tasks
+checked, do NOT mark story done. Flag it for investigation.
+
 > **Detailed reconciliation protocol:** See `step-4.5-reconcile-story-status.md` for the
-> full step-by-step reconciliation procedure (task check-off logic, Dev Agent Record filling,
-> sprint-status.yaml updates, and edge case handling).
+> full step-by-step reconciliation procedure and manual fallback if Eunomia fails.
 
 ### Step 6: Wait for All Workers to Finish
 

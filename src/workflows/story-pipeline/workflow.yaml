@@ -382,7 +382,14 @@ agents:
       - "light"
       - "standard"
 
-# Reconciliation: orchestrator does this directly (see workflow.md Phase 6)
+  reconciler:
+    description: "Story reconciliation — checks off tasks, fills Dev Agent Record"
+    steps: [6]
+    subagent_type: "general-purpose"
+    model: "sonnet"  # Mechanical task — doesn't need opus
+    prompt_file: "{agents_path}/reconciler.md"
+    timeout: 600
+    output_file: "{sprint_artifacts}/completions/{{story_key}}-reconciler.json"
 
 # Playbook configuration (v4.0, enhanced v1)
 playbooks:
