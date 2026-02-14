@@ -69,32 +69,26 @@ Required sections:
 
 See: `AGENT-LIMITATIONS.md` for full documentation on what agents can and cannot do.
 
-### 4. Swarm Mode Prerequisites (Parallel Mode)
+### 4. Agent Teams Prerequisites (Parallel Mode)
 
-> **NEW in v4.0.0:** Parallel mode now uses TeammateTool swarm coordination instead of wave-based Task polling.
+> **NEW in v4.0.0:** Parallel mode uses Claude Code Agent Teams for swarm coordination.
 
-**Required:** A swarm-patched Claude Code variant that enables TeammateTool features.
+**Required:** The `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` environment variable must be set before launching Claude Code.
 
-**How to get swarm mode:**
-1. Install [claude-sneakpeek](https://github.com/anthropics/claude-sneakpeek) (or equivalent)
-2. Create a variant: `npx claude-sneakpeek create --provider <provider> --name <name>`
-3. The variant automatically patches Claude Code to enable swarm features
-4. Run batch-stories using the variant command (e.g., `claudesp`) instead of `claude`
+**How to enable Agent Teams:**
+```bash
+# Set before launching Claude Code
+export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1
+claude
+```
 
-**What swarm mode enables:**
-- `TeammateTool` — Create/manage teams (`spawnTeam`, `cleanup`)
+**What Agent Teams enables:**
+- `TeamCreate/TeamDelete` — Create and manage agent teams
 - `SendMessage` — Direct messaging between agents (completion reports, failure alerts)
 - `TaskCreate/TaskUpdate/TaskList` — Shared task list with dependency constraints
 - `Task` with `team_name` param — Spawn teammates that join the swarm
 
-**Verify swarm mode is active:**
-```bash
-# Check if cli.js is patched
-grep "function sU(){return" ~/.claude-sneakpeek/<variant>/npm/node_modules/@anthropic-ai/claude-code/cli.js
-# Should show: function sU(){return!0}  (enabled)
-```
-
-**Sequential mode does NOT require swarm mode** — it runs in the main Claude context.
+**Sequential mode does NOT require Agent Teams** — it runs in the main Claude context.
 
 ---
 
@@ -463,7 +457,7 @@ All: all (processes all ready-for-dev stories)
 - Workers self-schedule: claim unblocked tasks, execute pipeline, report results, claim next
 - Dependencies enforced via task graph constraints (no rigid waves)
 - Zero idle time — workers grab the next available story immediately
-- Requires swarm-patched Claude Code (e.g., `claudesp` from claude-sneakpeek)
+- Requires Agent Teams (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`)
 - Configure worker count in `workflow.yaml` → `swarm_config.max_workers` (default: 3)
 
 ---
@@ -689,7 +683,7 @@ See: `step-4.5-reconcile-story-status.md` for detailed algorithm
   - Dependencies expressed as task graph constraints (`addBlockedBy`) instead of computed waves
   - Workers dynamically claim unblocked stories — zero idle time between stories
   - Progress via `SendMessage` notifications instead of 30-second artifact polling
-  - Requires swarm-patched Claude Code (e.g., `claudesp` variant from claude-sneakpeek)
+  - Requires Agent Teams (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`)
 - **NEW:** `heracles.md` teammate persona in `agents/`
   - Autonomous pipeline executor with self-scheduling loop
   - Git commit queue protocol (file-based locking with exponential backoff)

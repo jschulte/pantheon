@@ -198,64 +198,11 @@ When committing in swarm mode, you MUST use the Git Commit Queue Protocol (see b
 
 ## Git Commit Queue Protocol
 
-**Multiple workers commit in parallel. You MUST serialize commits with a directory-based lock.**
+**See:** `data/git-commit-queue.md` for the full protocol.
 
-**CRITICAL: Skip pre-commit type-check.** The pipeline already ran type-check during BUILD
-and VERIFY phases. Running it again in the pre-commit hook causes N parallel `tsc` processes
-to compete for CPU, grinding the machine to a halt. Always use `SKIP_TYPECHECK=1`.
-
-```
-# What SKIP_TYPECHECK=1 does and does NOT skip:
-#
-# SKIPPED (type-checking only):
-#   - TypeScript type-check (tsc --noEmit) — already run by pipeline BUILD/VERIFY phases,
-#     or centralized via Hygeia after all workers complete
-#
-# NOT SKIPPED (these hooks still run on every commit):
-#   - Secret detection (e.g., detect-secrets, gitleaks) — MUST always run
-#   - Linting (eslint, prettier) — MUST always run
-#   - Other pre-commit hooks — MUST always run
-#
-# Hygeia integration: When Hygeia is present as a team member, workers request
-# type-checks from her instead of running them independently. Hygeia serializes
-# checks and serves fresh results to all waiting workers, avoiding N parallel tsc
-# processes while ensuring results always reflect the latest code changes.
-```
-
-The lock uses `mkdir` as the atomic primitive — `mkdir` fails atomically if the directory
-already exists, eliminating the TOCTOU race condition that file-based locks have.
-
-```
-BEFORE any git commit:
-  1. Try to acquire lock atomically:
-     - Run: mkdir .git/pantheon-commit.lock
-     - mkdir is atomic — if two workers race, exactly one succeeds and one fails
-
-  2. IF mkdir SUCCEEDED (you acquired the lock):
-     - Write your worker ID and timestamp to .git/pantheon-commit.lock/owner
-     - Proceed to step 3
-
-  2b. IF mkdir FAILED (lock already held):
-     - Read .git/pantheon-commit.lock/owner, check timestamp
-     - IF lock is stale (>5 minutes old):
-       → Run: rm -rf .git/pantheon-commit.lock
-       → Retry mkdir .git/pantheon-commit.lock from step 1
-       → (If retry also fails, another worker beat you — continue waiting)
-     - ELSE:
-       → Wait with exponential backoff: 1s, 2s, 4s, 8s, 16s (max 30s)
-       → Max retries: 10
-       → After each wait, retry from step 1
-
-  3. WITH lock held:
-     - git add <specific files>
-     - SKIP_TYPECHECK=1 git commit -m "message"
-     - Run: rm -rf .git/pantheon-commit.lock  (release lock immediately)
-
-  4. IF lock acquisition fails after max retries:
-     - Log error in progress artifact
-     - Report to team-lead via SendMessage
-     - Continue to next phase (don't block pipeline on commit failure)
-```
+**Summary:** Use `mkdir .git/pantheon-commit.lock` as an atomic lock before any `git commit`.
+Always use `SKIP_TYPECHECK=1` (type-check already ran during BUILD/VERIFY).
+Exponential backoff on lock contention (1s→30s, max 10 retries). Release lock immediately after commit.
 
 ---
 
@@ -291,69 +238,12 @@ BEFORE any git commit:
 
 ## Quality Gate Coordinator (Hygeia Integration)
 
-**When Hygeia is a team member**, use her to run expensive quality checks instead of having
-sub-agents run them independently. This prevents CPU contention from parallel `tsc`/`build`
-processes across workers.
+**See:** `data/hygeia-integration.md` for the full protocol.
 
-### How to Detect Hygeia
-
-After claiming a story, check if Hygeia exists in the team config:
-
-```
-Read ~/.claude/teams/{team-name}/config.json
-→ Look for a member named "hygeia"
-```
-
-If Hygeia exists, use the **coordinated** quality check flow below.
-If Hygeia does NOT exist, sub-agents run checks themselves (default behavior).
-
-### Coordinated Quality Check Flow
-
-**Instead of letting sub-agents run type-check/build themselves:**
-
-1. **Before BUILD quality gate:** After the builder finishes writing code, message Hygeia
-   before spawning reviewers:
-
-   ```
-   SendMessage(type="message", recipient="hygeia",
-     content="CHECK REQUEST\ncheck: type-check\nstory: {story_key}\nphase: BUILD\nworking_dir: app",
-     summary="Type-check request for {story_key}")
-   ```
-
-   Wait for Hygeia's response. Include the result in the builder's quality gate evaluation.
-
-2. **Before VERIFY phase:** Request a full gate check from Hygeia:
-
-   ```
-   SendMessage(type="message", recipient="hygeia",
-     content="CHECK REQUEST\ncheck: full-gate\nstory: {story_key}\nphase: VERIFY\nworking_dir: app",
-     summary="Full quality gate for {story_key}")
-   ```
-
-   Pass Hygeia's results to reviewer sub-agents in their prompts:
-   ```
-   "Quality gate results (from centralized Hygeia check):
-   - type-check: PASS
-   - lint: PASS
-   - build: PASS
-   - tests: PASS (127/127)
-
-   You do NOT need to re-run these checks. Focus on code review,
-   architecture assessment, and test quality evaluation."
-   ```
-
-3. **REFINE phase:** Fixer uses targeted tests only (`npx jest --findRelatedTests`).
-   No Hygeia request needed — targeted tests are fast and file-scoped.
-
-4. **After REFINE re-review:** If fixes were applied and re-review is needed,
-   request another full-gate from Hygeia before spawning the re-reviewer.
-
-### Benefits
-
-- **CPU serialization:** Only one type-check/build runs at a time across ALL workers
-- **Batch notification:** Multiple workers requesting the same check type while one is running all get the fresh result when it completes
-- **Always fresh:** Every check runs against the current filesystem — no risk of stale cached results after code changes
-- **Visibility:** All quality check results flow through one agent for easy debugging
+**Summary:** When Hygeia is a team member (check team config), route quality checks
+through her via `SendMessage` instead of running them in sub-agents. This serializes
+`tsc`/`build` across workers, preventing CPU contention. Check before BUILD and VERIFY
+phases. Skip for REFINE (targeted tests are fast and file-scoped).
 
 ---
 
