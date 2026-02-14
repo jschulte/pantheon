@@ -1,5 +1,5 @@
 # Phase 6: COMMIT (6/7)
-<!-- Part of Story Pipeline v7.3.2 — see workflow.md for config and routing -->
+<!-- Part of Story Pipeline v1.1 — see workflow.md for config and routing -->
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

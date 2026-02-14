@@ -330,7 +330,8 @@ with the Read tool when you reach it. Execute phases sequentially.
 | 1 PREPARE | `phases/phase-1-prepare.md` | Always | ~160 |
 | 1.5 FORGE | `phases/phase-1.5-forge.md` | complexity >= light | ~150 |
 | 2 BUILD | `phases/phase-2-build.md` | Always | ~130 |
-| 3 VERIFY | `phases/phase-3-verify.md` | Always | ~540 |
+| 3A VERIFY | `phases/phase-3a-verify-consolidated.md` | consolidated | ~115 |
+| 3B VERIFY | `phases/phase-3b-verify-parallel.md` | parallel | ~450 |
 | 4 ASSESS | `phases/phase-4-assess.md` | Always | ~215 |
 | 5 REFINE | `phases/phase-5-refine.md` | MUST_FIX > 0 | ~270 |
 | 6 COMMIT | `phases/phase-6-commit.md` | Always | ~90 |
