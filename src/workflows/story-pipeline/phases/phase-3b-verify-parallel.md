@@ -1,122 +1,26 @@
-# Phase 3: VERIFY (3/7)
-<!-- Part of Story Pipeline v1 — see workflow.md for config and routing -->
+# Phase 3B: VERIFY — Parallel Review (3/7)
+<!-- Part of Story Pipeline v1.1 — see workflow.md for config and routing -->
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-👁️ PHASE 3: VERIFY (3/7)
+👁️ PHASE 3B: VERIFY — Parallel (3/7)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Review Mode: {{REVIEW_MODE}}
+Review Mode: parallel
+Complexity: complex | critical
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-### Review Mode Selection (Token Optimization v4.2)
-
-**Based on complexity, choose review mode:**
+### Review Mode Gate
 
 ```
-IF COMPLEXITY in [trivial, micro, light, standard]:
-  REVIEW_MODE = "consolidated"
-  → Use Multi-Reviewer (single agent, 4 perspectives)
-  → Saves ~60-70% tokens vs parallel reviewers
-
-ELIF COMPLEXITY in [complex, critical]:
-  REVIEW_MODE = "parallel"
-  → Use separate parallel reviewers
-  → Maximum thoroughness for high-risk stories
+ASSERT COMPLEXITY in [complex, critical]
+  → If COMPLEXITY in [trivial, micro, light, standard]:
+    → Load phase-3a-verify-consolidated.md instead
 ```
 
 ---
 
-### Option A: Consolidated Review (trivial/micro/light/standard)
-
-**Single agent reviews from 4 perspectives. Saves ~25K tokens.**
-
-**Note on blind mode:** In consolidated review, the multi-reviewer agent receives the Metis completion artifact for Nemesis/Cerberus/Hestia perspectives, but the Argus perspective section of multi-reviewer.md instructs Argus to verify against story requirements independently, not against builder claims. See the Blind Mode section in `agents/multi-reviewer.md`.
-
-```
-Task({
-  subagent_type: "general-purpose",
-  model: "opus",
-  description: "👁️🧪🔐🏛️ Multi-Review {{story_key}}",
-  prompt: `
-<agent_definition>
-[INLINE: Content from agents/multi-reviewer.md]
-</agent_definition>
-
-<goal>
-Review the implementation of {{story_key}} from all four perspectives defined in your agent definition.
-Classify each issue as MUST_FIX / SHOULD_FIX / STYLE.
-</goal>
-
-<context>
-<story>
-[inline story content]
-</story>
-
-<metis_completion>
-[INLINE: Summary from metis.json — files_created, files_modified, tasks_addressed]
-</metis_completion>
-
-<playbook_guidance>
-[CONDITIONAL — same rules as SHARED_PREFIX_FULL:
- If loaded tokens < 2000: inline gotchas + anti-patterns.
- If >= 2000: top 5 entries only.
- If none loaded: omit block entirely.
- Use entries to flag violations as MUST_FIX.]
-</playbook_guidance>
-
-<files_to_review>
-[list from metis.json]
-</files_to_review>
-</context>
-
-Save consolidated findings to:
-{{sprint_artifacts}}/completions/{{story_key}}-review.json
-`
-})
-```
-
-**After consolidated review, also spawn any forged specialists (if Pygmalion produced them):**
-
-```
-IF FORGED_SPECS.forged_specialists.length > 0:
-  # Spawn forged specialists in parallel alongside or after consolidated review
-  FOR EACH spec IN FORGED_SPECS.forged_specialists:
-    Task({
-      subagent_type: "{{spec.suggested_claude_agent_type}}",
-      model: "opus",
-      description: "{{spec.emoji}} {{spec.name}} reviewing {{story_key}}",
-      prompt: `
-You are {{spec.name}} ({{spec.emoji}}) — {{spec.title}}.
-
-{{spec.domain_expertise}}
-
-Review the following code changes for this story. Focus specifically on:
-{{spec.review_focus — as bullet list}}
-
-Technology Checklist — verify each item:
-{{spec.technology_checklist — as numbered list}}
-
-Known Gotchas to watch for:
-{{spec.known_gotchas — as bullet list}}
-
-Issue Classification:
-{{spec.issue_classification_guidance}}
-
-<story>[INLINE: story content]</story>
-<files_to_review>[list from metis.json]</files_to_review>
-
-Output your findings in standard reviewer JSON format.
-Save to: {{sprint_artifacts}}/completions/{{story_key}}-{{spec.id}}.json
-`
-    })
-```
-
-**After all reviews complete (consolidated + forged), proceed to Phase 4 (ASSESS).**
-
----
-
-### Option B: Parallel Reviewers (complex/critical)
+### Parallel Reviewers (complex/critical)
 
 **Multiple specialized agents for maximum thoroughness.**
 
@@ -276,7 +180,7 @@ SHARED_PREFIX_BLIND = `
 
 **Why blind context for Argus?** When a reviewer sees the builder's completion artifact ("I implemented tasks 1-5 in these files"), they tend to verify "did the builder do what they claimed" rather than independently checking "does the code satisfy the story requirements." Argus reviews blind to prevent this confirmation bias.
 
-### Argus 👁️ (Inspector) - ALWAYS SPAWN — Blind Context
+### Argus (Inspector) - ALWAYS SPAWN — Blind Context
 
 **Argus uses SHARED_PREFIX_BLIND** — no builder completion artifact, no builder plan.
 This forces independent verification against story requirements, not builder claims.
@@ -323,7 +227,7 @@ Save to: {{sprint_artifacts}}/completions/{{story_key}}-argus.json
 })
 ```
 
-### Nemesis 🧪 (Test Quality) - Skip for trivial/micro — Focused Context (test files)
+### Nemesis (Test Quality) - Skip for trivial/micro — Focused Context (test files)
 
 ```
 Task({
@@ -361,7 +265,7 @@ Save to: {{sprint_artifacts}}/completions/{{story_key}}-nemesis.json
 })
 ```
 
-### Cerberus 🔐 (Security) - standard+ — Focused Context (security-relevant files)
+### Cerberus (Security) - standard+ — Focused Context (security-relevant files)
 
 ```
 Task({
@@ -393,7 +297,7 @@ Save to: {{sprint_artifacts}}/completions/{{story_key}}-cerberus.json
 })
 ```
 
-### Apollo ⚡ (Logic/Performance) - complex+ — Focused Context (logic files)
+### Apollo (Logic/Performance) - complex+ — Focused Context (logic files)
 
 ```
 Task({
@@ -424,7 +328,7 @@ Save to: {{sprint_artifacts}}/completions/{{story_key}}-apollo.json
 })
 ```
 
-### Hestia 🏛️ (Architecture) - micro+ — Full Context
+### Hestia (Architecture) - micro+ — Full Context
 
 ```
 Task({
@@ -453,7 +357,7 @@ Save to: {{sprint_artifacts}}/completions/{{story_key}}-hestia.json
 })
 ```
 
-### Arete ✨ (Code Quality) - critical only — Focused Context (production files)
+### Arete (Code Quality) - critical only — Focused Context (production files)
 
 ```
 Task({
@@ -550,15 +454,14 @@ Update `{{sprint_artifacts}}/completions/{{story_key}}-progress.json`:
     "PREPARE": { "status": "complete", "details": "..." },
     "BUILD": { "status": "complete", "details": "..." },
     "VERIFY": { "status": "complete", "details": "{{AGENT_COUNT}} reviewers, {{total_issues}} issues found" },
-    "ASSESS": { "status": "in_progress", "details": "Themis triaging" },
-    ...
+    "ASSESS": { "status": "in_progress", "details": "Themis triaging" }
   },
   "metrics": {
-    "issues_found": {{total_issues}},
-    "reviewers": {{AGENT_COUNT}}
+    "issues_found": "{{total_issues}}",
+    "reviewers": "{{AGENT_COUNT}}"
   }
 }
 ```
 
-**📢 Orchestrator says:**
+**Orchestrator says:**
 > "All {{AGENT_COUNT}} reviewers are back! They found {{total_issues}} potential issues. Now **Themis** will weigh each one - she'll separate the real problems from the gold-plating."

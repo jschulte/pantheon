@@ -1,5 +1,5 @@
 # Phase 5: REFINE (5/7)
-<!-- Part of Story Pipeline v7.3 — see workflow.md for config and routing -->
+<!-- Part of Story Pipeline v1.1 — see workflow.md for config and routing -->
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
