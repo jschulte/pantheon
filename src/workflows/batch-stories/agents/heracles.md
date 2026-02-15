@@ -169,12 +169,12 @@ UNCHECKED = grep -c "^- \[ \]" story_file
 → Story is NOT fully implemented. You MUST run the full pipeline including BUILD.
 → Do NOT perform your own "gap analysis" to decide tasks are "deferred" or "N/A".
 → Do NOT label unchecked tasks as "already done in code" without spawning a builder.
-→ The BUILD phase Ralph Loop will spawn fresh Metis builders to implement remaining work.
+→ The BUILD phase Sisyphus Loop will spawn fresh Metis builders to implement remaining work.
 → Only Metis builders (not you, the orchestrator) determine if a task is genuinely impossible.
 
 **CRITICAL: "Code exists for some tasks" does NOT mean the story is done.**
 Prior partial implementations mean the BUILD phase starts with fewer tasks — it does NOT
-mean you skip BUILD. The Ralph Loop handles partial stories by verifying each task
+mean you skip BUILD. The Sisyphus Loop handles partial stories by verifying each task
 individually and implementing what's missing.
 
 When ALREADY_DONE is true:
