@@ -74,7 +74,7 @@ IF UNCHECKED > 0:
   → Story has remaining work. MUST proceed to BUILD phase.
   → Do NOT skip BUILD even if many tasks are already checked.
   → Do NOT perform ad-hoc "gap analysis" to label unchecked tasks as "deferred".
-  → The BUILD phase Ralph Loop will spawn builder agents to implement/verify EVERY
+  → The BUILD phase Sisyphus Loop will spawn builder agents to implement/verify EVERY
     unchecked task. Only the builder agent can determine if a task is genuinely
     impossible (requires manual QA, external vendor, etc.).
   → "Prior implementation exists" means BUILD starts with fewer tasks — it does NOT

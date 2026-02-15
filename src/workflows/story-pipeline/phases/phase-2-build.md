@@ -1,12 +1,12 @@
 # Phase 2: BUILD (2/7)
 <!-- Part of Story Pipeline v1.2 — see workflow.md for config and routing -->
-<!-- v1.2: Ralph-loop pattern replaces single-pass/chunking strategy -->
+<!-- v1.2: Sisyphus Loop pattern replaces single-pass/chunking strategy -->
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🔨 PHASE 2: BUILD (2/7)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Ralph-Loop Builder — Iterate Until Complete
+Sisyphus Loop — Iterate Until Complete
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
@@ -63,9 +63,10 @@ LAST_BUILDER_AGENT_ID = null
 
 **WHY A LOOP:** Builder agents have an effective attention span of ~30-40 tasks.
 A single-pass approach causes the builder to address only the most visible tasks
-and silently drop the rest. The Ralph-loop pattern (inspired by [snarktank/ralph](https://github.com/snarktank/ralph))
-spawns a **fresh builder each iteration** with clean context. Memory persists via
-artifacts, not accumulated context. Each iteration picks up where the last left off.
+and silently drop the rest. The Sisyphus Loop (inspired by [snarktank/ralph](https://github.com/snarktank/ralph))
+spawns a **fresh builder each iteration** with clean context — like Sisyphus resetting
+at the bottom of the hill, but each time the hill is shorter because tasks get checked off.
+Memory persists via artifacts, not accumulated context. Each iteration picks up where the last left off.
 
 ### Step 3: Build Loop
 
@@ -196,7 +197,7 @@ Save to: {{sprint_artifacts}}/completions/{{story_key}}-builder.json
   # 3.5 — Parse builder's completion artifact
   BUILDER_RESULT = Read {{sprint_artifacts}}/completions/{{story_key}}-builder.json
 
-  # 3.6 — Accumulate learnings (like progress.txt in Ralph)
+  # 3.6 — Accumulate learnings (Sisyphus carries knowledge between iterations)
   BUILD_PROGRESS.codebase_patterns += BUILDER_RESULT.learnings
   BUILD_PROGRESS.iterations.append({
     "iteration": ITERATION,
