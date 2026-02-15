@@ -271,17 +271,6 @@ Exponential backoff on lock contention (1s→30s, max 10 retries). Release lock 
 
 ---
 
-## Quality Gate Coordinator (Hygeia Integration)
-
-**See:** `data/hygeia-integration.md` for the full protocol.
-
-**Summary:** When Hygeia is a team member (check team config), route quality checks
-through her via `SendMessage` instead of running them in sub-agents. This serializes
-`tsc`/`build` across workers, preventing CPU contention. Check before BUILD and VERIFY
-phases. Skip for REFINE (targeted tests are fast and file-scoped).
-
----
-
 ## Completion Artifact
 
 Final progress artifact when story is complete:
