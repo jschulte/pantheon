@@ -47,10 +47,10 @@ Read the story file and all files created/modified by Metis:
 ### Step 2: Run Quality Checks
 
 ```bash
-npm run type-check  # Must pass
-npm run lint        # Must pass
-npm run build       # Must pass
-npm test -- --coverage  # Capture coverage
+npx tsc --noEmit --incremental  # Must pass (uses .tsbuildinfo cache)
+npm run lint                     # Must pass
+# Build intentionally skipped — Phase 4 coverage gate catches build issues
+npx jest --findRelatedTests {{changed_files}} --coverage  # {{changed_files}} from {{story_key}}-metis.json
 ```
 
 ### Step 3: Review as Argus (Inspector) 👁️ — BLIND MODE
@@ -88,10 +88,9 @@ Verdict: NOT_IMPLEMENTED
 **Argus Checklist:**
 - [ ] Every task verified against story requirements (not builder claims)
 - [ ] Each verification includes execution path trace, not just file existence
-- [ ] Type check passes
+- [ ] Type check (incremental) passes
 - [ ] Lint passes
-- [ ] Build succeeds
-- [ ] Tests pass with coverage ≥ 80%
+- [ ] Scoped tests pass with coverage ≥ 80%
 
 ### Step 4: Review as Nemesis (Test Quality) 🧪
 

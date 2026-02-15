@@ -67,8 +67,6 @@ Hand it an epic. Walk away. Come back to production-ready code with 80%+ test co
 
 Pantheon is designed from the ground up to work with Claude Code's multi-agent capabilities. In swarm mode, it spawns **Heracles workers** — each one an independent agent running the full story pipeline. Workers coordinate through shared task lists, claim stories automatically, and commit in parallel using a lock file protocol.
 
-**Hygeia**, the Quality Gate Coordinator, serializes expensive checks (type-check, build, test suite) across workers. When three workers all need `tsc --noEmit`, they queue up and Hygeia runs it once against the current filesystem — then serves the same fresh result to all waiting workers. No caching, no stale results — just serialized execution with batch notification, keeping your machine responsive while agents build in parallel.
-
 ### It gets smarter with every story
 
 Most AI coding tools are stateless. Every conversation starts from zero. Pantheon learns.
@@ -196,7 +194,6 @@ Interactive story generation with systematic codebase scanning. Auto-populates a
 | **Themis** | Triages findings — real issues get fixed, style nits get filtered |
 | **Hermes** | Reflection + reporting — extracts learnings, updates playbooks |
 | **Pygmalion** | Forges domain-specialist reviewers per story |
-| **Hygeia** | Coordinates quality gates across parallel swarm workers |
 
 ---
 

@@ -11,18 +11,12 @@ to compete for CPU, grinding the machine to a halt. Always use `SKIP_TYPECHECK=1
 # What SKIP_TYPECHECK=1 does and does NOT skip:
 #
 # SKIPPED (type-checking only):
-#   - TypeScript type-check (tsc --noEmit) — already run by pipeline BUILD/VERIFY phases,
-#     or centralized via Hygeia after all workers complete
+#   - TypeScript type-check (tsc --noEmit) — already run by pipeline BUILD/VERIFY phases
 #
 # NOT SKIPPED (these hooks still run on every commit):
 #   - Secret detection (e.g., detect-secrets, gitleaks) — MUST always run
 #   - Linting (eslint, prettier) — MUST always run
 #   - Other pre-commit hooks — MUST always run
-#
-# Hygeia integration: When Hygeia is present as a team member, workers request
-# type-checks from her instead of running them independently. Hygeia serializes
-# checks and serves fresh results to all waiting workers, avoiding N parallel tsc
-# processes while ensuring results always reflect the latest code changes.
 ```
 
 The lock uses `mkdir` as the atomic primitive — `mkdir` fails atomically if the directory

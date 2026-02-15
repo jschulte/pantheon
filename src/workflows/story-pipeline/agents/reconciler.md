@@ -48,17 +48,17 @@ Record the baseline for your output artifact.
 Read all available completion artifacts. Evidence sources (in priority order):
 
 1. **Argus/Multi-Reviewer `task_verification`** — Each entry has `task`, `implemented: true/false`, `evidence` (file:line citations). This is the PRIMARY evidence source.
-2. **Builder completion artifact** — `files_created`, `files_modified` arrays
-3. **Git diff** — Files changed in the story's commits
-4. **Fixer completion artifact** — Additional fixes applied
+2. **Fixer `Tasks Now Completed`** — Tasks that were NOT_IMPLEMENTED in the original review but completed during REFINE, with file:line evidence. **This overrides Argus NOT_IMPLEMENTED verdicts** for the same task — the fixer's evidence is newer.
+3. **Builder completion artifact** — `files_created`, `files_modified` arrays
+4. **Git diff** — Files changed in the story's commits
 
 ### Step 3: Match Tasks to Evidence & Check Off
 
 For EACH unchecked task (`- [ ]`):
 
-1. Search Argus/Multi-Reviewer `task_verification` for a matching entry
-2. If found with `implemented: true` + evidence → **CHECK IT OFF**
-3. If NOT found in Argus, check if the task description matches files in builder/git artifacts
+1. Search **Fixer `Tasks Now Completed`** for a matching entry with evidence → **CHECK IT OFF** (fixer evidence is freshest — it overrides stale NOT_IMPLEMENTED verdicts from the original review)
+2. Search Argus/Multi-Reviewer `task_verification` for a matching entry with `implemented: true` + evidence → **CHECK IT OFF**
+3. If NOT found in fixer or Argus, check if the task description matches files in builder/git artifacts
 4. If match found → **CHECK IT OFF**
 5. If NO evidence found → **LEAVE UNCHECKED**
 
@@ -73,6 +73,21 @@ new_string: "- [x] {{exact task text}}"
 - MUST NOT check off tasks without evidence (no guessing, no "probably done")
 - MUST use exact string matching with the Edit tool (preserve task text exactly)
 - If the Edit fails (string not unique), use more surrounding context to make it unique
+- **MUST NOT classify code tasks as "manual QA" or "human validation"** — almost ALL
+  technical tasks are automatable. Visual verification, layout checking, responsive
+  testing, accessibility audits — these can ALL be done with Playwright screenshots +
+  LLM visual inspection. The ONLY tasks that qualify as "human validation" are
+  non-technical organizational tasks (e.g., "get stakeholder sign-off", "conduct user
+  interview", "present to board", "negotiate vendor contract"). If a task involves
+  looking at code, a browser, or test output — an agent can do it.
+  Classifying automatable tasks as "manual" to justify low completion is dishonest
+  and defeats the purpose of task tracking.
+- When reporting unchecked tasks, categorize them honestly:
+  - `unchecked_code_tasks`: Tasks the builder did not complete (code work remaining —
+    this includes visual verification, layout checks, responsive testing, a11y audits,
+    and anything else that can be done with code + browser automation + screenshots)
+  - `unchecked_human_only`: Tasks requiring a non-technical human decision (stakeholder
+    approval, user interviews, business sign-off — NOT visual verification)
 
 ### Step 4: Fill Dev Agent Record
 
@@ -113,13 +128,23 @@ TASKS_CHECKED_BY_ME = FINAL_CHECKED - ALREADY_CHECKED
   "tasks_unchecked": {{FINAL_UNCHECKED}},
   "tasks_checked_by_reconciler": {{TASKS_CHECKED_BY_ME}},
   "tasks_already_checked": {{ALREADY_CHECKED}},
+  "completion_pct": {{FINAL_CHECKED / TOTAL * 100}},
   "dev_record_filled": true,
   "evidence_sources": ["argus", "builder", "git"],
-  "unchecked_tasks": [
-    "{{text of each remaining unchecked task}}"
-  ]
+  "unchecked_code_tasks": [
+    "{{text of remaining unchecked tasks that are code/automation work}}"
+  ],
+  "unchecked_human_only": [
+    "{{text of non-technical organizational tasks: stakeholder sign-off, user interviews, etc.}}"
+  ],
+  "status_recommendation": "{{done|review|in-progress based on completion_pct thresholds}}"
 }
 ```
+
+**Status recommendation rules (MUST follow — no overrides):**
+- `completion_pct >= 95` → `"done"`
+- `completion_pct >= 80` → `"review"`
+- `completion_pct < 80` → `"in-progress"`
 
 Save this artifact to: `docs/sprint-artifacts/completions/{{story_key}}-reconciler.json`
 

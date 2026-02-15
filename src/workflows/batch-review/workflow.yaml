@@ -113,7 +113,7 @@ agents:
     description: "Verifies fixes and checks for regressions"
     subagent_type: "testing-suite:test-engineer"
     model: "opus"
-    prompt_file: "{agents_path}/verification-reviewer.md"
+    prompt_file: "{agents_path}/verification-worker.md"
     timeout: 1200
 
   hardening_reporter:

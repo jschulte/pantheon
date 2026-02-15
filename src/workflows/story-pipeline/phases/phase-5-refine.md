@@ -197,7 +197,9 @@ IF ITERATION >= 2:
   2. Determine: RESOLVED or NOT_RESOLVED
   3. Check if the fix introduced NEW issues
 
-  Run tests to confirm nothing is broken.
+  Run scoped tests to confirm nothing is broken:
+  \`npx jest --findRelatedTests {{modified_files}}\`
+  \`npx tsc --noEmit --incremental\`
   `
   })
 ```

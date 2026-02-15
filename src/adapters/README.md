@@ -62,7 +62,7 @@ Uses the built-in Task tool with `subagent_type` parameter to spawn specialized 
 Uses `.opencode/agents/` Markdown configurations with YAML frontmatter. The Task tool invokes subagents. Parallel execution requires external orchestration (vibe-kanban) or runs sequentially.
 
 ### GitHub Copilot
-Uses Agent Skills (`.github/skills/`) folders. Each agent becomes a skill with `SKILL.md` + resources. Copilot automatically delegates and can run agents in parallel.
+Uses Agent Skills folders. Each agent becomes a skill with `SKILL.md` + resources. Copilot automatically delegates and can run agents in parallel. Installs to both project-level (`.github/skills/`) and global (`~/.copilot/skills/`) locations.
 
 ### Codex CLI
 Uses instruction files that Codex loads into context. Sequential execution only. The orchestrator follows phases manually with Codex handling implementation.

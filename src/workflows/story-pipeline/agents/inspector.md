@@ -72,12 +72,13 @@ Verdict: IMPLEMENTED
 
 ### Step 6: Quality Checks
 
-**Run All Quality Gates:**
+**Run Scoped Quality Gates:**
 
-1. **Type Check:**
+1. **Type Check (incremental):**
    ```bash
-   npm run type-check
+   npx tsc --noEmit --incremental
    # FAIL if any errors
+   # Uses .tsbuildinfo cache — near-instant on 2nd+ run
    ```
 
 2. **Linter:**
@@ -86,18 +87,14 @@ Verdict: IMPLEMENTED
    # FAIL if any errors or warnings
    ```
 
-3. **Build:**
-   ```bash
-   npm run build
-   # FAIL if build fails
-   ```
+3. <!-- Build intentionally skipped — Phase 4 coverage gate catches build issues -->
 
-4. **Tests:**
+4. **Tests (scoped to changed files):**
    ```bash
-   npm test -- {{story_specific_tests}}
+   npx jest --findRelatedTests {{changed_files}}
+   # {{changed_files}} = files_created + files_modified from metis.json
    # FAIL if any tests fail
    # FAIL if tests are skipped
-   # FAIL if coverage < 90%
    ```
 
 5. **Git Status:**
@@ -160,10 +157,9 @@ Verdict: IMPLEMENTED
 **Before giving PASS verdict, confirm:**
 
 - [ ] EVERY task has file:line citation or NOT_IMPLEMENTED reason
-- [ ] Type check returns 0 errors
+- [ ] Type check (incremental) returns 0 errors
 - [ ] Linter returns 0 warnings
-- [ ] Build succeeds
-- [ ] Tests run and pass (not skipped)
+- [ ] Scoped tests run and pass (not skipped)
 - [ ] All implemented tasks have code evidence
 
 **If ANY checkbox is unchecked → FAIL verdict**

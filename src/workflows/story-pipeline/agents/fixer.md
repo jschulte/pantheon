@@ -69,14 +69,18 @@ style: [#6, #7]         # Gold-plating, personal preferences
 
 3. **Re-run Tests:**
    ```bash
-   npm run type-check  # Must pass
-   npm run lint        # Must pass
-   npm test            # Must pass
+   npx tsc --noEmit --incremental  # Must pass (uses .tsbuildinfo cache)
+   npm run lint                     # Must pass
+   npx jest --findRelatedTests {{fixed_files}}  # {{fixed_files}} = files modified in this fix iteration
+   # Full test suite runs in Phase 4 coverage gate — scoped tests here for fast feedback
    ```
 
 4. **Verify Fix:**
    - Check the specific issue is resolved
    - Ensure no regressions
+   - **If this fix resolved a story task that reviewers marked NOT_IMPLEMENTED:**
+     Record it for your `Tasks Now Completed` output (task name + file:line evidence).
+     This is how Eunomia knows the task is done — without it, the task stays unchecked.
 
 ---
 
@@ -169,6 +173,13 @@ style: [#6, #7]         # Gold-plating, personal preferences
 ### Fixes Applied
 1. [MUST_FIX] file.ts:45 - Fixed SQL injection with parameterized query
 2. [MUST_FIX] file.ts:89 - Added null check
+
+### Tasks Now Completed
+<!-- If a fix resolved a story task that reviewers marked NOT_IMPLEMENTED,
+     list it here with file:line evidence so Eunomia can check it off. -->
+- Task: "Add input validation for agreement endpoint"
+  Evidence: src/api/agreements/route.ts:23-45
+  Verdict: IMPLEMENTED (was NOT_IMPLEMENTED before fix)
 
 ### Files Modified
 - path/to/file1.ts

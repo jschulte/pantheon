@@ -350,7 +350,8 @@ Load only the current phase, execute it, then load the next.
 **Iteration limit reached (Phase 5):** Escalate to user with remaining issues.
 **Metis resume fails (Phase 5):** Report unfixed issues. Manual intervention.
 **Eunomia reports zero tasks (Phase 6):** Hard gate blocks completion. Escalate to user.
-**Eunomia reports <50% tasks (Phase 6):** Warn user, allow continue or investigate.
+**Eunomia reports <80% tasks (Phase 6):** Story marked "in-progress". No override — this is arithmetic, not judgment.
+**Sprint-status derivation (Phase 6):** Status is ALWAYS computed from task counts: ≥95% → done, ≥80% → review, <80% → in-progress. Never trust agent self-reports.
 </failure_handling>
 
 <complexity_routing>

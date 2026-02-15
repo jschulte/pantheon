@@ -11,6 +11,10 @@ Coverage gate + Themis triage
 
 ### 4.1 Coverage Gate
 
+<!-- WHY FULL SUITE: Phase 4 is the ONE place the full test suite runs.
+     Earlier phases use scoped checks (incremental tsc, findRelatedTests) for speed.
+     This is the safety net that catches cross-module regressions. Do NOT scope this. -->
+
 ```bash
 npm test -- --coverage --silent 2>&1 | tee coverage-output.txt
 COVERAGE=$(grep -E "All files|Statements" coverage-output.txt | head -1 | grep -oE "[0-9]+\.[0-9]+" | head -1)

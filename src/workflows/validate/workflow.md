@@ -50,7 +50,6 @@ categories:
 
 <execution_context>
 @patterns/verification.md
-@patterns/hospital-grade.md
 </execution_context>
 
 <process>
@@ -75,14 +74,14 @@ stories_to_validate = [target]
 ```bash
 EPIC_NUM="{{target}}"
 # Get stories from sprint-status.yaml matching epic
-grep "^${EPIC_NUM}-" {{sprint_artifacts}}/sprint-status.yaml
+grep "^${EPIC_NUM}-" {{implementation_artifacts}}/sprint-status.yaml
 ```
 stories_to_validate = all stories starting with `{epic_num}-`
 
 **If scope == all:**
 ```bash
 # Find all story files, exclude meta-documents
-find {{sprint_artifacts}} -name "*.md" | grep -v "EPIC-\|COMPLETION\|REPORT\|README"
+find {{implementation_artifacts}} -name "*.md" | grep -v "EPIC-\|COMPLETION\|REPORT\|README"
 ```
 stories_to_validate = all story files
 
@@ -318,10 +317,10 @@ Use Edit tool to change status for inaccurate entries
 <examples>
 ```bash
 # Validate single story (quick)
-/validate scope=story target={{sprint_artifacts}}/2-5-auth.md
+/validate scope=story target={{implementation_artifacts}}/2-5-auth.md
 
 # Validate single story (deep - uses Haiku)
-/validate scope=story target={{sprint_artifacts}}/2-5-auth.md depth=deep
+/validate scope=story target={{implementation_artifacts}}/2-5-auth.md depth=deep
 
 # Validate all stories in epic 2
 /validate scope=epic target=2

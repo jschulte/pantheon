@@ -32,8 +32,6 @@ available_agents:
 </config>
 
 <execution_context>
-@patterns/security-checklist.md
-@patterns/hospital-grade.md
 @patterns/agent-completion.md
 </execution_context>
 
@@ -84,10 +82,6 @@ Task({
   prompt: `
 You are the {{AGENT_TYPE}} reviewer for story {{story_key}}.
 
-<execution_context>
-@patterns/security-checklist.md
-@patterns/hospital-grade.md
-</execution_context>
 
 <context>
 Story: [inline story content]
