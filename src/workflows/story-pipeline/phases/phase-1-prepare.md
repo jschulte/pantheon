@@ -69,6 +69,19 @@ IF UNCHECKED == 0 AND CHECKED > 0:
 
   This allows the orchestrator (or Heracles worker) to skip the entire pipeline.
   The worker writes a progress artifact with status ALREADY_DONE and moves on.
+
+IF UNCHECKED > 0:
+  → Story has remaining work. MUST proceed to BUILD phase.
+  → Do NOT skip BUILD even if many tasks are already checked.
+  → Do NOT perform ad-hoc "gap analysis" to label unchecked tasks as "deferred".
+  → The BUILD phase Ralph Loop will spawn builder agents to implement/verify EVERY
+    unchecked task. Only the builder agent can determine if a task is genuinely
+    impossible (requires manual QA, external vendor, etc.).
+  → "Prior implementation exists" means BUILD starts with fewer tasks — it does NOT
+    mean you skip BUILD.
+
+  Display:
+    "📋 Story {{story_key}}: {{CHECKED}} tasks done, {{UNCHECKED}} remaining → proceeding to BUILD"
 ```
 
 ### 1.3 Determine Complexity (6-tier scale)

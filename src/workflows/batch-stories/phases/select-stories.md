@@ -187,7 +187,6 @@ ELSE:
 **Why auto-detect:** When Agent Teams is enabled, swarm mode provides:
 - Parallel story execution with dynamic work-claiming
 - Dependency-aware scheduling (workers skip blocked tasks)
-- Quality gate coordination via Hygeia
 - Crash recovery via progress artifacts
 
 There is no scenario where sequential mode is preferred when teams are available.

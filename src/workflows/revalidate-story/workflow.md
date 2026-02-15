@@ -33,7 +33,6 @@ verification_status:
 
 <execution_context>
 @patterns/verification.md
-@patterns/hospital-grade.md
 </execution_context>
 
 <process>

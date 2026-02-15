@@ -162,10 +162,9 @@ EOF
   copilot)
     echo -e "${BLUE}Installing GitHub Copilot Agent Skills...${NC}"
 
-    # Create .github/skills directory
+    # Install to project-level .github/skills
     mkdir -p "$TARGET_DIR/.github/skills"
 
-    # Copy skill folders
     for skill_dir in "$SCRIPT_DIR/copilot/skills"/*; do
       if [ -d "$skill_dir" ]; then
         skill_name=$(basename "$skill_dir")
@@ -180,6 +179,33 @@ EOF
         fi
       fi
     done
+
+    # Install to global ~/.copilot/skills
+    COPILOT_GLOBAL="$HOME/.copilot/skills"
+    if [ -d "$HOME/.copilot" ]; then
+      echo ""
+      echo -e "${BLUE}Installing global Copilot skills to ~/.copilot/skills...${NC}"
+      mkdir -p "$COPILOT_GLOBAL"
+
+      for skill_dir in "$SCRIPT_DIR/copilot/skills"/*; do
+        if [ -d "$skill_dir" ]; then
+          skill_name=$(basename "$skill_dir")
+          target_path="$COPILOT_GLOBAL/$skill_name"
+
+          if [ -d "$target_path" ] && [ "$FORCE" != true ]; then
+            echo -e "${YELLOW}  Skipping $skill_name (exists, use --force to overwrite)${NC}"
+          else
+            mkdir -p "$target_path"
+            cp -r "$skill_dir"/. "$target_path/"
+            echo -e "${GREEN}  Installed: ~/.copilot/skills/$skill_name${NC}"
+          fi
+        fi
+      done
+    else
+      echo ""
+      echo -e "${YELLOW}~/.copilot not found — skipping global skill install.${NC}"
+      echo -e "${YELLOW}Install GitHub Copilot CLI first, then re-run with --platform copilot.${NC}"
+    fi
 
     # Append to copilot-instructions.md if exists
     instructions_file="$TARGET_DIR/.github/copilot-instructions.md"
@@ -200,8 +226,9 @@ EOF
     echo -e "${GREEN}GitHub Copilot installation complete!${NC}"
     echo ""
     echo "Usage:"
-    echo "  1. Skills are auto-loaded when relevant"
-    echo "  2. Skills work in VS Code agent mode too"
+    echo "  1. Project skills installed to .github/skills/"
+    echo "  2. Global skills installed to ~/.copilot/skills/"
+    echo "  3. Skills are auto-loaded when relevant"
     echo ""
     echo "Commands:"
     echo "  Story Pipeline:  '@workspace /pantheon-pipeline Implement STORY-001'"

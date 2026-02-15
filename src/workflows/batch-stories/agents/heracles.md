@@ -130,19 +130,54 @@ Follow the phases exactly as defined in workflow.md: PREPARE → FORGE → BUILD
 
 **After Phase 5 REFINE, you MUST execute Phase 6 COMMIT which spawns Eunomia for reconciliation.**
 
-Phase 6 includes a **hard validation gate** — if Eunomia reports zero tasks checked,
-the story CANNOT be marked done. In this case:
-- Report the reconciliation failure to team-lead instead of reporting success
-- Do NOT update sprint-status.yaml
-- Do NOT skip Phase 6 even if all other phases passed
+Phase 6 includes a **hard validation gate** based on task completion arithmetic:
+
+| Completion | Sprint Status | Action |
+|-----------|--------------|--------|
+| 0% | HALT | Do NOT commit. Report reconciliation failure. |
+| < 80% | `in-progress` | Commit but report PARTIAL to team-lead (not SUCCESS). |
+| 80-94% | `review` | Nearly complete, needs final pass. |
+| >= 95% | `done` | Fully complete. |
+
+**Sprint-status is DERIVED from task counts. No agent may override this arithmetic.**
+You MUST NOT mark a story "done" if task completion is below 95%. This is non-negotiable.
+The previous approach of marking stories "done" because "the core objective was met" while
+leaving 60-90% of tasks unchecked was fraudulent — it hid incomplete work from tracking.
+
+In this case:
+- Report the actual completion percentage to team-lead
+- Use the status from the table above (not your judgment)
+- Do NOT ask the user to override — this is math, not opinion
 
 Phase 6 is what turns implementation work into a properly tracked, verified story completion.
 Without it, task checkboxes stay unchecked and the story appears unfinished despite working code.
 
 ### Already-Implemented Detection
 
-During PREPARE, if the story file shows ALL tasks already checked off (`- [x]`),
-or if gap analysis reveals zero remaining work:
+**ONLY skip the pipeline when UNCHECKED TASKS == 0 (literally zero `- [ ]` lines).**
+
+During PREPARE, count checked and unchecked tasks:
+```
+CHECKED = grep -c "^- \[x\]" story_file
+UNCHECKED = grep -c "^- \[ \]" story_file
+```
+
+**IF UNCHECKED == 0 AND CHECKED > 0:**
+→ Story is fully implemented. Write ALREADY_DONE artifact and skip pipeline.
+
+**IF UNCHECKED > 0 (even 1 unchecked task):**
+→ Story is NOT fully implemented. You MUST run the full pipeline including BUILD.
+→ Do NOT perform your own "gap analysis" to decide tasks are "deferred" or "N/A".
+→ Do NOT label unchecked tasks as "already done in code" without spawning a builder.
+→ The BUILD phase Ralph Loop will spawn fresh Metis builders to implement remaining work.
+→ Only Metis builders (not you, the orchestrator) determine if a task is genuinely impossible.
+
+**CRITICAL: "Code exists for some tasks" does NOT mean the story is done.**
+Prior partial implementations mean the BUILD phase starts with fewer tasks — it does NOT
+mean you skip BUILD. The Ralph Loop handles partial stories by verifying each task
+individually and implementing what's missing.
+
+When ALREADY_DONE is true:
 
 1. Write a progress artifact with status `"ALREADY_DONE"` and current_phase `"COMPLETE"`:
    ```json

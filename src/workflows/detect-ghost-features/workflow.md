@@ -42,9 +42,6 @@ defaults:
   create_report: true
 </config>
 
-<execution_context>
-@patterns/hospital-grade.md
-</execution_context>
 
 <process>
 

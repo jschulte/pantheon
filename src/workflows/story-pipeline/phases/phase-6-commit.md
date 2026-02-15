@@ -60,24 +60,28 @@ tasks_checked = reconciler.tasks_checked
 tasks_total = reconciler.tasks_total
 tasks_unchecked = reconciler.tasks_unchecked
 dev_record_filled = reconciler.dev_record_filled
+pct = tasks_checked / tasks_total
 
 # ── Gate 1: Zero tasks checked → HALT ──────────────────────────
 IF tasks_checked == 0:
   → ❌ RECONCILIATION FAILED: Zero tasks checked out of {{tasks_total}}.
-  → DO NOT commit.
-  → DO NOT update sprint-status.yaml.
-  → Escalate to user: "Eunomia found zero implementation evidence.
-    Either the pipeline produced no artifacts or all tasks are unverifiable.
-    Please investigate before marking this story done."
+  → DO NOT commit. DO NOT update sprint-status.yaml.
+  → Escalate: "Eunomia found zero implementation evidence."
   → HALT pipeline for this story.
 
-# ── Gate 2: Less than 50% checked → WARN + confirm ─────────────
-IF tasks_checked / tasks_total < 0.5:
-  → ⚠️ WARNING: Only {{pct}}% of tasks reconciled ({{tasks_checked}}/{{tasks_total}}).
-  → Ask user: "Only {{tasks_checked}} of {{tasks_total}} tasks have evidence.
-    Continue with partial reconciliation, or investigate?"
-  → Options: "Continue (mark as review)" | "Investigate (halt)"
-  → If user says investigate → HALT.
+# ── Gate 2: Less than 80% checked → REJECT as incomplete ───────
+# CRITICAL: This gate prevents stories from being marked "done" or "review"
+# when the builder only partially completed the work. The builder likely
+# ran out of context on a large story. Status MUST reflect actual completion.
+IF pct < 0.80:
+  → ⚠️ INCOMPLETE: Only {{pct*100}}% of tasks reconciled ({{tasks_checked}}/{{tasks_total}}).
+  → Sprint-status = "in-progress" (NOT "done", NOT "review")
+  → DO NOT ask user to override — this is arithmetic, not judgment.
+  → Log: "Story {{story_key}} is {{pct*100}}% complete. {{tasks_unchecked}} tasks
+    remain unchecked. The builder addressed {{tasks_checked}} of {{tasks_total}} tasks.
+    Story marked in-progress for further work."
+  → Continue to 6.4 with status = "in-progress".
+  → In batch/swarm mode: report PARTIAL to team lead (not SUCCESS).
 
 # ── Gate 3: Dev Record not filled → WARN ──────────────────────
 IF dev_record_filled == false:
@@ -87,14 +91,18 @@ IF dev_record_filled == false:
 
 ### 6.4 Update sprint-status.yaml
 
-Use the status decision logic from `step-4.5-reconcile-story-status.md`:
+**Status is DERIVED from task counts. No agent may override this arithmetic.**
 
-| Condition | Status |
-|-----------|--------|
-| 95%+ tasks checked + Dev Record filled | `done` |
-| 80-94% tasks checked | `review` |
-| 50-79% tasks checked (user continued) | `in-progress` |
-| <50% tasks checked | blocked by hard gate |
+| Condition | Status | Notes |
+|-----------|--------|-------|
+| 95%+ tasks checked + Dev Record filled | `done` | Fully complete |
+| 80-94% tasks checked | `review` | Nearly complete, needs final pass |
+| <80% tasks checked | `in-progress` | Builder incomplete — needs more work |
+| 0 tasks checked | blocked by hard gate | Pipeline halted |
+
+**NEVER mark a story "done" if task completion is below 95%.** This is non-negotiable.
+The previous approach of marking stories "done" because "the core objective was met" while
+leaving 60-90% of tasks unchecked was fraudulent — it hid incomplete work from tracking.
 
 ```bash
 # Edit: "{{story_key}}: ready-for-dev" → "{{story_key}}: {{status}}"
