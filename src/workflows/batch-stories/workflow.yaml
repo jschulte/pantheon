@@ -129,51 +129,46 @@ session_reporting:
     subagent_type: "general-purpose"
     model: "sonnet"
 
-# Agent Teams configuration (NEW in v4.0.0, updated v4.1.0)
-# Replaces wave-based parallel execution with TeammateTool swarm coordination.
-# EXPERIMENTAL: Requires CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 environment variable.
-# This feature is experimental and may change. See: Claude Code Agent Teams documentation.
-swarm_config:
-  enabled: true                 # Use TeammateTool swarm for parallel mode
-  experimental: true            # Agent Teams is an experimental feature — may change without notice
-  team_prefix: "batch"          # Team name: batch-{epic} or batch-{timestamp}
-  max_workers: 3                # Number of Heracles worker teammates to spawn
-  worker_model: "opus"           # Model for Heracles worker agents (must be opus to orchestrate 7-phase pipeline with sub-agent spawning)
+# Parallel execution configuration (v5.0.0 — Lead-Driven Single-Story Workers)
+# Replaces Agent Teams swarm with lead-managed background Task agents.
+# Each worker is a background Task agent that processes ONE story in isolation.
+# No shared task list, no inter-agent messaging, no self-scheduling.
+parallel_config:
+  max_workers: 3                # Maximum concurrent pipeline executors (background Task agents)
+  worker_model: "opus"          # Model for pipeline executor agents
   worker_persona: "{installed_path}/agents/heracles.md"
-  delegate_mode: recommended    # Use Shift+Tab delegate mode for the lead so it coordinates without implementing
+  delegate_mode: recommended    # Use Shift+Tab delegate mode for the lead
 
-  # Agent Teams requires these Claude Code features:
-  # - TeammateTool (spawnTeam, cleanup)
-  # - SendMessage (inter-agent messaging)
-  # - TaskCreate/TaskUpdate/TaskList (shared task list)
-  # - Task with team_name param (teammate spawning)
-  requires:
-    env: CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1  # Must be set before launching Claude Code
+  # -------------------------------------------------------------------------
+  # ARCHITECTURE
+  # -------------------------------------------------------------------------
+  # Lead manages an in-memory queue. For each story:
+  #   1. Lead spawns a background Task agent (Heracles) with ONE story assignment
+  #   2. Agent executes the full 7-phase pipeline with sub-agent spawns
+  #   3. Agent writes artifacts to completions/ directory
+  #   4. Lead polls TaskOutput for completion, validates artifacts
+  #   5. Lead accepts or rejects based on mandatory artifact checklist
+  #
+  # This eliminates batch awareness — workers cannot see other stories,
+  # cannot self-schedule, and cannot optimize for throughput over depth.
+
+  # -------------------------------------------------------------------------
+  # ARTIFACT VALIDATION (Mandatory before accepting completion)
+  # -------------------------------------------------------------------------
+  # Lead validates these artifacts exist before marking a story complete:
+  #   1. {story_key}-progress.json — status == SUCCESS or ALREADY_DONE
+  #   2. {story_key}-builder.json — with file:line evidence in tasks_addressed
+  #   3. {story_key}-argus.json OR {story_key}-review.json — reviewer artifact
+  #   4. {story_key}-themis.json — triage data
+  #   5. {story_key}-reconciler.json — task completion counts
+  #   6. Git commit with feat({story_key}) prefix
+  # Missing artifacts → rejection, re-queue for retry (max 2 attempts)
 
   # -------------------------------------------------------------------------
   # TIMEOUT & RECOVERY
   # -------------------------------------------------------------------------
-  # What happens when a worker exceeds the timeout or crashes:
-  #   1. Lead detects worker idle beyond worker_timeout_seconds
-  #   2. Lead sends shutdown_request to the stalled worker
-  #   3. If worker doesn't respond within 60s, lead treats it as crashed
-  #   4. Lead checks for partial artifacts in completions/ directory
-  #   5. If story has progress artifacts, lead marks story as "partial"
-  #   6. If no artifacts, lead marks story as "failed" with reason "worker_timeout"
-  #   7. Lead may reassign the story to another worker (if retries remain)
-  #
-  # Workers should write progress artifacts after each phase completion
-  # so that partial work is not lost on timeout/crash.
-  worker_timeout_seconds: 3600  # 1 hour per story (generous for complex stories)
-  worker_retries: 1             # Retry failed stories once (0 = no retry)
-  stale_worker_check_interval: 300  # Check for stalled workers every 5 minutes
-
-  # -------------------------------------------------------------------------
-  # LOCK TIMEOUTS
-  # -------------------------------------------------------------------------
-  lock_timeout_seconds: 180     # 3 minutes — stale lock detection threshold
-  lock_retry_delay_ms: 500      # Initial retry delay (doubles with exponential backoff)
-  lock_max_retries: 5           # Maximum lock acquisition attempts
+  worker_retries: 2             # Retry failed/rejected stories (0 = no retry)
+  circuit_breaker_threshold: 3  # Halt batch after 3 consecutive failures
 
 standalone: true
 web_bundle: false

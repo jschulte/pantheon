@@ -116,9 +116,8 @@ IF ALREADY_DONE is not empty:
 
 ### Step 4: Store Dependency Graph (In-Memory Only)
 
-**Do NOT call TaskCreate here.** Task creation must happen AFTER TeamCreate in `execute_parallel`
-so that tasks land in the team's task list context (`~/.claude/tasks/{team-name}/`).
-Tasks created before the team exists land in the default context and are invisible to workers.
+**No TaskCreate or TeamCreate calls needed.** The lead manages an in-memory queue in `execute_parallel`.
+Workers are background Task agents with no access to shared task lists.
 
 Store the dependency graph as an in-memory data structure for use by `execute_parallel`:
 
@@ -154,8 +153,8 @@ Blocked (waiting):     4 stories
 
 Use AskUserQuestion:
 ```
-Dependency graph analyzed. Tasks will be created in the team context
-after TeamCreate (in execute_parallel).
+Dependency graph analyzed. The lead will manage an in-memory queue
+and spawn isolated workers in execute_parallel.
 
 Options:
 1. Proceed with dependency graph (recommended)

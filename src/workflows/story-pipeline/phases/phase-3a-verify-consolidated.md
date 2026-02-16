@@ -69,7 +69,53 @@ Save consolidated findings to:
 })
 ```
 
-**After consolidated review, also spawn any forged specialists (if Pygmalion produced them):**
+**After consolidated review, ALWAYS spawn Eudaimonia (requirements reviewer):**
+
+Eudaimonia reviews from a product/business perspective. She receives the story file and git diff
+but NOT the builder artifact (blind review). She is ALWAYS included regardless of complexity.
+
+```
+Task({
+  subagent_type: "general-purpose",
+  model: "opus",
+  description: "📋 Eudaimonia reviewing requirements for {{story_key}}",
+  prompt: `
+${SHARED_PREFIX_BLIND}
+
+<git_diff>
+[INLINE: git diff of implementation changes]
+</git_diff>
+
+<files_changed>
+[list of files created/modified by builder]
+</files_changed>
+
+You are EUDAIMONIA 📋 - Guardian of Requirements & Business Intent.
+
+You ensure every acceptance criterion is satisfied.
+
+<goal>
+Verify that every acceptance criterion and story requirement has corresponding implementation.
+Review from a PRODUCT MANAGER perspective — not code quality, but "would a PM accept this as done?"
+</goal>
+
+<blind_mode>
+You intentionally do NOT have the builder's completion artifact.
+Verify against the STORY REQUIREMENTS, not against what the builder claims to have done.
+</blind_mode>
+
+<issue_classification>
+- MUST_FIX: Acceptance criterion completely missing or fundamentally wrong
+- SHOULD_FIX: Acceptance criterion partially met, or edge case from story not handled
+- STYLE: Minor interpretation differences that don't affect user experience
+</issue_classification>
+
+Save to: {{sprint_artifacts}}/completions/{{story_key}}-requirements.json
+`
+})
+```
+
+**After Eudaimonia, also spawn any forged specialists (if Pygmalion produced them):**
 
 ```
 IF FORGED_SPECS.forged_specialists.length > 0:
@@ -105,7 +151,7 @@ Save to: {{sprint_artifacts}}/completions/{{story_key}}-{{spec.id}}.json
     })
 ```
 
-**After all reviews complete (consolidated + forged), proceed to Phase 4 (ASSESS).**
+**After all reviews complete (consolidated + Eudaimonia + forged), proceed to Phase 4 (ASSESS).**
 
 ---
 

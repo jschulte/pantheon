@@ -10,7 +10,7 @@ SPRINT_STATUS="{{sprint_artifacts}}/sprint-status.yaml"
 ```
 
 Use Read tool on sprint-status.yaml. Extract:
-- Stories with status `ready-for-dev` or `backlog`
+- All stories whose status is **not** `done` (includes `ready-for-dev`, `backlog`, `in-progress`, `review`, etc.)
 - Exclude epics (`epic-*`) and retrospectives (`*-retrospective`)
 - Sort by epic number, then story number
 
@@ -56,10 +56,14 @@ For each story:
 1. **17-10** ✅ occupant-agreement-view
 2. **17-11** ✅ agreement-status-tracking
 
-### Backlog (Y)
-3. **18-1** ❌ [needs story file]
+### In Progress (Y)
+3. **17-12** ✅ catch-photo-upload
 
-Legend: ✅ ready | ❌ missing | 🔄 done but not tracked
+### Backlog (Z)
+4. **18-1** ❌ [needs story file]
+
+Legend: ✅ ready | ❌ missing | 🔄 already implemented
+Stories are grouped by current status. Any status except `done` is eligible.
 ```
 </step>
 
@@ -152,7 +156,7 @@ Use AskUserQuestion:
 Which stories would you like to implement?
 
 Options:
-1. All ready-for-dev stories (X stories)
+1. All available stories (X stories — everything not done)
 2. Select specific stories by number
 3. Single story (enter key like "17-10")
 ```
@@ -161,32 +165,34 @@ Validate selection against available stories.
 </step>
 
 <step name="choose_mode">
-**Choose execution mode (auto-detects Agent Teams)**
+**Choose execution mode**
 
-### Auto-Detection (MANDATORY)
+### Mode Selection
 
-Before asking the user, check if Agent Teams is available:
+Ask the user which mode to use, or auto-select based on story count:
 
 ```
-IF TeamCreate tool is available AND swarm_config.enabled == true:
-  → Auto-select parallel/swarm mode
+IF selected_stories.length >= 3:
+  → Recommend parallel mode
   → Display:
-    "🐝 Agent Teams detected. Using swarm mode for parallel execution.
-     Workers will self-schedule from shared task list with dependency constraints."
-  → Proceed directly to analyze_dependencies (skip mode selection question)
+    "📦 Recommending parallel mode for {{selected_stories.length}} stories.
+     Up to {{max_workers}} pipeline executors will run concurrently.
+     Each executor processes ONE story in isolation with full pipeline enforcement."
+  → Proceed to analyze_dependencies
+
+ELIF selected_stories.length == 1:
+  → Auto-select sequential mode
+  → Display:
+    "ℹ️ Single story selected. Using sequential mode."
+  → Proceed to execute_sequential
 
 ELSE:
-  → Fall back to sequential mode
-  → Display:
-    "ℹ️ Agent Teams not available. Using sequential mode.
-     To enable swarm mode, set CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1
-     before launching Claude Code."
-  → Proceed to execute_sequential
+  → Ask user: parallel (recommended) or sequential?
 ```
 
-**Why auto-detect:** When Agent Teams is enabled, swarm mode provides:
-- Parallel story execution with dynamic work-claiming
-- Dependency-aware scheduling (workers skip blocked tasks)
+**Why parallel:** Lead-driven parallel mode spawns isolated background Task agents
+per story. Each agent runs the full pipeline with mandatory checkpoints. The lead
+validates artifacts before accepting completion.
 - Crash recovery via progress artifacts
 
 There is no scenario where sequential mode is preferred when teams are available.

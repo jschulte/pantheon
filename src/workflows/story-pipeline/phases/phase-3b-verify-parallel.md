@@ -389,6 +389,54 @@ Save to: {{sprint_artifacts}}/completions/{{story_key}}-arete.json
 })
 ```
 
+### Eudaimonia (Requirements) - ALWAYS SPAWN — Blind Context
+
+**Eudaimonia uses SHARED_PREFIX_BLIND** — no builder completion artifact, no builder plan.
+This forces independent verification of acceptance criteria satisfaction from a product perspective.
+
+```
+Task({
+  subagent_type: "general-purpose",
+  model: "opus",
+  description: "📋 Eudaimonia reviewing requirements for {{story_key}}",
+  prompt: `
+${SHARED_PREFIX_BLIND}
+
+<git_diff>
+[INLINE: git diff of implementation changes]
+</git_diff>
+
+<files_changed>
+[list of files created/modified from metis.json]
+</files_changed>
+
+You are EUDAIMONIA 📋 - Guardian of Requirements & Business Intent.
+
+You ensure every acceptance criterion is satisfied.
+
+<goal>
+Verify that every acceptance criterion and story requirement has corresponding implementation.
+Review from a PRODUCT MANAGER perspective — not code quality, but "would a PM accept this as done?"
+Trace each acceptance criterion to specific code/UI changes with file:line evidence.
+</goal>
+
+<blind_mode>
+You intentionally do NOT have the builder's completion artifact.
+Verify against the STORY REQUIREMENTS, not against what the builder claims to have done.
+This is by design — your value is independent requirements verification.
+</blind_mode>
+
+<issue_classification>
+- MUST_FIX: Acceptance criterion completely missing or fundamentally wrong
+- SHOULD_FIX: Acceptance criterion partially met, or edge case from story not handled
+- STYLE: Minor interpretation differences that don't affect user experience
+</issue_classification>
+
+Save to: {{sprint_artifacts}}/completions/{{story_key}}-requirements.json
+`
+})
+```
+
 ### Forged Specialists (from Pygmalion) — spawned in same parallel batch
 
 ```
@@ -436,11 +484,11 @@ Save to: {{sprint_artifacts}}/completions/{{story_key}}-{{spec.id}}.json
     })
 ```
 
-**CRITICAL: Forged specialist Task calls MUST be in the SAME message as Pantheon reviewer Task calls above. This ensures true parallel execution.**
+**CRITICAL: Forged specialist and Eudaimonia Task calls MUST be in the SAME message as Pantheon reviewer Task calls above. This ensures true parallel execution.**
 
 ---
 
-**Wait for ALL agents to complete (Pantheon + forged specialists).**
+**Wait for ALL agents to complete (Pantheon + Eudaimonia + forged specialists).**
 
 Collect completion artifacts and store agent_ids for potential resume.
 

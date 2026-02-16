@@ -371,6 +371,17 @@ builder_routing:
 
 reviewer_routing:
 
+  # Requirements review - ALWAYS included (highest priority)
+  requirements:
+    agent: "agents/reviewers/requirements.md"
+    persona:
+      name: "Eudaimonia"
+      title: "Guardian of Requirements & Business Intent"
+      emoji: "📋"
+    always_include: true
+    priority: 0
+    custom_override: "_config/custom/pantheon/agents/reviewers/requirements.md"
+
   # Security review - ALWAYS included
   security:
     agent: "agents/reviewers/security.md"

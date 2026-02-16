@@ -37,6 +37,7 @@ You will receive:
 3. **Hermes artifacts** - `{{story}}-hermes.json` (contains TL;DR and quick stats)
 4. **Progress artifacts** - `{{sprint_artifacts}}/completions/{{story}}-progress.json`
 5. **Git log** - Recent commits from this session
+6. **Narrative logs** - `{{sprint_artifacts}}/completions/{{story}}-narrative.log` (real-time phase-by-phase updates written by each Heracles worker, including files created/modified with descriptions)
 
 **Key insight:** Each story now has its own detailed summary with verification guide.
 Your job is to aggregate these into a session-level overview that:
@@ -101,6 +102,12 @@ From each story, extract:
 - `learnings` (what was learned)
 - `playbook_action` (what playbooks were updated)
 
+**From narrative log (`{story}-narrative.log`):**
+- `BUILD DONE` entries: every file created/modified with one-line descriptions
+- `VERIFY DONE` entries: issues found with descriptions
+- `REFINE DONE` entries: what was fixed
+- `COMMIT` entries: task completion ratio, commit hash
+
 **From story file:**
 - Story title
 - Business context (1-2 sentences)
@@ -119,8 +126,44 @@ git log --oneline --since="session_start" --until="now"
 
 **See:** `templates/session-report-template.md` for the full report template.
 
-The template includes: Executive Summary, Stories at a Glance, Aggregate Metrics,
-Git Commits, Verification Guide, Issues & Tech Debt, Next Steps, and Appendix.
+The template includes: Executive Summary, **Developer Walkthrough**, Stories at a Glance,
+Aggregate Metrics, Git Commits, Verification Guide, Issues & Tech Debt, Next Steps, and Appendix.
+
+### Developer Walkthrough Section (from narrative logs)
+
+The **Developer Walkthrough** is the most important section for the developer. It answers:
+*"What was built, what does it do, and where can I find it?"*
+
+For each completed story, extract the BUILD DONE entries from its narrative log and present:
+
+```markdown
+## Developer Walkthrough
+
+### Story 36-1: Catch List View Polish
+**What was built:** Filtering and sorting for the catch list, with loading states and empty state handling.
+
+**New files:**
+- `src/components/CatchList/FilterBar.tsx` — Filter UI with species/date/size dropdowns
+- `src/components/CatchList/SortDropdown.tsx` — Sort control with 4 options
+- `src/hooks/useCatchFilters.ts` — Filter state management, URL param sync
+
+**Modified files:**
+- `src/pages/catches/index.tsx:45-78` — Integrated FilterBar, added loading states
+- `src/styles/catches.module.css` — Filter bar and sort dropdown styling
+
+**Issues found & fixed:** 2 MUST_FIX (a11y labels on FilterBar, empty state in useCatchFilters) — both resolved in refinement.
+
+---
+
+### Story 36-2: Agreement Status Tracking
+...
+```
+
+**Source data:** The narrative logs (`{story_key}-narrative.log`) contain all of this.
+Extract from `BUILD DONE` entries (file lists with descriptions), `VERIFY DONE` entries
+(issues), and `REFINE DONE` entries (fixes applied). This section should read like a
+guided tour of the codebase changes — the developer should be able to scan it and know
+exactly where to look for each piece of functionality.
 
 ---
 

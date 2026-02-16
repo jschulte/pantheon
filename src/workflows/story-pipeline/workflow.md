@@ -15,7 +15,7 @@ Anti-pattern documentation captures "looks right but fails" patterns for future 
 - Phase 1 PREPARE: Validate story quality, load playbooks
 - Phase 1.5 FORGE: Pygmalion analyzes domain, forges specialist personas (if complexity >= light)
 - Phase 2 BUILD: Metis implements with TDD
-- Phase 3 VERIFY: Argus + Nemesis + reviewers + forged specialists validate in parallel
+- Phase 3 VERIFY: Argus + Nemesis + Eudaimonia + reviewers + forged specialists validate in parallel
 - Phase 4 ASSESS: Coverage gate + Themis triages issues pragmatically
 - Phase 5 REFINE: Metis fixes real issues, iterate until clean
 - Phase 6 COMMIT: Reconcile story, update status
@@ -32,6 +32,7 @@ Measure twice, cut once. Trust but verify. Evidence-based validation. Self-impro
 | Builder | **Metis** | Goddess of wisdom, skill, and craft | 🔨 |
 | Inspector | **Argus** | The 100-eyed giant who sees everything | 👁️ |
 | Test Quality | **Nemesis** | Goddess of retribution and balance | 🧪 |
+| Requirements | **Eudaimonia** | Guardian of requirements & business intent | 📋 |
 | Security | **Cerberus** | Three-headed guardian of the underworld | 🔐 |
 | Logic/Perf | **Apollo** | God of reason, truth, and light | ⚡ |
 | Architecture | **Hestia** | Goddess of hearth, home, and structure | 🏛️ |
@@ -40,7 +41,7 @@ Measure twice, cut once. Trust but verify. Evidence-based validation. Self-impro
 | Reflection | **Mnemosyne** | Titan of memory | 📚 |
 | Accessibility | **Iris** | Goddess of the rainbow, bridges realms | 🌈 |
 | Persona Forge | **Pygmalion** | The sculptor who brought the perfect being to life | 🗿 |
-| Reconciler | **Eunomia** | Goddess of lawful conduct and good order | 📋 |
+| Reconciler | **Eunomia** | Goddess of lawful conduct and good order | 📝 |
 | *Forged Specialists* | *Dynamic* | *Domain-specific experts created by Pygmalion* | *Varies* |
 </agents>
 
@@ -56,32 +57,31 @@ This workflow runs in TWO contexts. The phases, quality gates, and artifacts are
 3. Main session executes phases sequentially, spawning Task agents as defined below
 4. Task agents return artifacts; main session continues with next phase
 
-### Context 2: Heracles Teammate (Parallel — via batch-stories swarm)
+### Context 2: Heracles Pipeline Executor (Parallel — via batch-stories)
 
-1. Heracles worker claims a story from the shared TaskList
+1. Lead spawns a background Task agent (Heracles) for ONE story
 2. Heracles reads this workflow.md file directly (no Skill invocation needed)
 3. Heracles executes phases sequentially, spawning Task sub-agents as defined below
 4. Task sub-agents return artifacts; Heracles continues with next phase
+5. Heracles has NO access to task lists, messaging, or knowledge of other stories
 
 **This works because `general-purpose` Task agents have access to ALL tools, including the Task tool itself.** Heracles workers CAN and MUST spawn sub-agents for each pipeline phase.
 
-### Context 3: Agent Teams Member (Experimental)
+### Context 3: Background Task Agent
 
-When running as a teammate in an Agent Teams session (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`):
+When running as a background Task agent (spawned by the batch lead):
 
-- **You CAN spawn Task sub-agents.** The "no nested teams" restriction only prevents calling `TeammateTool` (creating new teams or spawning additional teammates). Regular `Task` sub-agent spawning works normally and is required for all pipeline phases.
+- **You CAN spawn Task sub-agents.** Regular `Task` sub-agent spawning works normally and is required for all pipeline phases.
 - **You CAN use all standard tools** (Read, Write, Edit, Bash, Grep, Glob, Task, etc.)
-- **You CANNOT call TeammateTool** — no `spawnTeam`, no spawning additional teammates
-- **You CANNOT create nested teams** — one team per session, managed by the lead
-- **Session resumption does NOT restore teammates** — progress artifacts are your crash recovery mechanism
-
-Agent Teams is **experimental** and may change without notice. The sequential fallback (Context 1) always works regardless of feature availability.
+- **You have NO access to** TaskList, TaskCreate, TaskUpdate, SendMessage, or any team primitives
+- **You process ONE story and stop** — no self-scheduling, no batch awareness
+- **Progress artifacts are your crash recovery mechanism** — write after every phase
 
 ### Task Agents Used Per Phase (same in both contexts):
 
 - Phase 1.5 FORGE: `Task(subagent_type: "general-purpose")` → Pygmalion (Persona Forge) — complexity >= light only
 - Phase 2 BUILD: `Task(subagent_type: "general-purpose")` → Metis (Builder)
-- Phase 3 VERIFY: `Task(subagent_type: ...)` → Argus + Nemesis + Cerberus/Apollo/Hestia/Arete + forged specialists - in parallel
+- Phase 3 VERIFY: `Task(subagent_type: ...)` → Argus + Nemesis + Eudaimonia + Cerberus/Apollo/Hestia/Arete + forged specialists - in parallel
 - Phase 4 ASSESS: `Task(subagent_type: ...)` → Themis (triage arbiter)
 - Phase 5 REFINE: Iterative loop:
   - `Task(resume: builder_id)` → Metis fixes MUST_FIX
@@ -170,7 +170,7 @@ phases:
   phase_1: PREPARE (story quality gate + playbook query)
   phase_1_5: FORGE (Pygmalion forges specialist personas — complexity >= light)
   phase_2: BUILD (Metis implements with TDD)
-  phase_3: VERIFY (Argus + Nemesis + reviewers + forged specialists in parallel)
+  phase_3: VERIFY (Argus + Nemesis + Eudaimonia + reviewers + forged specialists in parallel)
   phase_4: ASSESS (coverage gate + Themis triage)
   phase_5: REFINE (Metis fixes + iterate until clean)
   phase_6: COMMIT (Eunomia reconciles story + hard validation gate + update status)
@@ -371,6 +371,7 @@ Load only the current phase, execute it, then load the next.
 **Agent roles:**
 - **Argus** 👁️ (Inspector) - Verifies tasks with code citations.
 - **Nemesis** 🧪 (Test Quality) - Reviews test coverage and quality.
+- **Eudaimonia** 📋 (Requirements) - Verifies acceptance criteria satisfaction. Always included. Blind review (no builder artifact).
 - **Cerberus** 🔐 (Security) - Security vulnerabilities, injection, auth issues.
 - **Apollo** ⚡ (Logic/Performance) - Logic bugs, performance issues, edge cases.
 - **Hestia** 🏛️ (Architecture) - Patterns, integration, route structure.
@@ -380,7 +381,7 @@ Load only the current phase, execute it, then load the next.
 - **Hermes** 📜 (Reflect+Report) - Updates playbooks AND generates completion report.
 - **Iris** 🌈 (Accessibility) - WCAG, ARIA, a11y (conditional, frontend only).
 - **Pygmalion** 🗿 (Persona Forge) - Analyzes domain, forges specialist personas. Invoked in Phase 1.5 for complexity >= light.
-- **Eunomia** 📋 (Reconciler) - Checks off story tasks with evidence, fills Dev Agent Record. Invoked in Phase 6. Includes hard validation gate (zero tasks = block, <50% = warn).
+- **Eunomia** 📝 (Reconciler) - Checks off story tasks with evidence, fills Dev Agent Record. Invoked in Phase 6. Includes hard validation gate (zero tasks = block, <50% = warn).
 - **Forged Specialists** (Dynamic) - Domain-specific reviewers created by Pygmalion. Same artifact format as Pantheon reviewers.
 </complexity_routing>
 

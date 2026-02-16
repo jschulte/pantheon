@@ -37,3 +37,16 @@ docs/implementation-playbooks/_index.json
 
 # Testing
 .nyc_output/
+
+# Local tool config
+.claude/
+.codex/
+
+# BMAD framework (local install)
+_bmad/
+_bmad-output/
+
+# Working docs (not source)
+ACTION-CHECKLIST.md
+REVIEW-FINDINGS-*.md
+blog/
