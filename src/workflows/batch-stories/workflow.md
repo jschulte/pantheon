@@ -134,7 +134,7 @@ This workflow runs in the **main Claude context** (the orchestrator). The orches
 **When spawning Task agents:**
 - Only spawn Tasks for phases explicitly defined in story-pipeline/workflow.md
 - Phase 2: BUILD - Metis (builder)
-- Phase 3: VERIFY - Argus (inspector), Nemesis (test quality), reviewers (Cerberus/Apollo/Hestia/Arete/Iris)
+- Phase 3: VERIFY - Argus (inspector), Nemesis (test quality), Eudaimonia (requirements), reviewers (Cerberus/Apollo/Hestia/Arete/Iris)
 - Phase 4: ASSESS - Themis (arbiter) triages issues
 - Phase 5: REFINE - Metis resumed with MUST_FIX issues, iterative loop
 - Phase 7: REFLECT - Mnemosyne (reflection)
@@ -153,14 +153,20 @@ Load phases on-demand from the `phases/` directory.
 | 2 | Plan Parallel | phases/plan-parallel.md | mode==parallel | 165 |
 | 3a | Execute Sequential | phases/execute-sequential.md | mode==sequential | 130 |
 | 3b | Execute Parallel | phases/execute-parallel.md | mode==parallel | 490 |
+| 3c | Quality Gates | phases/quality-gates.md | mode==parallel | 120 |
 | 4 | Report & Summary | phases/report-summary.md | Always | 300 |
 
 **Execution flow:**
 1. Always load `phases/select-stories.md` first
 2. Based on mode selection in choose_mode step:
    - Sequential: Load `phases/execute-sequential.md`
-   - Parallel: Load `phases/plan-parallel.md`, then `phases/execute-parallel.md`
+   - Parallel: Load `phases/plan-parallel.md`, then `phases/execute-parallel.md`, then `phases/quality-gates.md`
 3. Always load `phases/report-summary.md` last
+
+> **Quality Gates (3c):** In parallel mode, individual workers skip type-check and lint during
+> their phases (batch_mode flag). Phase 3c runs both checks once after all stories complete,
+> auto-fixes what it can, and spawns a fixer for remaining issues. Sequential mode runs
+> type-check/lint per-story as before — no quality gates phase needed.
 
 <failure_handling>
 **Story file missing:** Skip with warning, continue to next.

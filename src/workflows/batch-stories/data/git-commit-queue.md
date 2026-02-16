@@ -3,19 +3,23 @@
 
 **Multiple workers commit in parallel. You MUST serialize commits with a directory-based lock.**
 
-**CRITICAL: Skip pre-commit type-check.** The pipeline already ran type-check during BUILD
-and VERIFY phases. Running it again in the pre-commit hook causes N parallel `tsc` processes
-to compete for CPU, grinding the machine to a halt. Always use `SKIP_TYPECHECK=1`.
+**CRITICAL: Skip pre-commit type-check and lint in batch mode.** The pipeline already ran
+type-check and lint during BUILD and VERIFY phases (in sequential mode), or defers them to a
+centralized quality gates phase (in batch mode). Running them in the pre-commit hook causes
+N parallel `tsc`/`eslint` processes to compete for CPU, grinding the machine to a halt.
+Always use `SKIP_TYPECHECK=1 SKIP_LINT=1`.
 
 ```
-# What SKIP_TYPECHECK=1 does and does NOT skip:
+# What SKIP_TYPECHECK=1 SKIP_LINT=1 does and does NOT skip:
 #
-# SKIPPED (type-checking only):
-#   - TypeScript type-check (tsc --noEmit) — already run by pipeline BUILD/VERIFY phases
+# SKIPPED:
+#   - TypeScript type-check (tsc --noEmit) — deferred to quality gates phase
+#   - ESLint linting (npm run lint) — deferred to quality gates phase
 #
 # NOT SKIPPED (these hooks still run on every commit):
+#   - lint-staged (prettier formatting) — fast, per-file, always runs
 #   - Secret detection (e.g., detect-secrets, gitleaks) — MUST always run
-#   - Linting (eslint, prettier) — MUST always run
+#   - Tests (pnpm test --bail 1) — MUST always run
 #   - Other pre-commit hooks — MUST always run
 ```
 
@@ -45,7 +49,7 @@ BEFORE any git commit:
 
   3. WITH lock held:
      - git add <specific files>
-     - SKIP_TYPECHECK=1 git commit -m "message"
+     - SKIP_TYPECHECK=1 SKIP_LINT=1 git commit -m "message"
      - Run: rm -rf .git/pantheon-commit.lock  (release lock immediately)
 
   4. IF lock acquisition fails after max retries:

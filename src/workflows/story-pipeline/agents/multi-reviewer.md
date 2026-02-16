@@ -46,10 +46,16 @@ Read the story file and all files created/modified by Metis:
 
 ### Step 2: Run Quality Checks
 
+> **Batch Mode:** When `batch_mode: true` is indicated in your prompt, skip type-check and lint. These run once after all stories complete via a centralized quality gates phase. Tests always run.
+
 ```bash
+# Skip in batch mode:
 npx tsc --noEmit --incremental  # Must pass (uses .tsbuildinfo cache)
 npm run lint                     # Must pass
+
 # Build intentionally skipped — Phase 4 coverage gate catches build issues
+
+# Always run (scoped tests are fast and catch real bugs):
 npx jest --findRelatedTests {{changed_files}} --coverage  # {{changed_files}} from {{story_key}}-metis.json
 ```
 
@@ -88,9 +94,9 @@ Verdict: NOT_IMPLEMENTED
 **Argus Checklist:**
 - [ ] Every task verified against story requirements (not builder claims)
 - [ ] Each verification includes execution path trace, not just file existence
-- [ ] Type check (incremental) passes
-- [ ] Lint passes
-- [ ] Scoped tests pass with coverage ≥ 80%
+- [ ] Type check (incremental) passes (skip in batch mode)
+- [ ] Lint passes (skip in batch mode)
+- [ ] Scoped tests pass with coverage ≥ 80% — always run
 
 ### Step 4: Review as Nemesis (Test Quality) 🧪
 

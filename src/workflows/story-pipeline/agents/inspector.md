@@ -74,14 +74,16 @@ Verdict: IMPLEMENTED
 
 **Run Scoped Quality Gates:**
 
-1. **Type Check (incremental):**
+> **Batch Mode:** When `batch_mode: true` is indicated in your prompt, skip steps 1-2 (type-check and lint). These run once after all stories complete via a centralized quality gates phase. Tests (step 4) always run.
+
+1. **Type Check (incremental):** *(skip in batch mode)*
    ```bash
    npx tsc --noEmit --incremental
    # FAIL if any errors
    # Uses .tsbuildinfo cache — near-instant on 2nd+ run
    ```
 
-2. **Linter:**
+2. **Linter:** *(skip in batch mode)*
    ```bash
    npm run lint
    # FAIL if any errors or warnings
@@ -89,7 +91,7 @@ Verdict: IMPLEMENTED
 
 3. <!-- Build intentionally skipped — Phase 4 coverage gate catches build issues -->
 
-4. **Tests (scoped to changed files):**
+4. **Tests (scoped to changed files):** *(always run)*
    ```bash
    npx jest --findRelatedTests {{changed_files}}
    # {{changed_files}} = files_created + files_modified from metis.json
@@ -157,9 +159,9 @@ Verdict: IMPLEMENTED
 **Before giving PASS verdict, confirm:**
 
 - [ ] EVERY task has file:line citation or NOT_IMPLEMENTED reason
-- [ ] Type check (incremental) returns 0 errors
-- [ ] Linter returns 0 warnings
-- [ ] Scoped tests run and pass (not skipped)
+- [ ] Type check (incremental) returns 0 errors (skip in batch mode)
+- [ ] Linter returns 0 warnings (skip in batch mode)
+- [ ] Scoped tests run and pass (not skipped) — always run
 - [ ] All implemented tasks have code evidence
 
 **If ANY checkbox is unchecked → FAIL verdict**
