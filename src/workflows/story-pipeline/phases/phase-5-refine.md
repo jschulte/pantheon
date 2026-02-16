@@ -9,9 +9,82 @@ Metis fixes + iterate until clean (max 3)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-**Skip if Themis cleared all issues.**
+### Skip Conditions
 
-### Iterative Refinement Loop
+```
+IF (MUST_FIX_COUNT == 0) AND (task_completion_pct >= 95):
+  → Skip REFINE phase entirely
+  → Proceed to Phase 6: COMMIT
+
+ELIF (MUST_FIX_COUNT == 0) AND (task_completion_pct < 95):
+  → Trigger COMPLETION LOOP (not bug-fix loop)
+  → Resume Metis with directive to complete remaining tasks
+  → Max 2 iterations for task completion
+
+ELSE:
+  → Execute standard REFINEMENT LOOP (fix MUST_FIX issues)
+  → Max 3 iterations
+```
+
+### Completion Loop (When Clean Code But Incomplete Tasks)
+
+**Trigger:** 0 MUST_FIX issues, but task completion < 95%
+
+This addresses the pattern where builders defer "manual QA" or "integration tests" instead of automating them.
+
+```
+ITERATION = 1
+MAX_COMPLETION_ITERATIONS = 2
+
+WHILE (task_completion_pct < 95) AND (ITERATION <= MAX_COMPLETION_ITERATIONS):
+
+  # Resume Metis with aggressive completion directive
+  Task({
+    subagent_type: "general-purpose",
+    model: "opus",
+    description: "🔨 Metis completing remaining tasks (iteration {{ITERATION}}) on {{story_key}}",
+    resume: "{{BUILDER_AGENT_ID}}",
+    prompt: `
+You have {{unchecked_count}} unchecked tasks remaining out of {{total_tasks}}.
+
+**DIRECTIVE: COMPLETE THESE TASKS. DO NOT DEFER.**
+
+<unchecked_tasks>
+{{list of unchecked tasks from story file}}
+</unchecked_tasks>
+
+**Required actions:**
+- "Manual QA" → Write Playwright E2E tests
+- "Test with live database" → Write integration tests with test DB setup
+- "Visual verification" → Playwright screenshot tests
+- "Staging deployment" → Write deployment automation or document procedure
+- "Integration testing" → Write automated integration test suite
+
+**NOT acceptable:**
+- Marking tasks as "requires human" when automation is possible
+- Deferring tasks because "needs infrastructure" (set up test infrastructure!)
+- Stopping at <95% completion
+
+Complete the work. Run tests. Report when done or genuinely blocked.
+`
+  })
+
+  # Quick verification (no full review needed - just check tasks got done)
+  Read story file, count checked vs unchecked tasks
+
+  IF task_completion_pct >= 95:
+    BREAK  # Success!
+
+  ITERATION++
+
+END WHILE
+
+IF task_completion_pct < 95 AND ITERATION > MAX_COMPLETION_ITERATIONS:
+  → Log warning: "Completion loop exhausted. {{unchecked_count}} tasks remain. Proceeding to COMMIT with in-progress status."
+  → Continue to Phase 6 (story will be marked in-progress)
+```
+
+### Iterative Refinement Loop (When MUST_FIX Issues Exist)
 
 ```
 ┌─────────────────────────────────────────────────────────┐
