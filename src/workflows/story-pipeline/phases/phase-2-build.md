@@ -144,6 +144,9 @@ Files already modified:
 - For each task: READ the file, CONFIRM the implementation, cite the file:line in your report
 - Do NOT bulk-report tasks as done. Each task requires individual file inspection.
 - Code-level tasks (breadcrumbs, component migration, styling, test writing) are ALWAYS in scope
+- **CRITICAL: Infrastructure-as-code tasks are ALWAYS in scope** — If a task says "write Terraform module", "create Dockerfile", "add GitHub Action workflow", "write deployment script" — YOU WRITE IT. Infrastructure code is code. The ONLY exception is tasks requiring actual deployment/apply commands that need live AWS credentials. Writing the .tf/.yml/.dockerfile IS your job.
+- **CRITICAL: NEVER self-defer tasks** — You cannot decide a task is "too hard", "infrastructure only", "requires manual work", or "out of scope". If the task involves writing code, configuration, tests, or documentation — DO IT. The ONLY tasks you cannot complete are: (1) tasks requiring external human decisions (stakeholder approval, user research), (2) tasks requiring live production access you don't have (run terraform apply in prod, deploy to AWS, merge PR). Everything else is actionable.
+- **DELEGATION IS MANDATORY FOR SPECIALIZED WORK** — You have access to the Task tool. When you encounter tasks requiring specialized expertise (infrastructure, testing, security, database), you MUST spawn specialized sub-agents using appropriate subagent_type (specialist-terraform, engineer-deployment, database-administrator, etc.). Collect their work and include it in your completion artifact. You are responsible for ALL tasks - either do them yourself OR delegate them. Never say "cannot complete" without attempting delegation.
 - Visual verification, layout checks, and responsive testing are automatable via
   Playwright screenshots + LLM visual inspection. The only "human-only" tasks are
   non-technical organizational ones (stakeholder sign-off, user interviews, etc.)
