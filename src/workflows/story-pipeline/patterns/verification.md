@@ -53,13 +53,15 @@ For each story task:
 
 Run ALL checks — a single failure means FAIL verdict:
 
-| Check | Command | Failure Condition |
-|-------|---------|-------------------|
-| Type check | `npm run type-check` | Any errors |
-| Lint | `npm run lint` | Any errors/warnings |
-| Build | `npm run build` | Build fails |
-| Tests | `npm test` | Any test fails or is skipped |
-| Coverage | Parse test output | Below threshold |
+| Check | Command | Failure Condition | Batch Mode |
+|-------|---------|-------------------|------------|
+| Type check | `npm run type-check` | Any errors | **SKIP** — runs once after all stories |
+| Lint | `npm run lint` | Any errors/warnings | **SKIP** — runs once after all stories |
+| Build | `npm run build` | Build fails | **SKIP** — runs once after all stories |
+| Tests | `npm test` | Any test fails or is skipped | **RUN** — scoped tests are fast |
+| Coverage | Parse test output | Below threshold | **RUN** — per-story coverage |
+
+> **Batch Mode:** When `batch_mode: true` is indicated, agents skip type-check, lint, and build. These run once in a centralized quality gates phase after all stories complete. Tests always run per-story because they're scoped to changed files and catch real bugs early.
 
 ---
 
@@ -68,10 +70,10 @@ Run ALL checks — a single failure means FAIL verdict:
 Before giving PASS verdict:
 
 - [ ] EVERY task has `file:line` citation or `NOT_IMPLEMENTED` reason
-- [ ] Type check returns 0 errors
-- [ ] Linter returns 0 warnings
-- [ ] Build succeeds
-- [ ] Tests run and pass (not skipped)
+- [ ] Type check returns 0 errors (skip in batch mode)
+- [ ] Linter returns 0 warnings (skip in batch mode)
+- [ ] Build succeeds (skip in batch mode)
+- [ ] Tests run and pass (not skipped) — always run
 - [ ] Coverage meets threshold
 - [ ] All implemented tasks have code evidence
 

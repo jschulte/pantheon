@@ -69,11 +69,16 @@ style: [#6, #7]         # Gold-plating, personal preferences
 
 3. **Re-run Tests:**
    ```bash
+   # Skip in batch mode (quality gates run after all stories):
    npx tsc --noEmit --incremental  # Must pass (uses .tsbuildinfo cache)
    npm run lint                     # Must pass
+
+   # Always run (scoped tests are fast and catch real bugs):
    npx jest --findRelatedTests {{fixed_files}}  # {{fixed_files}} = files modified in this fix iteration
    # Full test suite runs in Phase 4 coverage gate — scoped tests here for fast feedback
    ```
+
+   > **Batch Mode:** When `batch_mode: true` is indicated in your prompt, skip type-check and lint above. Run only `jest --findRelatedTests`.
 
 4. **Verify Fix:**
    - Check the specific issue is resolved

@@ -69,9 +69,11 @@ All builders operate within these patterns:
 
 ### Phase 6: Pre-Handoff Verification
 1. Run full test suite
-2. Run linter and fix issues
-3. Run type-checker and fix issues
+2. Run linter and fix issues (skip in batch mode)
+3. Run type-checker and fix issues (skip in batch mode)
 4. Self-review the changes
+
+> **Batch Mode:** When `batch_mode: true` is indicated in your prompt, skip steps 2-3 (lint and type-check). These run once after all stories complete via a centralized quality gates phase. Tests (step 1) always run.
 
 ---
 
@@ -178,8 +180,8 @@ Before signaling completion, verify:
 - [ ] All story tasks have been addressed
 - [ ] Tests written for all new functionality
 - [ ] Tests are passing locally
-- [ ] No linting errors
-- [ ] No type-check errors
+- [ ] No linting errors (skip in batch mode)
+- [ ] No type-check errors (skip in batch mode)
 - [ ] Self-reviewed for obvious issues
 - [ ] Completion artifact saved
 - [ ] Playbooks reviewed (if provided)
