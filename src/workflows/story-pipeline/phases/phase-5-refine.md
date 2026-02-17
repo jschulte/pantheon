@@ -38,13 +38,14 @@ MAX_COMPLETION_ITERATIONS = 2
 
 WHILE (task_completion_pct < 95) AND (ITERATION <= MAX_COMPLETION_ITERATIONS):
 
-  # Resume Metis with aggressive completion directive
-  Task({
-    subagent_type: "general-purpose",
-    model: "opus",
-    description: "🔨 Metis completing remaining tasks (iteration {{ITERATION}}) on {{story_key}}",
-    resume: "{{BUILDER_AGENT_ID}}",
-    prompt: `
+  # Iteration 1: Resume Metis (builder knows the context)
+  IF ITERATION == 1:
+    Task({
+      subagent_type: "general-purpose",
+      model: "opus",
+      description: "🔨 Metis completing remaining tasks (iteration 1) on {{story_key}}",
+      resume: "{{BUILDER_AGENT_ID}}",
+      prompt: `
 You have {{unchecked_count}} unchecked tasks remaining out of {{total_tasks}}.
 
 **DIRECTIVE: COMPLETE THESE TASKS. DO NOT DEFER.**
@@ -67,7 +68,43 @@ You have {{unchecked_count}} unchecked tasks remaining out of {{total_tasks}}.
 
 Complete the work. Run tests. Report when done or genuinely blocked.
 `
-  })
+    })
+
+  # Iteration 2: Invoke Teleos (story-closer agent - more aggressive)
+  ELSE:
+    Task({
+      subagent_type: "general-purpose",
+      model: "opus",
+      description: "🏁 Teleos (story-closer) completing {{story_key}}",
+      prompt: `
+You are TELEOS 🔧 - the story-closer completion agent.
+
+Metis attempted to complete this story but {{unchecked_count}} tasks remain.
+
+Load the story-closer workflow:
+  {{project_root}}/_bmad/pantheon/workflows/story-closer/workflow.md
+
+Execute ONLY the Teleos worker logic (not the full workflow):
+1. Read story file: {{story_file}}
+2. Analyze {{unchecked_count}} unchecked tasks
+3. For each task:
+   - "Manual QA" → Write Playwright E2E test
+   - "Visual verification" → Playwright screenshot test
+   - "Integration test" → Write integration test with test DB
+   - "Deployment" → Write deployment automation script or detailed runbook
+   - If genuinely human-only (PR review, product sign-off), mark as validated
+4. Check off completed tasks with evidence
+5. Report final completion percentage
+
+**You are more aggressive than Metis.** Don't accept "needs infrastructure" as
+an excuse - BUILD the test infrastructure. Don't accept "manual QA" - WRITE
+the automated test.
+
+Story: {{story_key}}
+Unchecked tasks: {{unchecked_count}}
+Sprint artifacts: {{sprint_artifacts}}
+`
+    })
 
   # Quick verification (no full review needed - just check tasks got done)
   Read story file, count checked vs unchecked tasks
@@ -80,8 +117,8 @@ Complete the work. Run tests. Report when done or genuinely blocked.
 END WHILE
 
 IF task_completion_pct < 95 AND ITERATION > MAX_COMPLETION_ITERATIONS:
-  → Log warning: "Completion loop exhausted. {{unchecked_count}} tasks remain. Proceeding to COMMIT with in-progress status."
-  → Continue to Phase 6 (story will be marked in-progress)
+  → Log warning: "Completion loop exhausted (tried Metis + Teleos). {{unchecked_count}} tasks genuinely require human intervention. Proceeding to COMMIT with in-progress/review status."
+  → Continue to Phase 6 (story will be marked in-progress or review based on percentage)
 ```
 
 ### Iterative Refinement Loop (When MUST_FIX Issues Exist)
