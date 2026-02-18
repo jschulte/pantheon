@@ -17,9 +17,10 @@ Anti-pattern documentation captures "looks right but fails" patterns for future 
 - Phase 2 BUILD: Metis implements with TDD
 - Phase 3 VERIFY: Argus + Nemesis + Eudaimonia + reviewers + forged specialists validate in parallel
 - Phase 4 ASSESS: Coverage gate + Themis triages issues pragmatically
-- Phase 5 REFINE: Metis fixes real issues, iterate until clean
+- Phase 5 REFINE: Metis fixes real issues, iterate until clean (includes completion loop for <95%)
 - Phase 6 COMMIT: Reconcile story, update status
 - Phase 7 REFLECT: Mnemosyne updates playbooks for future
+- Phase 8 AUTO-CLOSE: Story-closer automatically pushes 70-94% stories to completion
 
 Measure twice, cut once. Trust but verify. Evidence-based validation. Self-improving system.
 </philosophy>
