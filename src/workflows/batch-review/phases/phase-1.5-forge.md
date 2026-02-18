@@ -60,6 +60,64 @@ ELSE:
   FORGED_SPECS = { forged_specialists: [], skipped: true }
 ```
 
+### Conduct Live Research for Forged Specialists
+
+For each newly forged or evolved specialist, spawn a research agent to compile authoritative
+reference documentation. This transforms specialists from "persona titles" into genuine
+domain experts backed by verified knowledge.
+
+```
+NEEDS_RESEARCH = []
+FOR EACH spec IN FORGED_SPECS.forged_specialists:
+  IF spec.registry_action == "forged_new":
+    NEEDS_RESEARCH.push(spec)
+  ELIF spec.registry_action == "evolved":
+    existing_file = "docs/specialist-registry/{{spec.id}}.json"
+    IF file_exists(existing_file):
+      existing = read(existing_file)
+      IF NOT existing.knowledge_file:
+        NEEDS_RESEARCH.push(spec)
+
+IF NEEDS_RESEARCH.length > 0:
+  echo "📚 Conducting live research for {{NEEDS_RESEARCH.length}} specialist(s)..."
+
+  FOR EACH spec IN NEEDS_RESEARCH (max 5 parallel):
+    Task({
+      subagent_type: "search-web",
+      model: "opus",
+      run_in_background: true,
+      description: "📚 Research for {{spec.name}} ({{spec.title}})",
+      prompt: `
+        Compile authoritative, LLM-friendly reference documentation for a
+        {{spec.title}} code reviewer.
+
+        This documentation will be injected into a code review agent's prompt
+        to help it catch implementation errors that codebase analysis alone would miss.
+
+        Technologies: {{spec.technologies}}
+        Review focus: {{spec.review_focus}}
+
+        For each technology cluster, research:
+        - Official documentation and best practices
+        - Security considerations and common vulnerabilities
+        - Compliance/legal requirements (if applicable)
+        - Known anti-patterns and community gotchas
+        - Framework-specific implementation patterns
+
+        Write as a single markdown document with DO / DON'T patterns,
+        code examples, and a quick-reference review checklist.
+        Target: 20-50KB.
+        Save to: docs/specialist-registry/knowledge/{{spec.id}}-reference.md
+      `
+    })
+
+  # Wait for completion, then set knowledge_file on each spec
+  FOR EACH spec IN NEEDS_RESEARCH:
+    knowledge_path = "knowledge/{{spec.id}}-reference.md"
+    IF file_exists("docs/specialist-registry/{{knowledge_path}}"):
+      spec.knowledge_file = knowledge_path
+```
+
 ### Update Specialist Registry
 
 After Pygmalion returns, persist new/evolved specialists to the registry.
