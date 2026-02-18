@@ -192,7 +192,64 @@ If no meaningful gaps exist (including after registry matches), return an empty 
 - Caching/storage → Mnemosyne (if not already used), Thesaurus
 - Scheduling/time → Chronos, Kairos
 
-### Step 7: Register New & Evolved Specialists
+### Step 7: Conduct Live Research (Knowledge Base)
+
+**Every FORGE_NEW and EVOLVE specialist MUST have backing reference documentation.** A specialist without authoritative knowledge is just a persona title — the real value comes from concrete, verified domain expertise that lets the reviewer catch issues it wouldn't otherwise know about.
+
+**For each FORGE_NEW specialist:**
+
+1. **Identify 4-8 research topics** based on the specialist's technology cluster and domain expertise. Topics should cover:
+   - Official documentation and best practices for the primary technology
+   - Security considerations and common vulnerabilities
+   - Compliance/legal requirements (if applicable)
+   - Known anti-patterns and gotchas from the community
+   - Framework-specific implementation patterns
+
+2. **Spawn a web research agent** to compile authoritative documentation:
+   ```
+   Task({
+     subagent_type: "search-web",
+     model: "opus",
+     description: "📚 Research for {{spec.name}} ({{spec.title}})",
+     prompt: `
+       Compile authoritative, LLM-friendly reference documentation for a {{spec.title}} reviewer.
+       This documentation will be injected into a code review agent's prompt to help it catch
+       implementation errors.
+
+       Research these topics with CONCRETE patterns and anti-patterns — not vague advice:
+       {{research_topics — as numbered list with sub-bullets}}
+
+       Write as a single markdown document with:
+       - Clear headers for each topic
+       - DO / DON'T patterns with code examples
+       - Specific thresholds, limits, and requirements (not generic advice)
+       - A quick-reference review checklist at the end
+
+       Save to: docs/specialist-registry/knowledge/{{spec.id}}-reference.md
+     `
+   })
+   ```
+
+3. **Add `knowledge_file` reference** to the specialist spec and registry index:
+   ```json
+   "knowledge_file": "knowledge/{{spec.id}}-reference.md"
+   ```
+
+**For EVOLVE specialists:**
+- If the existing specialist already has a `knowledge_file`, check if the new technologies require supplementary research
+- If new technology clusters are detected, spawn a research agent to create an addendum or update the existing knowledge file
+- If no new clusters, reuse the existing knowledge file as-is
+
+**For REUSE specialists:**
+- No new research needed. The existing `knowledge_file` is used as-is.
+
+**Parallel execution:** Research agents for multiple specialists can run in parallel (max 5 concurrent). Research is independent per specialist — no cross-specialist dependencies.
+
+**Output quality gate:** The knowledge file must be at least 15KB of substantive content. If the research agent returns a stub or fails, log a warning but do NOT block forging — the specialist will function with reduced effectiveness until research is completed.
+
+---
+
+### Step 8: Register New & Evolved Specialists
 
 After forging/evolving, persist specialists to the registry for future reuse.
 
@@ -268,7 +325,8 @@ Save to: `{{sprint_artifacts}}/completions/{{story_key}}-pygmalion.json`
         "Test mode and live mode use different webhook signing secrets"
       ],
       "issue_classification_guidance": "Webhook signature bypass or missing idempotency = MUST_FIX. Missing event types or inadequate error handling = SHOULD_FIX. Logging verbosity or code organization = STYLE.",
-      "suggested_claude_agent_type": "auditor-security"
+      "suggested_claude_agent_type": "auditor-security",
+      "knowledge_file": "knowledge/stripe-webhook-integrity-reference.md"
     }
   ],
   "forged_builder": null,
@@ -319,11 +377,29 @@ Save to: `{{sprint_artifacts}}/completions/{{story_key}}-pygmalion.json`
 
 The story-pipeline orchestrator takes your output and:
 
-1. **Constructs a dynamic prompt** for each forged specialist:
+1. **Loads the knowledge base** (if `knowledge_file` exists):
+   ```
+   IF spec.knowledge_file exists:
+     KNOWLEDGE = read("docs/specialist-registry/{{spec.knowledge_file}}")
+   ELSE:
+     KNOWLEDGE = ""
+   ```
+
+2. **Constructs a dynamic prompt** for each forged specialist:
    ```
    You are {{name}} ({{emoji}}) — {{title}}.
 
    {{domain_expertise}}
+
+   {{IF KNOWLEDGE:}}
+   <reference_documentation>
+   The following is authoritative reference documentation for your domain.
+   Use this to verify the implementation follows best practices and catches
+   issues that codebase analysis alone would miss.
+
+   {{KNOWLEDGE}}
+   </reference_documentation>
+   {{END IF}}
 
    Review the following code changes for this story. Focus specifically on:
    {{review_focus — as bullet list}}
@@ -340,9 +416,9 @@ The story-pipeline orchestrator takes your output and:
    Output your findings in standard reviewer JSON format.
    ```
 
-2. **Spawns** the specialist as a Task agent (using `suggested_claude_agent_type`)
-3. **Collects** the specialist's findings alongside Pantheon reviewer findings
-4. **Passes all findings** to Themis for unified triage (no special handling needed)
+3. **Spawns** the specialist as a Task agent (using `suggested_claude_agent_type`)
+4. **Collects** the specialist's findings alongside Pantheon reviewer findings
+5. **Passes all findings** to Themis for unified triage (no special handling needed)
 
 ---
 

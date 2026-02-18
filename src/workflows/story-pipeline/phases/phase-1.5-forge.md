@@ -121,6 +121,78 @@ IF validation fails for any ASSERT:
   FORGED_SPECS = { forged_specialists: [], skipped: true, reason: "Validation failure" }
 ```
 
+### Conduct Live Research for Forged Specialists
+
+For each newly forged or evolved specialist, spawn a research agent to compile authoritative
+reference documentation. This transforms specialists from "persona titles" into genuine
+domain experts backed by verified knowledge.
+
+```
+# Collect specialists needing research
+NEEDS_RESEARCH = []
+FOR EACH spec IN FORGED_SPECS.forged_specialists:
+  IF spec.registry_action == "forged_new":
+    NEEDS_RESEARCH.push(spec)
+  ELIF spec.registry_action == "evolved":
+    existing = read("docs/specialist-registry/{{spec.id}}.json")
+    IF NOT existing.knowledge_file:
+      NEEDS_RESEARCH.push(spec)
+    # If existing has knowledge_file, check if new technologies need supplementary research
+    ELIF spec.technologies has items NOT IN existing.technologies:
+      NEEDS_RESEARCH.push(spec)  # Will create addendum
+
+IF NEEDS_RESEARCH.length > 0:
+  echo "📚 Conducting live research for {{NEEDS_RESEARCH.length}} specialist(s)..."
+
+  # Spawn research agents in parallel (max 5 concurrent)
+  RESEARCH_TASKS = []
+  FOR EACH spec IN NEEDS_RESEARCH (max 5 parallel):
+    task = Task({
+      subagent_type: "search-web",
+      model: "opus",
+      run_in_background: true,
+      description: "📚 Research for {{spec.name}} ({{spec.title}})",
+      prompt: `
+        Compile authoritative, LLM-friendly reference documentation for a
+        {{spec.title}} code reviewer.
+
+        This documentation will be injected into a code review agent's prompt
+        to help it catch implementation errors that codebase analysis alone would miss.
+
+        Research topics derived from the specialist's domain:
+        Technologies: {{spec.technologies}}
+        Review focus areas: {{spec.review_focus}}
+
+        For each technology cluster, research:
+        - Official documentation and best practices
+        - Security considerations and common vulnerabilities
+        - Compliance/legal requirements (if applicable)
+        - Known anti-patterns and community gotchas
+        - Framework-specific implementation patterns
+
+        Write as a single markdown document with:
+        - Clear headers for each topic
+        - DO / DON'T patterns with code examples
+        - Specific thresholds, limits, and requirements
+        - A quick-reference review checklist at the end
+
+        Target: 20-50KB of substantive content.
+        Save to: docs/specialist-registry/knowledge/{{spec.id}}-reference.md
+      `
+    })
+    RESEARCH_TASKS.push({ spec: spec, task: task })
+
+  # Wait for all research to complete
+  FOR EACH rt IN RESEARCH_TASKS:
+    AWAIT rt.task
+    knowledge_path = "knowledge/{{rt.spec.id}}-reference.md"
+    IF file_exists("docs/specialist-registry/{{knowledge_path}}"):
+      rt.spec.knowledge_file = knowledge_path
+      echo "  📚 {{rt.spec.emoji}} {{rt.spec.name}} — research complete"
+    ELSE:
+      echo "  ⚠️ {{rt.spec.emoji}} {{rt.spec.name}} — research failed (specialist still usable)"
+```
+
 ### Process Pygmalion Output
 
 ```
@@ -201,6 +273,7 @@ FOR EACH spec IN FORGED_SPECS.forged_specialists:
       "technologies": [extracted from spec],
       "domains": [extracted from spec],
       "file": "{{spec.id}}.json",
+      "knowledge_file": spec.knowledge_file or null,
       "spec_version": 1,
       "created_for": "{{story_key}}",
       "last_used": "{{story_key}}"
