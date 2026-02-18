@@ -259,7 +259,7 @@ Add to story file:
 
 ```bash
 git add {{sprint_artifacts}}/{{story_key}}.md
-git add {{sprint_artifacts}}/sprint-status.yaml
+git add {{implementation_artifacts}}/sprint-status.yaml
 git add {{sprint_artifacts}}/completions/
 git commit -m "chore({{story_key}}): reconcile story completion"
 ```

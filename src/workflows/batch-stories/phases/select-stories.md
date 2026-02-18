@@ -5,7 +5,7 @@
 **Load and parse sprint-status.yaml**
 
 ```bash
-SPRINT_STATUS="{{sprint_artifacts}}/sprint-status.yaml"
+SPRINT_STATUS="{{implementation_artifacts}}/sprint-status.yaml"
 [ -f "$SPRINT_STATUS" ] || { echo "ERROR: sprint-status.yaml not found"; exit 1; }
 ```
 

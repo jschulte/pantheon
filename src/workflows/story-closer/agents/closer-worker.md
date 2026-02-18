@@ -182,7 +182,7 @@ Use Edit tool:
 
 ### Step 6: Update sprint-status.yaml
 
-Read `{{sprint_artifacts}}/sprint-status.yaml` and update this story's status:
+Read `{{implementation_artifacts}}/sprint-status.yaml` and update this story's status:
 
 ```
 Count final state:
@@ -238,7 +238,7 @@ Save to `{{sprint_artifacts}}/completions/{{story_key}}-summary.md`.
 ```bash
 git add {{all changed files for this story}}
 git add {{sprint_artifacts}}/{{story_key}}.md
-git add {{sprint_artifacts}}/sprint-status.yaml
+git add {{implementation_artifacts}}/sprint-status.yaml
 git add {{sprint_artifacts}}/completions/
 
 git commit -m "$(cat <<'EOF'

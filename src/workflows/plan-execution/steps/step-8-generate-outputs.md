@@ -30,7 +30,7 @@ Write to: docs/team-execution-plan.md
 ### 8.2 Enrich Sprint Status (Optional)
 
 ```
-IF exists("{{sprint_artifacts}}/sprint-status.yaml"):
+IF exists("{{implementation_artifacts}}/sprint-status.yaml"):
   # Add team_assignments section
   Append to sprint-status.yaml:
 
@@ -75,7 +75,7 @@ IF exists("{{sprint_artifacts}}/sprint-status.yaml"):
   Output:
     docs/team-execution-plan.md
     {{IF sprint_status_enriched}}
-    {{sprint_artifacts}}/sprint-status.yaml (enriched)
+    {{implementation_artifacts}}/sprint-status.yaml (enriched)
     {{ENDIF}}
 
   Next Steps:

@@ -21,6 +21,8 @@ author: "Jonah Schulte (leveraging BMAD Method)"
 
 # Paths
 config_source: "{project-root}/_bmad/pantheon/config.yaml"
+output_folder: "{project-root}/_bmad-output"
+implementation_artifacts: "{output_folder}/implementation-artifacts"
 installed_path: "{project-root}/_bmad/pantheon/workflows/plan-execution"
 instructions: "{installed_path}/workflow.md"
 templates_path: "{installed_path}/templates"
@@ -66,7 +68,7 @@ inputs:
     description: "Architecture document from BMAD create-architecture"
 
   sprint_status:
-    pattern: "{{sprint_artifacts}}/sprint-status.yaml"
+    pattern: "{{implementation_artifacts}}/sprint-status.yaml"
     load_mode: FULL_LOAD
     required: false
     description: "Sprint status for rebalance mode - detects completed work"
@@ -74,7 +76,7 @@ inputs:
 # Output
 output:
   execution_plan: "docs/team-execution-plan.md"
-  sprint_status_enriched: "{{sprint_artifacts}}/sprint-status.yaml"
+  sprint_status_enriched: "{{implementation_artifacts}}/sprint-status.yaml"
   template: "{templates_path}/team-execution-plan-template.md"
 
 # Execution

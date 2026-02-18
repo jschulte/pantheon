@@ -34,8 +34,8 @@ ELSE:
 ### 1.3 Check for Sprint Status (Rebalance Mode)
 
 ```
-IF exists("{{sprint_artifacts}}/sprint-status.yaml"):
-  SPRINT_STATUS = Read("{{sprint_artifacts}}/sprint-status.yaml")
+IF exists("{{implementation_artifacts}}/sprint-status.yaml"):
+  SPRINT_STATUS = Read("{{implementation_artifacts}}/sprint-status.yaml")
   REBALANCE_MODE = true
 
   # Parse completed stories
