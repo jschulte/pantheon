@@ -31,7 +31,7 @@ description: Sequential batch implementation of multiple stories with dependency
 ## Step 1: Load Sprint Status
 
 ```bash
-SPRINT_STATUS="{{sprint_artifacts}}/sprint-status.yaml"
+SPRINT_STATUS="{{implementation_artifacts}}/sprint-status.yaml"
 ```
 
 Read sprint-status.yaml. Extract stories with status `ready-for-dev` or `backlog`. Exclude epics and retrospectives. Sort by epic number, then story number.

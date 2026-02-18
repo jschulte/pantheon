@@ -112,7 +112,7 @@ leaving 60-90% of tasks unchecked was fraudulent — it hid incomplete work from
 
 ```bash
 git add {{sprint_artifacts}}/{{story_key}}.md
-git add {{sprint_artifacts}}/sprint-status.yaml
+git add {{implementation_artifacts}}/sprint-status.yaml
 git add {{sprint_artifacts}}/completions/
 
 git commit -m "$(cat <<'EOF'

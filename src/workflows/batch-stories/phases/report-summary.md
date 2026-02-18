@@ -235,12 +235,12 @@ IF epic provided (e.g., epic=17):
   EPIC_KEY="epic-{{epic}}"
 
   # Get all stories in this epic from sprint-status.yaml
-  EPIC_STORIES=$(grep "^  {{epic}}-" {{sprint_artifacts}}/sprint-status.yaml | cut -d: -f1 | tr -d ' ')
+  EPIC_STORIES=$(grep "^  {{epic}}-" {{implementation_artifacts}}/sprint-status.yaml | cut -d: -f1 | tr -d ' ')
 
   # Check if ALL stories are "done"
   ALL_DONE=true
   for story in $EPIC_STORIES; do
-    STATUS=$(grep "^  $story:" {{sprint_artifacts}}/sprint-status.yaml | cut -d: -f2 | tr -d ' ')
+    STATUS=$(grep "^  $story:" {{implementation_artifacts}}/sprint-status.yaml | cut -d: -f2 | tr -d ' ')
     if [ "$STATUS" != "done" ]; then
       ALL_DONE=false
       break
@@ -266,7 +266,7 @@ ENDIF
 
 ```bash
 IF epic marked as done:
-  git add {{sprint_artifacts}}/sprint-status.yaml
+  git add {{implementation_artifacts}}/sprint-status.yaml
 
   git commit -m "$(cat <<'EOF'
 chore(epic-{{epic}}): mark epic as complete

@@ -153,7 +153,7 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 
 ### Step 6: Update Sprint Status
 
-Use Read tool: `{{sprint_artifacts}}/sprint-status.yaml`
+Use Read tool: `{{implementation_artifacts}}/sprint-status.yaml`
 
 Find the entry for {{story_key}} and use Edit tool to update:
 

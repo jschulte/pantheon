@@ -192,7 +192,7 @@ All teammates inherit the lead session's permission settings. If the lead has pr
 
 ```bash
 # 1. Check story files exist
-for story in $(grep "ready-for-dev" {{sprint_artifacts}}/sprint-status.yaml | awk '{print $1}' | sed 's/://'); do
+for story in $(grep "ready-for-dev" {{implementation_artifacts}}/sprint-status.yaml | awk '{print $1}' | sed 's/://'); do
   [ -f "{{sprint_artifacts}}/story-$story.md" ] || echo "❌ Missing: $story"
 done
 
