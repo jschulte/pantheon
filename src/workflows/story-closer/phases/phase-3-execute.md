@@ -94,50 +94,155 @@ IF result.status == "error":
 
 Continue to next story.
 
-### 3.4 Parallel Processing
+### 3.4 Parallel Processing (Worktree Isolation)
 
-Group selected stories into waves. Wave size depends on story count:
-- ≤5 stories: 1 wave (all at once)
-- 6-15 stories: waves of 5
-- 16+ stories: waves of 8
+Uses the same persistent worktree + early integration pattern as batch-stories.
+Each worktree gets its own filesystem, `node_modules`, and git branch — no contention.
 
-**For each wave:**
+**Step 1: Create Integration Branch + Persistent Worktrees**
 
 ```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔧 Wave {{wave_num}}/{{total_waves}}
-   Processing {{wave_size}} stories in parallel
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+INTEGRATION = "integration"
+Bash("git branch {{INTEGRATION}} HEAD")
+
+max_worktrees = 3  # matches batch-stories parallel_config
+WORKTREES = {}
+
+FOR n IN 1..max_worktrees:
+  branch = "worktree/teleos-{{n}}"
+  path = "{{project_root}}/.claude/worktrees/teleos-{{n}}"
+  Bash("git worktree add -b {{branch}} {{path}} HEAD")
+  Bash("cd {{path}} && npm ci")
+  WORKTREES[n] = { path, branch, stories: [], agent_task_id: null }
 ```
 
-**Route NEEDS_PIPELINE stories first** (just log them, no spawn needed).
+**Step 2: Assign Stories to Worktrees**
 
-**Spawn Teleos workers in parallel for CLOSEABLE stories:**
+Route NEEDS_PIPELINE stories first (log them, no spawn needed).
+
+For CLOSEABLE stories:
+- If story depends on another assigned story → same worktree
+- Otherwise → worktree with fewest stories (load balance)
 
 ```
-FOR EACH closeable story in wave:
-  Task({
+FOR EACH closeable story IN selected_stories:
+  IF story.depends_on intersects any worktree's story list:
+    target_wt = worktree containing the dependency
+  ELSE:
+    target_wt = worktree with fewest stories
+  WORKTREES[target_wt].stories.append(story)
+```
+
+**Step 3: Spawn Initial Workers (One Story Per Worker)**
+
+Each worker gets exactly ONE story. When a worker finishes, the lead merges to integration
+and spawns a NEW worker in the same worktree for the next story in that worktree's queue.
+
+```
+FUNCTION spawn_teleos_in_worktree(wt_id, wt, story):
+  is_first_story = (wt.completed_count == 0)
+
+  agent = Task({
     subagent_type: "general-purpose",
-    description: "🔧 Teleos closing {{story_key}}",
+    description: "🔧 Teleos: {{story.story_key}} (wt-{{wt_id}})",
     run_in_background: true,
-    prompt: `[same prompt as sequential mode]`
+    prompt: `
+You are Teleos, the Story Closer worker agent.
+
+Read your full instructions from:
+  src/workflows/story-closer/agents/closer-worker.md
+
+## Worktree Mode
+- worktree_mode: true
+- worktree_path: {{wt.path}}
+- You OWN this worktree. Commit freely, no lock protocol needed.
+
+## Your Assignment — ONE Story
+- story_key: {{story.story_key}}
+- story_file: {{story.story_file}}
+- unchecked_count: {{story.unchecked}}
+
+{{IF NOT is_first_story:}}
+## Pre-Flight: Pull Integration
+Before starting, pull the latest integration branch:
+  cd {{wt.path}} && git merge integration --no-edit
+{{END IF}}
+
+sprint_artifacts: {{sprint_artifacts}}
+current_date: {{date}}
+
+Human-validation patterns to skip:
+{{human_validation_patterns from workflow.md config}}
+
+CRITICAL: Return a structured JSON result as your final output.
+Do NOT stop to ask questions — log blockers and continue.
+`
   })
+  WORKTREES[wt_id].agent_task_id = agent.task_id
+  WORKTREES[wt_id].current_story = story
+
+# Spawn first story in each worktree
+FOR EACH (wt_id, wt) IN WORKTREES WHERE wt.stories is not empty:
+  wt.story_index = 0
+  wt.completed_count = 0
+  spawn_teleos_in_worktree(wt_id, wt, wt.stories[0])
 ```
 
-Wait for all workers in wave to complete. Collect results.
+**Step 4: Monitor, Early Integration, Re-Dispatch**
 
-**Display wave summary:**
+```
+WHILE any workers active OR any worktrees have remaining stories:
+  FOR EACH (wt_id, wt) IN WORKTREES WHERE wt.agent_task_id is not null:
+    result = TaskOutput(task_id=wt.agent_task_id, block=false, timeout=5000)
+
+    IF result.status == "completed":
+      # Merge worktree branch into integration
+      Bash("git checkout {{INTEGRATION}} && git merge {{wt.branch}} --no-edit && git checkout -")
+      Parse result, merge into batch_results
+      wt.completed_count++
+      wt.agent_task_id = null
+
+      # Re-dispatch: spawn new worker for next story in this worktree's queue
+      wt.story_index++
+      IF wt.story_index < wt.stories.length:
+        next_story = wt.stories[wt.story_index]
+        spawn_teleos_in_worktree(wt_id, wt, next_story)
+
+    ELIF result.status == "failed":
+      batch_results.errors.append({ story_key: wt.current_story.story_key, error: result.error })
+      wt.agent_task_id = null
+      wt.story_index++
+      IF wt.story_index < wt.stories.length:
+        next_story = wt.stories[wt.story_index]
+        spawn_teleos_in_worktree(wt_id, wt, next_story)
+
+  sleep(10s)
+```
+
+**Step 5: Final Merge + Cleanup**
+
+```
+# Merge integration into main
+Bash("git checkout main && git merge {{INTEGRATION}} --no-edit")
+
+# Cleanup worktrees and branches
+FOR EACH (wt_id, wt) IN WORKTREES:
+  Bash("git worktree remove {{wt.path}}")
+  Bash("git branch -d {{wt.branch}}")
+Bash("git branch -d {{INTEGRATION}}")
+```
+
+**Display batch summary:**
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📊 Wave {{wave_num}} Complete
+📊 Parallel Execution Complete
    ✅ {{completed}} completed
    ⚠️ {{partial}} partial
    ❌ {{errors}} errors
+   🔀 {{routed}} routed to pipeline
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
-
-Continue to next wave until all waves complete.
 
 ### 3.5 Aggregate Results
 

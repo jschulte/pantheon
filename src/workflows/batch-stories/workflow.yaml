@@ -140,18 +140,30 @@ parallel_config:
   worker_persona: "{installed_path}/agents/heracles.md"
   delegate_mode: recommended    # Use Shift+Tab delegate mode for the lead
 
+  # Worktree isolation — persistent worktrees eliminate filesystem contention
+  worktree_isolation:
+    enabled: true
+    max_worktrees: 3              # matches max_workers
+    install_cmd: "npm ci"         # run once per worktree at setup
+    branch_pattern: "worktree/heracles-{n}"
+    integration_branch: "integration"
+    colocate_dependencies: true   # stories with deps → same worktree
+
   # -------------------------------------------------------------------------
   # ARCHITECTURE
   # -------------------------------------------------------------------------
-  # Lead manages an in-memory queue. For each story:
-  #   1. Lead spawns a background Task agent (Heracles) with ONE story assignment
-  #   2. Agent executes the full 7-phase pipeline with sub-agent spawns
-  #   3. Agent writes artifacts to completions/ directory
-  #   4. Lead polls TaskOutput for completion, validates artifacts
-  #   5. Lead accepts or rejects based on mandatory artifact checklist
+  # Lead creates 3 persistent worktrees + integration branch (once):
+  #   1. git worktree add for each worktree, npm ci once per worktree
+  #   2. Assign stories to worktrees (deps → same worktree, load-balance rest)
+  #   3. Spawn ONE worker per story (not per worktree) — single-story contract
+  #   4. When worker finishes: lead merges worktree → integration branch
+  #   5. Lead spawns NEW worker in same worktree for next story in queue
+  #   6. New worker pulls integration first → has all previously completed code
+  #   7. Final merge: integration → main
   #
-  # This eliminates batch awareness — workers cannot see other stories,
-  # cannot self-schedule, and cannot optimize for throughput over depth.
+  # Each worker OWNS its worktree — no lock protocol, no staging contention.
+  # Single-story workers stay focused. Worktrees persist (no re-setup).
+  # Early integration catches cross-worktree issues before they compound.
 
   # -------------------------------------------------------------------------
   # ARTIFACT VALIDATION (Mandatory before accepting completion)

@@ -35,6 +35,17 @@ You are spawned by the batch lead with exactly ONE story. Your job:
 
 ---
 
+### Worktree Mode
+
+When `worktree_mode: true`:
+- You OWN this worktree. No other agents modify files here.
+- Commit freely: `git add -A && git commit -m "feat({story_key}): {title}"`
+- No lock protocol needed. Do NOT read git-commit-queue.md.
+- All npm scripts (test, build, type-check, lint) work normally — you have full node_modules.
+- If your prompt includes a "Pre-Flight: Pull Integration" section, run that merge first.
+
+---
+
 ## Inputs (from Spawn Prompt)
 
 The batch lead spawns you with these values in your prompt:
@@ -240,6 +251,10 @@ NARRATIVE
 Use `SKIP_TYPECHECK=1 SKIP_LINT=1` for commits (type-check and lint are handled by quality gates in batch mode, or already ran during BUILD/VERIFY in sequential mode). Create two commits:
 - Implementation: `feat({{story_key}}): {{title}}`
 - Reconciliation: `chore({{story_key}}): reconcile story completion`
+
+**Worktree mode (`worktree_mode: true`):** Commit freely — you own the worktree. No lock protocol needed. Skip reading `git-commit-queue.md`. Just `git add -A && SKIP_TYPECHECK=1 SKIP_LINT=1 git commit -m "..."`.
+
+**Non-worktree mode (shared filesystem):** Use the directory-based lock protocol from `data/git-commit-queue.md` to serialize commits with other workers.
 
 ---
 

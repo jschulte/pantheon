@@ -20,8 +20,31 @@ checks exactly ONCE after all stories complete, then fixes any issues.
 - Secret detection — ran in pre-commit hook
 
 **What this phase verifies:**
+- Integration branch merged cleanly into main (worktree mode)
 - TypeScript type-check (whole project, one process)
+- Full test suite (catches cross-story integration issues)
 - ESLint lint (whole project, one process)
+
+### Step 0: Verify Integration Merge (Worktree Mode)
+
+If worktree isolation was used, the integration branch was already merged into main
+during the execute-parallel phase (Step 6: Final Merge). Verify that merge was clean:
+
+```bash
+# Verify we're on main and integration is fully merged
+git branch --merged main | grep integration
+```
+
+```
+IF integration branch is merged:
+  "✅ Integration branch merged cleanly into main"
+ELSE:
+  "⚠️ Integration branch not fully merged — attempting merge"
+  git merge integration --no-edit
+  IF merge fails:
+    "❌ Integration merge conflict — manual resolution required"
+    Display conflict files
+```
 
 ### Step 1: Run Type Check
 
@@ -59,16 +82,38 @@ ELSE:
   Display first 50 lines of errors
 ```
 
+### Step 2.5: Run Full Test Suite (Cross-Story Integration)
+
+Per-story tests ran scoped (`jest --findRelatedTests`) during BUILD/VERIFY. Now run the
+full suite to catch cross-story integration issues — e.g., two stories modifying the same
+module in incompatible ways.
+
+```bash
+cd app
+npm test -- --bail 2>&1 | tee /tmp/batch-test-output.txt
+TEST_EXIT=$?
+```
+
+```
+IF TEST_EXIT == 0:
+  "✅ Full test suite: PASS"
+ELSE:
+  "❌ Full test suite: FAIL — cross-story integration issues detected"
+  Display first 50 lines of failures
+```
+
 ### Step 3: If Errors, Spawn Fixer Agent
 
 ```
-IF TYPE_CHECK_EXIT != 0 OR LINT_EXIT != 0:
+IF TYPE_CHECK_EXIT != 0 OR LINT_EXIT != 0 OR TEST_EXIT != 0:
   # Collect error output
   errors = ""
   IF TYPE_CHECK_EXIT != 0:
     errors += Read("/tmp/batch-typecheck-output.txt")
   IF LINT_EXIT != 0:
     errors += Read("/tmp/batch-lint-output.txt")
+  IF TEST_EXIT != 0:
+    errors += Read("/tmp/batch-test-output.txt")
 
   # Spawn a fixer agent to resolve issues
   fixer = Task({
@@ -76,8 +121,8 @@ IF TYPE_CHECK_EXIT != 0 OR LINT_EXIT != 0:
     model: "opus",
     description: "🔧 Fix batch type-check/lint errors",
     prompt: `
-You are a code fixer. The batch pipeline completed all stories but type-check and/or lint
-failed. Fix ALL errors below.
+You are a code fixer. The batch pipeline completed all stories but type-check, lint, and/or
+tests failed. Fix ALL errors below.
 
 ## Errors to Fix
 
@@ -120,14 +165,17 @@ EOF
 cd app
 npm run type-check
 npm run lint
+npm test -- --bail
 ```
 
 ```
-IF both pass:
+IF all pass:
   Display:
     "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     "✅ QUALITY GATES PASSED"
+    "   Integration: MERGED"
     "   Type check: PASS"
+    "   Tests: PASS"
     "   Lint: PASS"
     "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
@@ -136,6 +184,7 @@ ELSE:
     "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     "❌ QUALITY GATES FAILED — Manual intervention required"
     "   Type check: {{PASS|FAIL}}"
+    "   Tests: {{PASS|FAIL}}"
     "   Lint: {{PASS|FAIL}}"
     "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     "   Remaining errors saved to /tmp/batch-*-output.txt"
