@@ -152,8 +152,8 @@ Load phases on-demand from the `phases/` directory.
 | 1 | Select Stories | phases/select-stories.md | Always | 210 |
 | 2 | Plan Parallel | phases/plan-parallel.md | mode==parallel | 165 |
 | 3a | Execute Sequential | phases/execute-sequential.md | mode==sequential | 130 |
-| 3b | Execute Parallel | phases/execute-parallel.md | mode==parallel | 490 |
-| 3c | Quality Gates | phases/quality-gates.md | mode==parallel | 120 |
+| 3b | Execute Parallel | phases/execute-parallel.md | mode==parallel | 550 |
+| 3c | Quality Gates | phases/quality-gates.md | mode==parallel | 180 |
 | 4 | Report & Summary | phases/report-summary.md | Always | 300 |
 
 **Execution flow:**
@@ -163,9 +163,18 @@ Load phases on-demand from the `phases/` directory.
    - Parallel: Load `phases/plan-parallel.md`, then `phases/execute-parallel.md`, then `phases/quality-gates.md`
 3. Always load `phases/report-summary.md` last
 
+> **Worktree Isolation (3b):** In parallel mode, the lead creates 3 persistent worktrees with
+> independent `node_modules` (via `npm ci`). Stories are assigned to worktrees — dependencies
+> go to the same worktree, remaining stories are load-balanced. Each worker gets exactly ONE
+> story (single-story contract). When a worker finishes, the lead merges to the integration
+> branch and spawns a NEW worker in the same worktree for the next story. The new worker pulls
+> integration first, getting all previously completed code. This eliminates git staging
+> contention, concurrent build fights, and the `mkdir`-based commit queue.
+
 > **Quality Gates (3c):** In parallel mode, individual workers skip type-check and lint during
-> their phases (batch_mode flag). Phase 3c runs both checks once after all stories complete,
-> auto-fixes what it can, and spawns a fixer for remaining issues. Sequential mode runs
+> their phases (batch_mode flag). Phase 3c verifies the integration merge, runs type-check,
+> full test suite (catches cross-story issues), and lint once after all stories complete.
+> Auto-fixes what it can, spawns a fixer for remaining issues. Sequential mode runs
 > type-check/lint per-story as before — no quality gates phase needed.
 
 <failure_handling>
