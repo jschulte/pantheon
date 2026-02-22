@@ -103,16 +103,22 @@ Each worktree gets its own filesystem, `node_modules`, and git branch — no con
 
 ```
 INTEGRATION = "integration"
-Bash("git branch {{INTEGRATION}} HEAD")
+Bash("git branch -f {{INTEGRATION}} HEAD")  # -f for idempotent rerun
 
 max_worktrees = 3  # matches batch-stories parallel_config
+install_cmd = "npm ci"  # configurable per project
 WORKTREES = {}
 
 FOR n IN 1..max_worktrees:
   branch = "worktree/teleos-{{n}}"
   path = "{{project_root}}/.claude/worktrees/teleos-{{n}}"
+
+  # Clean up stale worktree/branch from interrupted previous run
+  Bash("git worktree remove {{path}} --force 2>/dev/null || true")
+  Bash("git branch -D {{branch}} 2>/dev/null || true")
+
   Bash("git worktree add -b {{branch}} {{path}} HEAD")
-  Bash("cd {{path}} && npm ci")
+  Bash("cd {{path}} && {{install_cmd}}")
   WORKTREES[n] = { path, branch, stories: [], agent_task_id: null }
 ```
 
@@ -197,7 +203,7 @@ WHILE any workers active OR any worktrees have remaining stories:
 
     IF result.status == "completed":
       # Merge worktree branch into integration
-      Bash("git checkout {{INTEGRATION}} && git merge {{wt.branch}} --no-edit && git checkout -")
+      Bash("git checkout {{INTEGRATION}} && git merge {{wt.branch}} --no-edit && git checkout main")
       Parse result, merge into batch_results
       wt.completed_count++
       wt.agent_task_id = null

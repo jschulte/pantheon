@@ -193,6 +193,16 @@ ELSE:
   # Do NOT halt the batch — proceed to summary with the failure noted
 ```
 
+### Step 6: Cleanup Integration Branch
+
+The integration branch was retained by execute-parallel for this verification.
+Now that quality gates are complete, clean it up.
+
+```
+Bash("git branch -d integration 2>/dev/null || true")
+Display: "🧹 Cleaned up integration branch"
+```
+
 ### Proceed to Summary
 
 Continue to `report-summary` phase with quality gate results included.

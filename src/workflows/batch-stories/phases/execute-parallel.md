@@ -57,8 +57,8 @@ FOR EACH story IN DEPENDENCY_SORTED_STORIES:
     depends_on: story.depends_on
   })
 
-# Create integration branch at current HEAD
-Bash("git branch {{INTEGRATION}} HEAD")
+# Create or reset integration branch at current HEAD (idempotent for interrupted reruns)
+Bash("git branch -f {{INTEGRATION}} HEAD")
 ```
 
 **No TeamCreate. No TaskCreate. No shared task list.** Tracking lives in the lead's context only.
@@ -68,12 +68,18 @@ Bash("git branch {{INTEGRATION}} HEAD")
 ```
 max_worktrees = 3  # From parallel_config.worktree_isolation.max_worktrees
 
+install_cmd = parallel_config.worktree_isolation.install_cmd  # e.g., "npm ci"
+
 FOR n IN 1..max_worktrees:
   branch = "worktree/heracles-{{n}}"
   path = "{{project_root}}/.claude/worktrees/heracles-{{n}}"
 
+  # Clean up stale worktree/branch from interrupted previous run
+  Bash("git worktree remove {{path}} --force 2>/dev/null || true")
+  Bash("git branch -D {{branch}} 2>/dev/null || true")
+
   Bash("git worktree add -b {{branch}} {{path}} HEAD")
-  Bash("cd {{path}} && npm ci")
+  Bash("cd {{path}} && {{install_cmd}}")
 
   WORKTREES[n] = {
     path: path,
@@ -260,7 +266,7 @@ WHILE stories_remaining():
 
       IF validation.passed:
         # Merge worktree branch into integration
-        Bash("git checkout {{INTEGRATION}} && git merge {{wt.branch}} --no-edit && git checkout -")
+        Bash("git checkout {{INTEGRATION}} && git merge {{wt.branch}} --no-edit && git checkout main")
         MERGED_TO_INTEGRATION.append(story.story_key)
         COMPLETED.append(story.story_key)
         wt.completed_stories.append(story.story_key)
@@ -402,9 +408,10 @@ FOR EACH (wt_id, wt) IN WORKTREES:
   Bash("git worktree remove {{wt.path}} --force")
   Bash("git branch -d {{wt.branch}}")
 
-Bash("git branch -d {{INTEGRATION}}")
+# NOTE: Integration branch is NOT deleted here — quality-gates Step 0 needs it
+# to verify the merge. Quality gates deletes it after verification.
 
-Display: "✅ Removed {{WORKTREES.size}} worktrees + integration branch"
+Display: "✅ Removed {{WORKTREES.size}} worktrees (integration branch retained for quality gates)"
 ```
 
 ### Step 8: Artifact Validation (MANDATORY Before Accepting Completion)
