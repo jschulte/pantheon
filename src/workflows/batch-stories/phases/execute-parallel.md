@@ -33,9 +33,15 @@ operate autonomously and cannot prompt for permission mid-execution. In your set
 **Delegate mode (recommended):** Use `Shift+Tab` to switch the lead session to delegate mode.
 This ensures the orchestrator coordinates work without accidentally implementing stories itself.
 
-### Step 1: Initialize Tracking + Integration Branch
+### Step 1: Initialize Tracking + Session ID
 
 ```
+# Generate a unique 6-character hex session ID from PID + timestamp
+# This ensures multiple terminals never collide on worktree names
+SESSION_ID = Bash("echo -n $$$(date +%s%N) | shasum | head -c 6").trim()
+
+Display: "🔑 Session ID: {{SESSION_ID}}"
+
 # From the dependency-sorted story list (produced by select-stories phase):
 ALL_STORIES = []    # All stories in dependency order
 COMPLETED = []      # Successfully completed story_keys
@@ -44,7 +50,7 @@ CONSECUTIVE_FAILURES = 0  # Circuit breaker counter
 NARRATIVE_POSITIONS = {}  # story_key → lines_already_displayed (for incremental log reading)
 
 WORKTREES = {}          # wt_id → {path, branch, stories: [], agent_task_id, current_story}
-INTEGRATION = "integration"
+INTEGRATION = "integration-{{SESSION_ID}}"
 MERGED_TO_INTEGRATION = []  # story_keys already merged
 
 # Populate ALL_STORIES in dependency order (dependencies first)
@@ -56,27 +62,65 @@ FOR EACH story IN DEPENDENCY_SORTED_STORIES:
     title: story.story_title,
     depends_on: story.depends_on
   })
-
-# Create or reset integration branch at current HEAD (idempotent for interrupted reruns)
-Bash("git branch -f {{INTEGRATION}} HEAD")
 ```
 
 **No TeamCreate. No TaskCreate. No shared task list.** Tracking lives in the lead's context only.
+
+### Step 1.5: Orphan Detection + Cleanup
+
+Before creating new worktrees, check for orphaned worktrees from crashed sessions.
+
+```
+MANIFEST_PATH = "{{project_root}}/.claude/worktrees/manifest.json"
+Bash("mkdir -p {{project_root}}/.claude/worktrees")
+
+IF file_exists(MANIFEST_PATH):
+  manifest = JSON.parse(Read(MANIFEST_PATH))
+  stale_threshold_hours = 4  # From worktree_isolation.orphan_detection.stale_threshold_hours
+
+  FOR EACH (session_id, session) IN manifest.sessions:
+    # Check if the PID is still running
+    pid_alive = Bash("kill -0 {{session.pid}} 2>/dev/null && echo alive || echo dead").trim() == "alive"
+    age_hours = (now() - session.started_at) / 3600
+
+    IF NOT pid_alive AND age_hours > stale_threshold_hours:
+      Display: "🧹 Cleaning orphaned session {{session_id}} (PID {{session.pid}} dead, {{age_hours}}h old)"
+
+      FOR EACH wt IN session.worktrees:
+        Bash("git worktree remove {{wt.path}} --force 2>/dev/null || true")
+        Bash("git branch -D {{wt.branch}} 2>/dev/null || true")
+      Bash("git branch -D {{session.integration_branch}} 2>/dev/null || true")
+
+      # Remove session from manifest
+      delete manifest.sessions[session_id]
+
+    ELIF NOT pid_alive:
+      Display: "⚠️ Session {{session_id}} (PID {{session.pid}}) — PID dead but only {{age_hours}}h old. Skipping (threshold: {{stale_threshold_hours}}h)"
+
+  # Write cleaned manifest back
+  Write(MANIFEST_PATH, JSON.stringify(manifest, null, 2))
+
+ELSE:
+  # No manifest — first run or manually cleaned
+  manifest = { sessions: {} }
+```
+
+### Step 1.7: Create Integration Branch
+
+```
+# Create or reset integration branch at current HEAD (idempotent for interrupted reruns)
+Bash("git branch -f {{INTEGRATION}} HEAD")
+```
 
 ### Step 2: Create Persistent Worktrees
 
 ```
 max_worktrees = 3  # From parallel_config.worktree_isolation.max_worktrees
-
 install_cmd = parallel_config.worktree_isolation.install_cmd  # e.g., "npm ci"
 
 FOR n IN 1..max_worktrees:
-  branch = "worktree/heracles-{{n}}"
-  path = "{{project_root}}/.claude/worktrees/heracles-{{n}}"
-
-  # Clean up stale worktree/branch from interrupted previous run
-  Bash("git worktree remove {{path}} --force 2>/dev/null || true")
-  Bash("git branch -D {{branch}} 2>/dev/null || true")
+  branch = "worktree/heracles-{{SESSION_ID}}-{{n}}"
+  path = "{{project_root}}/.claude/worktrees/heracles-{{SESSION_ID}}-{{n}}"
 
   Bash("git worktree add -b {{branch}} {{path}} HEAD")
   Bash("cd {{path}} && {{install_cmd}}")
@@ -90,8 +134,19 @@ FOR n IN 1..max_worktrees:
     completed_stories: []
   }
 
+# Write this session to the manifest
+manifest.sessions[SESSION_ID] = {
+  pid: Bash("echo $$").trim(),
+  started_at: now(),
+  integration_branch: INTEGRATION,
+  worktrees: WORKTREES.values().map(wt → { path: wt.path, branch: wt.branch }),
+  stories: [],  # populated in Step 3
+  status: "active"
+}
+Write(MANIFEST_PATH, JSON.stringify(manifest, null, 2))
+
 Display:
-  "✅ Created {{max_worktrees}} persistent worktrees with independent node_modules"
+  "✅ Created {{max_worktrees}} persistent worktrees (session: {{SESSION_ID}})"
   FOR EACH (id, wt) IN WORKTREES:
     "  worktree-{{id}}: {{wt.path}} (branch: {{wt.branch}})"
 ```
@@ -119,6 +174,12 @@ FOR EACH story IN ALL_STORIES:
     target_wt = WORKTREES.min_by(wt → wt.stories.length).id
 
   WORKTREES[target_wt].stories.append(story)
+
+# Update manifest with story assignments
+manifest.sessions[SESSION_ID].stories = ALL_STORIES.map(s → s.story_key)
+FOR EACH (wt_id, wt) IN WORKTREES:
+  manifest.sessions[SESSION_ID].worktrees[wt_id - 1].assigned_stories = wt.stories.map(s → s.story_key)
+Write(MANIFEST_PATH, JSON.stringify(manifest, null, 2))
 
 Display:
   "📋 Story assignments:"
@@ -399,7 +460,7 @@ ELSE:
   # Try to resolve automatically, report if manual intervention needed
 ```
 
-### Step 7: Cleanup Worktrees
+### Step 7: Cleanup Worktrees + Manifest
 
 ```
 Display: "🧹 Cleaning up worktrees and branches..."
@@ -410,6 +471,12 @@ FOR EACH (wt_id, wt) IN WORKTREES:
 
 # NOTE: Integration branch is NOT deleted here — quality-gates Step 0 needs it
 # to verify the merge. Quality gates deletes it after verification.
+
+# Remove this session from the manifest
+IF file_exists(MANIFEST_PATH):
+  manifest = JSON.parse(Read(MANIFEST_PATH))
+  delete manifest.sessions[SESSION_ID]
+  Write(MANIFEST_PATH, JSON.stringify(manifest, null, 2))
 
 Display: "✅ Removed {{WORKTREES.size}} worktrees (integration branch retained for quality gates)"
 ```

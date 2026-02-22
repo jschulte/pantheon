@@ -163,13 +163,16 @@ Load phases on-demand from the `phases/` directory.
    - Parallel: Load `phases/plan-parallel.md`, then `phases/execute-parallel.md`, then `phases/quality-gates.md`
 3. Always load `phases/report-summary.md` last
 
-> **Worktree Isolation (3b):** In parallel mode, the lead creates 3 persistent worktrees with
-> independent `node_modules` (via `npm ci`). Stories are assigned to worktrees — dependencies
-> go to the same worktree, remaining stories are load-balanced. Each worker gets exactly ONE
-> story (single-story contract). When a worker finishes, the lead merges to the integration
-> branch and spawns a NEW worker in the same worktree for the next story. The new worker pulls
-> integration first, getting all previously completed code. This eliminates git staging
-> contention, concurrent build fights, and the `mkdir`-based commit queue.
+> **Worktree Isolation (3b):** In parallel mode, the lead generates a unique session ID and
+> creates 3 persistent worktrees with session-scoped names (e.g., `heracles-a1b2c3-1`). This
+> allows multiple terminals to run parallel batches simultaneously without collision. A manifest
+> file (`.claude/worktrees/manifest.json`) tracks active sessions; orphaned worktrees from
+> crashed sessions are automatically cleaned up at batch start. Stories are assigned to
+> worktrees — dependencies go to the same worktree, remaining stories are load-balanced. Each
+> worker gets exactly ONE story (single-story contract). When a worker finishes, the lead merges
+> to the integration branch and spawns a NEW worker in the same worktree for the next story.
+> The new worker pulls integration first, getting all previously completed code. This eliminates
+> git staging contention, concurrent build fights, and the `mkdir`-based commit queue.
 
 > **Quality Gates (3c):** In parallel mode, individual workers skip type-check and lint during
 > their phases (batch_mode flag). Phase 3c verifies the integration merge, runs type-check,

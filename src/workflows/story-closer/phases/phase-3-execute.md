@@ -98,28 +98,59 @@ Continue to next story.
 
 Uses the same persistent worktree + early integration pattern as batch-stories.
 Each worktree gets its own filesystem, `node_modules`, and git branch — no contention.
+Session-scoped naming prevents collisions when multiple terminals run concurrently.
 
-**Step 1: Create Integration Branch + Persistent Worktrees**
+**Step 1: Generate Session ID + Create Integration Branch + Persistent Worktrees**
 
 ```
-INTEGRATION = "integration"
+# Generate a unique 6-character hex session ID (same pattern as batch-stories)
+SESSION_ID = Bash("echo -n $$$(date +%s%N) | shasum | head -c 6").trim()
+Display: "🔑 Session ID: {{SESSION_ID}}"
+
+INTEGRATION = "integration-{{SESSION_ID}}"
 Bash("git branch -f {{INTEGRATION}} HEAD")  # -f for idempotent rerun
 
 max_worktrees = 3  # matches batch-stories parallel_config
 install_cmd = "npm ci"  # configurable per project
 WORKTREES = {}
+MANIFEST_PATH = "{{project_root}}/.claude/worktrees/manifest.json"
+Bash("mkdir -p {{project_root}}/.claude/worktrees")
+
+# Orphan cleanup: check manifest for dead sessions
+IF file_exists(MANIFEST_PATH):
+  manifest = JSON.parse(Read(MANIFEST_PATH))
+  FOR EACH (sid, session) IN manifest.sessions:
+    pid_alive = Bash("kill -0 {{session.pid}} 2>/dev/null && echo alive || echo dead").trim() == "alive"
+    age_hours = (now() - session.started_at) / 3600
+    IF NOT pid_alive AND age_hours > 4:
+      Display: "🧹 Cleaning orphaned session {{sid}}"
+      FOR EACH wt IN session.worktrees:
+        Bash("git worktree remove {{wt.path}} --force 2>/dev/null || true")
+        Bash("git branch -D {{wt.branch}} 2>/dev/null || true")
+      Bash("git branch -D {{session.integration_branch}} 2>/dev/null || true")
+      delete manifest.sessions[sid]
+  Write(MANIFEST_PATH, JSON.stringify(manifest, null, 2))
+ELSE:
+  manifest = { sessions: {} }
 
 FOR n IN 1..max_worktrees:
-  branch = "worktree/teleos-{{n}}"
-  path = "{{project_root}}/.claude/worktrees/teleos-{{n}}"
-
-  # Clean up stale worktree/branch from interrupted previous run
-  Bash("git worktree remove {{path}} --force 2>/dev/null || true")
-  Bash("git branch -D {{branch}} 2>/dev/null || true")
+  branch = "worktree/teleos-{{SESSION_ID}}-{{n}}"
+  path = "{{project_root}}/.claude/worktrees/teleos-{{SESSION_ID}}-{{n}}"
 
   Bash("git worktree add -b {{branch}} {{path}} HEAD")
   Bash("cd {{path}} && {{install_cmd}}")
   WORKTREES[n] = { path, branch, stories: [], agent_task_id: null }
+
+# Write session to manifest
+manifest.sessions[SESSION_ID] = {
+  pid: Bash("echo $$").trim(),
+  started_at: now(),
+  workflow: "story-closer",
+  integration_branch: INTEGRATION,
+  worktrees: WORKTREES.values().map(wt → { path: wt.path, branch: wt.branch }),
+  status: "active"
+}
+Write(MANIFEST_PATH, JSON.stringify(manifest, null, 2))
 ```
 
 **Step 2: Assign Stories to Worktrees**
@@ -233,9 +264,15 @@ Bash("git checkout main && git merge {{INTEGRATION}} --no-edit")
 
 # Cleanup worktrees and branches
 FOR EACH (wt_id, wt) IN WORKTREES:
-  Bash("git worktree remove {{wt.path}}")
+  Bash("git worktree remove {{wt.path}} --force")
   Bash("git branch -d {{wt.branch}}")
 Bash("git branch -d {{INTEGRATION}}")
+
+# Remove session from manifest
+IF file_exists(MANIFEST_PATH):
+  manifest = JSON.parse(Read(MANIFEST_PATH))
+  delete manifest.sessions[SESSION_ID]
+  Write(MANIFEST_PATH, JSON.stringify(manifest, null, 2))
 ```
 
 **Display batch summary:**
