@@ -140,18 +140,44 @@ parallel_config:
   worker_persona: "{installed_path}/agents/heracles.md"
   delegate_mode: recommended    # Use Shift+Tab delegate mode for the lead
 
+  # Worktree isolation — persistent worktrees eliminate filesystem contention
+  worktree_isolation:
+    enabled: true
+    max_worktrees: 3              # matches max_workers
+    install_cmd: "npm ci"         # run once per worktree at setup
+    branch_pattern: "worktree/heracles-{session}-{n}"  # {session} = unique 6-char hex per batch run
+    worktree_path_pattern: ".claude/worktrees/heracles-{session}-{n}"
+    integration_branch: "integration-{session}"        # session-scoped to avoid collision
+    manifest_file: ".claude/worktrees/manifest.json"   # tracks active sessions for crash recovery
+    colocate_dependencies: true   # stories with deps → same worktree
+    orphan_detection:
+      enabled: true               # check for orphaned worktrees at batch start
+      stale_threshold_hours: 4    # sessions older than this with dead PID are orphans
+      auto_cleanup: true          # automatically remove orphaned worktrees
+
   # -------------------------------------------------------------------------
   # ARCHITECTURE
   # -------------------------------------------------------------------------
-  # Lead manages an in-memory queue. For each story:
-  #   1. Lead spawns a background Task agent (Heracles) with ONE story assignment
-  #   2. Agent executes the full 7-phase pipeline with sub-agent spawns
-  #   3. Agent writes artifacts to completions/ directory
-  #   4. Lead polls TaskOutput for completion, validates artifacts
-  #   5. Lead accepts or rejects based on mandatory artifact checklist
+  # Lead generates a 6-char session ID (hex from PID + timestamp) at batch start.
+  # All worktree paths, branch names, and integration branch include the session ID.
+  # This allows multiple terminals to run parallel batches without collision.
   #
-  # This eliminates batch awareness — workers cannot see other stories,
-  # cannot self-schedule, and cannot optimize for throughput over depth.
+  # Lead creates 3 persistent worktrees + integration branch (once):
+  #   1. Check manifest for orphaned worktrees (dead PID + stale) → cleanup
+  #   2. git worktree add for each worktree, npm ci once per worktree
+  #   3. Write session to manifest.json (PID, timestamp, story assignments)
+  #   4. Assign stories to worktrees (deps → same worktree, load-balance rest)
+  #   5. Spawn ONE worker per story (not per worktree) — single-story contract
+  #   6. When worker finishes: lead merges worktree → integration branch
+  #   7. Lead spawns NEW worker in same worktree for next story in queue
+  #   8. New worker pulls integration first → has all previously completed code
+  #   9. Final merge: integration → main
+  #  10. Remove session from manifest, cleanup worktrees and branches
+  #
+  # Each worker OWNS its worktree — no lock protocol, no staging contention.
+  # Single-story workers stay focused. Worktrees persist (no re-setup).
+  # Early integration catches cross-worktree issues before they compound.
+  # Multiple terminals never collide — each has its own session-scoped worktrees.
 
   # -------------------------------------------------------------------------
   # ARTIFACT VALIDATION (Mandatory before accepting completion)
