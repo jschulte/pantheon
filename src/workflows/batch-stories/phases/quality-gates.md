@@ -28,11 +28,17 @@ checks exactly ONCE after all stories complete, then fixes any issues.
 ### Step 0: Verify Integration Merge (Worktree Mode)
 
 If worktree isolation was used, the integration branch was already merged into main
-during the execute-parallel phase (Step 6: Final Merge). Verify that merge was clean:
+during the execute-parallel phase (Step 6: Final Merge). Verify that merge was clean.
+
+The integration branch name is session-scoped (e.g., `integration-a1b2c3`). The lead
+passes `INTEGRATION` (the branch name) forward from execute-parallel. If not available,
+detect it from the manifest or by pattern matching.
 
 ```bash
-# Verify we're on main and integration is fully merged
-git branch --merged main | grep integration
+# Detect session-scoped integration branch (if INTEGRATION not passed forward)
+INTEGRATION=$(git branch --list 'integration-*' --merged main | head -1 | tr -d ' ')
+# Verify it's fully merged
+git branch --merged main | grep "$INTEGRATION"
 ```
 
 ```
@@ -40,7 +46,7 @@ IF integration branch is merged:
   "✅ Integration branch merged cleanly into main"
 ELSE:
   "⚠️ Integration branch not fully merged — attempting merge"
-  git merge integration --no-edit
+  git merge $INTEGRATION --no-edit
   IF merge fails:
     "❌ Integration merge conflict — manual resolution required"
     Display conflict files
@@ -199,8 +205,11 @@ The integration branch was retained by execute-parallel for this verification.
 Now that quality gates are complete, clean it up.
 
 ```
-Bash("git branch -d integration 2>/dev/null || true")
-Display: "🧹 Cleaned up integration branch"
+# INTEGRATION is session-scoped (e.g., "integration-a1b2c3")
+Bash("git branch -d {{INTEGRATION}} 2>/dev/null || true")
+# Also clean any other merged integration branches (from previous sessions)
+Bash("git branch --list 'integration-*' --merged main | xargs -r git branch -d 2>/dev/null || true")
+Display: "🧹 Cleaned up integration branch(es)"
 ```
 
 ### Proceed to Summary
