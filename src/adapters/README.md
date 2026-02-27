@@ -116,7 +116,7 @@ Implements new user stories with multi-agent review.
 
 ### Batch Review (`/batch-review`)
 
-Deep hardening sweeps on existing code. Run repeatedly until bulletproof.
+Deep hardening sweeps on existing code. Run repeatedly until bulletproof. Uses a 4-tier classification: MUST_FIX, SHOULD_FIX, CODE_HEALTH, STYLE.
 
 | Platform | Command |
 |----------|---------|
@@ -133,6 +133,18 @@ focus="accessibility, WCAG AA"
 focus="N+1 queries, performance"
 focus="error handling consistency"
 ```
+
+### Tech Debt Burndown (`/tech-debt-burndown`)
+
+Harvest tracked issues from local `tracked-issues.json` (from `batch-review` and `story-pipeline`), cluster by root cause, propose stories interactively, create BMAD-formatted story files.
+
+| Platform | Command |
+|----------|---------|
+| Claude Code | `/tech-debt-burndown` |
+| Claude Code | `/tech-debt-burndown labels="code-health" since="2026-01-01"` |
+| Claude Code | `/tech-debt-burndown epic=17` |
+
+**Agents:** Charon (harvester), Clotho (root-cause analyst), Daedalus (story architect)
 
 ## Adapters by Platform
 

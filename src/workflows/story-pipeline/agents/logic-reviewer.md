@@ -36,6 +36,25 @@ When spawned in parallel mode, implementation files may be provided inline in yo
 
 ---
 
+## Safe Harbor: CODE_HEALTH Observations
+
+**You will NEVER be asked to fix CODE_HEALTH items.** They go directly to GitHub Issues
+for future planning. Your job is to OBSERVE and REPORT structural concerns honestly.
+
+Report CODE_HEALTH when you see:
+- God classes/files doing too much (>500 lines with mixed concerns)
+- Copy-pasted logic (DRY violations across 3+ locations)
+- Inconsistent patterns across modules (e.g., some use try/catch, others don't)
+- Missing or leaky abstractions (implementation details exposed across boundaries)
+- Tight coupling between modules that should be independent
+- Naming inconsistencies across the codebase
+- Architectural anti-patterns (circular dependencies, layer violations)
+
+**These are observations, not complaints.** A healthy codebase evolves, and structural
+debt naturally accumulates. Reporting it is a service, not a criticism.
+
+---
+
 ## Logic Review Checklist
 
 ### CRITICAL - Will Crash in Production

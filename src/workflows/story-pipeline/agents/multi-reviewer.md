@@ -167,6 +167,25 @@ Fix: Run npx prisma migrate dev --name add_agreement
 
 ---
 
+## Safe Harbor: CODE_HEALTH Observations
+
+**You will NEVER be asked to fix CODE_HEALTH items.** They go directly to GitHub Issues
+for future planning. Your job is to OBSERVE and REPORT structural concerns honestly.
+
+Report CODE_HEALTH when you see:
+- God classes/files doing too much (>500 lines with mixed concerns)
+- Copy-pasted logic (DRY violations across 3+ locations)
+- Inconsistent patterns across modules (e.g., some use try/catch, others don't)
+- Missing or leaky abstractions (implementation details exposed across boundaries)
+- Tight coupling between modules that should be independent
+- Naming inconsistencies across the codebase
+- Architectural anti-patterns (circular dependencies, layer violations)
+
+**These are observations, not complaints.** A healthy codebase evolves, and structural
+debt naturally accumulates. Reporting it is a service, not a criticism.
+
+---
+
 ## Issue Classification
 
 For EVERY issue found, classify as:
@@ -174,10 +193,11 @@ For EVERY issue found, classify as:
 | Classification | Meaning | Criteria |
 |----------------|---------|----------|
 | **MUST_FIX** | Fix immediately | Any real issue (security, correctness, quality) |
-| **SHOULD_FIX** | Log as tech debt | Large refactoring with speculative benefit |
+| **SHOULD_FIX** | Best-effort fix | Localized improvements (1-3 files, clear benefit) |
+| **CODE_HEALTH** | Track to GitHub Issues | Structural/design observations (systemic, needs planning) |
 | **STYLE** | Ignore | Clearly manufactured complaints only |
 
-**Real Issue Rule:** If it's a real issue → MUST_FIX. Only use STYLE for manufactured complaints.
+**Real Issue Rule:** If it's a real issue → MUST_FIX. Use CODE_HEALTH for systemic structural observations that need planning, not inline fixing.
 
 ---
 
@@ -278,13 +298,13 @@ Generate a consolidated review with sections for each perspective:
 
 ## Summary
 
-| Perspective | Issues | Must Fix | Should Fix | Style |
+| Perspective | Issues | Must Fix | Should Fix | Code Health | Style |
 |-------------|--------|----------|------------|-------|
-| Argus | 1 | 1 | 0 | 0 |
-| Nemesis | 2 | 1 | 1 | 0 |
-| Cerberus | 1 | 1 | 0 | 0 |
-| Hestia | 1 | 1 | 0 | 0 |
-| **Total** | **5** | **4** | **1** | **0** |
+| Argus | 1 | 1 | 0 | 0 | 0 |
+| Nemesis | 2 | 1 | 1 | 0 | 0 |
+| Cerberus | 1 | 1 | 0 | 0 | 0 |
+| Hestia | 1 | 1 | 0 | 0 | 0 |
+| **Total** | **5** | **4** | **1** | **0** | **0** |
 
 **Verdict:** NEEDS_FIXES (4 MUST_FIX issues)
 ```
@@ -332,6 +352,7 @@ Save a consolidated artifact that mimics what separate reviewers would produce:
     "total_issues": 5,
     "must_fix": 4,
     "should_fix": 1,
+    "code_health": 0,
     "style": 0
   }
 }
