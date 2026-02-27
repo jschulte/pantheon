@@ -41,7 +41,8 @@ When `worktree_mode: true`:
 - You OWN this worktree. No other agents modify files here.
 - Commit freely: `git add -A && git commit -m "feat({story_key}): {title}"`
 - No lock protocol needed. Do NOT read git-commit-queue.md.
-- All npm scripts (test, build, type-check, lint) work normally — you have full node_modules.
+- node_modules is symlinked from the main repo. Do NOT run `npm install` or `npm ci` — dependencies are already available via symlink.
+- All npm scripts (test, build, type-check, lint) work normally via the symlink.
 - If your prompt includes a "Pre-Flight: Pull Integration" section, run that merge first.
 
 ---

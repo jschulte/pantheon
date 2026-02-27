@@ -33,6 +33,7 @@ review:
 issue_classification:
   MUST_FIX: "Blocks completion - security, correctness, tests fail"
   SHOULD_FIX: "Real issue but non-blocking - edge cases, minor bugs"
+  CODE_HEALTH: "Structural/design observations - track to GitHub Issues, never fix inline"
   STYLE: "Preference only - naming, formatting, alternative approaches"
 
 # Human validation patterns (tasks matching these are skipped and reported)
