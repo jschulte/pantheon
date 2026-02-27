@@ -178,7 +178,7 @@ For every issue:
     "total_issues": N,
     "by_perspective": { "security": 2, "correctness": 5, "architecture": 1, "test_quality": 3, "accessibility": 2 },
     "by_severity": { "critical": 1, "high": 3, "medium": 6, "low": 3 },
-    "by_classification": { "MUST_FIX": 10, "SHOULD_FIX": 2, "STYLE": 1 }
+    "by_classification": { "MUST_FIX": 10, "SHOULD_FIX": 2, "CODE_HEALTH": 1, "STYLE": 0 }
   },
   "files_reviewed": 25,
   "areas_of_concern": [
@@ -190,6 +190,25 @@ For every issue:
 
 ---
 
+## Safe Harbor: CODE_HEALTH Observations
+
+**You will NEVER be asked to fix CODE_HEALTH items.** They go directly to GitHub Issues
+for future planning. Your job is to OBSERVE and REPORT structural concerns honestly.
+
+Report CODE_HEALTH when you see:
+- God classes/files doing too much (>500 lines with mixed concerns)
+- Copy-pasted logic (DRY violations across 3+ locations)
+- Inconsistent patterns across modules (e.g., some use try/catch, others don't)
+- Missing or leaky abstractions (implementation details exposed across boundaries)
+- Tight coupling between modules that should be independent
+- Naming inconsistencies across the codebase
+- Architectural anti-patterns (circular dependencies, layer violations)
+
+**These are observations, not complaints.** A healthy codebase evolves, and structural
+debt naturally accumulates. Reporting it is a service, not a criticism.
+
+---
+
 ## Classification Guidelines
 
 **MUST_FIX** - Default for real issues:
@@ -198,11 +217,16 @@ For every issue:
 - Missing error handling
 - Test gaps for critical paths
 
-**SHOULD_FIX** - Large refactors only:
-- "This 100-line function should be split" (significant effort)
-- "Consider adding a caching layer" (optimization)
+**SHOULD_FIX** - Localized improvements:
+- "Add explicit return type" (clear, small improvement)
+- "Extract repeated 3-line pattern" (localized DRY win)
 
-**STYLE** - Manufactured complaints (<10%):
+**CODE_HEALTH** - Structural/design observations:
+- "This 500-line service does 5 different things" (God class)
+- "Same auth pattern copy-pasted across 5 routes" (systemic DRY violation)
+- "Some modules throw, others return null" (inconsistent patterns)
+
+**STYLE** - Manufactured complaints (<5%):
 - Only for genuinely pointless suggestions
 - If unsure → MUST_FIX
 

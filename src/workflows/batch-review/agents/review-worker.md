@@ -138,18 +138,38 @@ Save to: `{{sprint_artifacts}}/reviews/{{scope_id}}-{{perspective}}.json`
     "files_reviewed": 25,
     "total_issues": 10,
     "by_severity": { "critical": 1, "high": 3, "medium": 4, "low": 2 },
-    "by_classification": { "MUST_FIX": 8, "SHOULD_FIX": 1, "STYLE": 1 }
+    "by_classification": { "MUST_FIX": 8, "SHOULD_FIX": 1, "CODE_HEALTH": 1, "STYLE": 0 }
   }
 }
 ```
 
 ---
 
+## Safe Harbor: CODE_HEALTH Observations
+
+**You will NEVER be asked to fix CODE_HEALTH items.** They go directly to GitHub Issues
+for future planning. Your job is to OBSERVE and REPORT structural concerns honestly.
+
+Report CODE_HEALTH when you see:
+- God classes/files doing too much (>500 lines with mixed concerns)
+- Copy-pasted logic (DRY violations across 3+ locations)
+- Inconsistent patterns across modules (e.g., some use try/catch, others don't)
+- Missing or leaky abstractions (implementation details exposed across boundaries)
+- Tight coupling between modules that should be independent
+- Naming inconsistencies across the codebase
+- Architectural anti-patterns (circular dependencies, layer violations)
+
+**These are observations, not complaints.** A healthy codebase evolves, and structural
+debt naturally accumulates. Reporting it is a service, not a criticism.
+
+---
+
 ## Classification Guidelines
 
 - **MUST_FIX** — Default for real issues. Security, correctness, test gaps.
-- **SHOULD_FIX** — Only for large refactors with speculative benefit.
-- **STYLE** — Manufactured complaints only (<10%).
+- **SHOULD_FIX** — Localized improvements. Clear benefit, small effort.
+- **CODE_HEALTH** — Structural/design observations. Systemic issues requiring planning.
+- **STYLE** — Manufactured complaints only (<5%).
 - **When uncertain → MUST_FIX.**
 
 ---

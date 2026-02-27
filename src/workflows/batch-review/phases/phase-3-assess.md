@@ -28,10 +28,12 @@ Triage these hardening findings. **ERR ON THE SIDE OF FIXING.**
 
 <triage_rules>
 **MUST_FIX** - Any real issue. Default category.
-**SHOULD_FIX** - Large refactoring with speculative benefit only.
-**STYLE** - Clearly manufactured complaints only (<10%).
+**SHOULD_FIX** - Localized improvements, attempt best-effort.
+**CODE_HEALTH** - Structural/design observations. Skip fixer, track to GitHub Issues.
+**STYLE** - Clearly manufactured complaints only (<5%).
 
 If uncertain → MUST_FIX.
+CODE_HEALTH items are collected for tracking in Phase 6 — no fix attempt is made.
 </triage_rules>
 
 <deduplication_rules>
@@ -58,6 +60,7 @@ Multiple reviewers may find the same underlying issue. Merge duplicates:
   "summary": {
     "must_fix": N,
     "should_fix": N,
+    "code_health": N,
     "style": N,
     "duplicates_merged": N
   }
@@ -69,7 +72,9 @@ Save to: {{sprint_artifacts}}/hardening/{{scope_id}}-triage.json
 })
 ```
 
-**If no MUST_FIX issues:**
+**Note:** CODE_HEALTH issues are excluded from all fix phases. They are collected for tracking in Phase 6.
+
+**If no MUST_FIX and no fixable SHOULD_FIX issues:**
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ✅ CLEAN PASS - No issues require fixing
@@ -78,4 +83,7 @@ Save to: {{sprint_artifacts}}/hardening/{{scope_id}}-triage.json
 --> Skip to Phase 6: REPORT
 
 **If MUST_FIX issues exist:**
---> Continue to Phase 4: FIX
+--> Continue to Phase 4: FIX (MUST_FIX first, then best-effort SHOULD_FIX)
+
+**If no MUST_FIX but SHOULD_FIX issues exist (and should_fix_behavior.fix_enabled):**
+--> Continue to Phase 4: FIX (best-effort SHOULD_FIX only)
