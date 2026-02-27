@@ -97,7 +97,7 @@ Continue to next story.
 ### 3.4 Parallel Processing (Worktree Isolation)
 
 Uses the same persistent worktree + early integration pattern as batch-stories.
-Each worktree gets its own filesystem, `node_modules`, and git branch — no contention.
+Each worktree gets its own filesystem, symlinked `node_modules`, and git branch — no contention.
 Session-scoped naming prevents collisions when multiple terminals run concurrently.
 
 **Step 1: Generate Session ID + Create Integration Branch + Persistent Worktrees**
@@ -111,7 +111,7 @@ INTEGRATION = "integration-{{SESSION_ID}}"
 Bash("git branch -f {{INTEGRATION}} HEAD")  # -f for idempotent rerun
 
 max_worktrees = 3  # matches batch-stories parallel_config
-install_cmd = "npm ci"  # configurable per project
+dep_strategy = parallel_config.worktree_deps  # "symlink" (default) or "install"
 WORKTREES = {}
 MANIFEST_PATH = "{{project_root}}/.claude/worktrees/manifest.json"
 Bash("mkdir -p {{project_root}}/.claude/worktrees")
@@ -138,7 +138,17 @@ FOR n IN 1..max_worktrees:
   path = "{{project_root}}/.claude/worktrees/teleos-{{SESSION_ID}}-{{n}}"
 
   Bash("git worktree add -b {{branch}} {{path}} HEAD")
-  Bash("cd {{path}} && {{install_cmd}}")
+
+  IF dep_strategy == "symlink":
+    # Find all node_modules directories in the main repo and symlink them into the worktree
+    node_modules_dirs = Bash("find {{project_root}} -name node_modules -maxdepth 3 -type d -not -path '*/.*'")
+    FOR EACH nm_dir IN node_modules_dirs:
+      relative = nm_dir relative to project_root
+      target_in_worktree = "{{path}}/{{relative}}"
+      Bash("rm -rf {{target_in_worktree}} 2>/dev/null; ln -s {{nm_dir}} {{target_in_worktree}}")
+  ELSE:
+    Bash("cd {{path}} && npm ci")
+
   WORKTREES[n] = { path, branch, stories: [], agent_task_id: null }
 
 # Write session to manifest

@@ -11,15 +11,16 @@
 ```
 
 **Architecture:** The lead creates 3 persistent worktrees with independent filesystems and
-`node_modules`. Stories are assigned to worktrees (dependencies colocated, rest load-balanced).
-Each worker gets exactly ONE story — when it finishes, the lead merges to integration, then
-spawns a NEW worker in the same worktree for the next story. The new worker pulls integration
-first, getting all previously completed code. This preserves the single-story contract that
-keeps workers focused.
+symlinked `node_modules` (from the main repo). Stories are assigned to worktrees (dependencies
+colocated, rest load-balanced). Each worker gets exactly ONE story — when it finishes, the lead
+merges to integration, then spawns a NEW worker in the same worktree for the next story. The new
+worker pulls integration first, getting all previously completed code. This preserves the
+single-story contract that keeps workers focused.
 
 **Why worktrees?** Parallel workers sharing one filesystem caused git staging contention,
 concurrent build/test fights, and CPU/memory spikes. The `mkdir`-based commit queue was a
-bandaid. Worktrees give each worker its own git index, working tree, and `node_modules`.
+bandaid. Worktrees give each worker its own git index and working tree. Dependencies are
+symlinked from the main repo — no parallel `npm ci` installs needed.
 
 ### Pre-Flight: Permissions & Delegate Mode
 
@@ -116,14 +117,23 @@ Bash("git branch -f {{INTEGRATION}} HEAD")
 
 ```
 max_worktrees = 3  # From parallel_config.worktree_isolation.max_worktrees
-install_cmd = parallel_config.worktree_isolation.install_cmd  # e.g., "npm ci"
+dep_strategy = parallel_config.worktree_isolation.dep_strategy  # "symlink" (default) or "install"
 
 FOR n IN 1..max_worktrees:
   branch = "worktree/heracles-{{SESSION_ID}}-{{n}}"
   path = "{{project_root}}/.claude/worktrees/heracles-{{SESSION_ID}}-{{n}}"
 
   Bash("git worktree add -b {{branch}} {{path}} HEAD")
-  Bash("cd {{path}} && {{install_cmd}}")
+
+  IF dep_strategy == "symlink":
+    # Find all node_modules directories in the main repo and symlink them into the worktree
+    node_modules_dirs = Bash("find {{project_root}} -name node_modules -maxdepth 3 -type d -not -path '*/.*'")
+    FOR EACH nm_dir IN node_modules_dirs:
+      relative = nm_dir relative to project_root  # e.g., "node_modules" or "app/node_modules"
+      target_in_worktree = "{{path}}/{{relative}}"
+      Bash("rm -rf {{target_in_worktree}} 2>/dev/null; ln -s {{nm_dir}} {{target_in_worktree}}")
+  ELSE:
+    Bash("cd {{path}} && npm ci")
 
   WORKTREES[n] = {
     path: path,
@@ -225,7 +235,8 @@ You are a story-pipeline executor working in an isolated worktree.
 - **worktree_path:** {{wt.path}}
 - You OWN this worktree. No other agents modify files here.
 - Commit freely — no lock protocol, no git-commit-queue.md.
-- All npm scripts work normally — you have full node_modules.
+- node_modules is symlinked from the main repo. Do NOT run npm install/npm ci.
+- All npm scripts (test, build, lint) work normally via the symlink.
 
 {{IF NOT is_first_story:}}
 ## Pre-Flight: Pull Integration
