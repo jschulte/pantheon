@@ -23,7 +23,7 @@ Read: {project-root}/_bmad/pantheon/agent-routing.yaml
 3. Check package.json for framework indicators (react, vue, fastapi, etc.)
 
 **Match against builder_routing rules (first match wins):**
-- `frontend-react` → Apollo ⚛️ (React/Next.js components)
+- `frontend-react` → Helios ⚛️ (React/Next.js components)
 - `backend-typescript` → Hephaestus 🔥 (API routes, services)
 - `database-prisma` → Athena 🦉 (migrations, schema changes)
 - `infrastructure` → Atlas 🌍 (CI/CD, Docker, Terraform)
@@ -36,6 +36,32 @@ Read: {project-root}/_bmad/pantheon/agents/builders/backend-typescript.md
 BUILDER_NAME = "Hephaestus"
 BUILDER_EMOJI = "🔥"
 BUILDER_SPECIALTY = "Backend TypeScript API Development"
+```
+
+### Step 1.5: Forged Builder Override (Pygmalion)
+
+Check if Pygmalion forged a specialized builder persona for this story.
+The forged builder AUGMENTS the selected builder — it doesn't replace the base coding persona.
+The standard builder provides general coding discipline; the forged builder adds domain-specific
+expertise, build focus, and technology patterns backed by live research.
+
+```
+IF FORGED_SPECS.forged_builder is non-null:
+  FORGED_BUILDER = FORGED_SPECS.forged_builder
+  BUILDER_NAME = FORGED_BUILDER.name
+  BUILDER_EMOJI = FORGED_BUILDER.emoji
+
+  # Override subagent_type if the forged builder suggests a more specific one
+  IF FORGED_BUILDER.suggested_claude_agent_type:
+    subagent_type = FORGED_BUILDER.suggested_claude_agent_type
+
+  # Load research backing (if available)
+  IF FORGED_BUILDER.knowledge_file:
+    BUILDER_KNOWLEDGE = read("docs/specialist-registry/{{FORGED_BUILDER.knowledge_file}}")
+  ELSE:
+    BUILDER_KNOWLEDGE = ""
+
+  echo "🗿 Using Pygmalion-forged builder: {{FORGED_BUILDER.emoji}} {{FORGED_BUILDER.name}} — {{FORGED_BUILDER.title}}"
 ```
 
 ### Step 2: Initialize Build Loop
@@ -123,6 +149,29 @@ UNCHECKED TASKS ({{UNCHECKED_TASKS}} remaining):
 <playbooks>
 [INLINE: Playbook content that was loaded in Phase 1]
 </playbooks>
+{{ENDIF}}
+
+{{IF FORGED_BUILDER}}
+<forged_expertise>
+You have been given the specialized persona of {{FORGED_BUILDER.name}} ({{FORGED_BUILDER.emoji}}) — {{FORGED_BUILDER.title}}.
+
+Domain expertise: {{FORGED_BUILDER.domain_expertise}}
+
+Build focus — prioritize these patterns:
+{{FORGED_BUILDER.build_focus — as bullet list}}
+
+Technology patterns to follow:
+{{FORGED_BUILDER.technology_patterns — as bullet list}}
+</forged_expertise>
+
+{{IF BUILDER_KNOWLEDGE}}
+<reference_documentation>
+The following is authoritative reference documentation for your domain.
+Use this to write correct, idiomatic code following established patterns.
+
+{{BUILDER_KNOWLEDGE}}
+</reference_documentation>
+{{ENDIF}}
 {{ENDIF}}
 
 {{IF ITERATION > 1}}
