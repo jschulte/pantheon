@@ -21,9 +21,9 @@ QUICK FEATURE PIPELINE — ARTIFACT SUMMARY
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Planning Artifacts:
-  PRD:            {{PRD_PATH}} ({{prd_size}})
-  Architecture:   {{ARCHITECTURE_PATH || "Skipped"}} ({{arch_size || "N/A"}})
-  Epics:          {{EPICS_PATH}} ({{epics_size}})
+  PRD:            {{PRD_PATH}}
+  Architecture:   {{ARCHITECTURE_PATH || "Skipped"}}
+  Epics:          {{EPICS_PATH}}
 
 Implementation Artifacts:
   Sprint Status:  {{SPRINT_STATUS_PATH}}
@@ -76,7 +76,7 @@ ELSE IF BUILD_MODE == "review":
     /batch-stories
 
   Or to build specific stories:
-    /batch-stories stories="{{comma_separated_keys}}"
+    /batch-stories stories="<comma-separated story keys>"
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
