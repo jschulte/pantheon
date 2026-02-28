@@ -1,0 +1,76 @@
+name: tech-debt-burndown
+description: "Harvest tracked issues, cluster by root cause, propose and create stories"
+author: "Jonah Schulte (leveraging BMAD Method)"
+
+# ============================================================================
+# TECH-DEBT-BURNDOWN: Issue Harvesting & Story Creation Workflow
+# ============================================================================
+# Purpose: Convert accumulated tracked issues (local JSON index or GitHub Issues)
+# into actionable BMAD-formatted story files. Clusters issues by root cause,
+# proposes stories interactively, and generates complete story files.
+#
+# Usage:
+#   /tech-debt-burndown
+#   /tech-debt-burndown labels="code-health"
+#   /tech-debt-burndown since="2026-01-01"
+#   /tech-debt-burndown epic=17
+# ============================================================================
+
+# Critical variables from config
+config_source: "{project-root}/_bmad/pantheon/config.yaml"
+output_folder: "{project-root}/_bmad-output"
+sprint_artifacts: "{output_folder}/sprint-artifacts"
+
+# Workflow paths
+installed_path: "{project-root}/_bmad/pantheon/workflows/tech-debt-burndown"
+instructions: "{installed_path}/workflow.md"
+agents_path: "{installed_path}/agents"
+
+# Scope options
+scope:
+  labels: ["tech-debt", "should-fix", "code-health"]
+  epic: null        # Optional: filter issues by epic label
+  since: null       # Optional: only issues created after this date
+  state: "open"
+
+# Agents
+agents:
+  harvester:
+    description: "Read local tracked-issues.json (or fetch GitHub Issues as fallback)"
+    subagent_type: "general-purpose"
+    model: "sonnet"
+    prompt_file: "{agents_path}/harvester.md"
+    timeout: 300
+
+  root_cause_analyst:
+    description: "Cluster issues by root cause, detect patterns, estimate effort"
+    subagent_type: "general-purpose"
+    model: "opus"
+    prompt_file: "{agents_path}/root-cause-analyst.md"
+    timeout: 600
+
+  story_architect:
+    description: "Generate BMAD-formatted story files from approved proposals"
+    subagent_type: "general-purpose"
+    model: "opus"
+    prompt_file: "{agents_path}/story-architect.md"
+    timeout: 900
+
+# Story output settings
+story_settings:
+  target_size_kb: [6, 12]       # Target story file size range
+  output_dir: "{output_folder}/burndown-stories"
+  status: "ready-for-dev"
+  link_source_issues: true       # Comment on source issues with story reference
+  close_source_issues: false     # Don't auto-close — stories need implementation first
+  export_to_github: false        # If true, export tracked issues to GitHub Issues after story creation
+
+# Phases
+phases:
+  - phase-1-harvest    # Fetch issues from GitHub
+  - phase-2-analyze    # Root-cause clustering
+  - phase-3-propose    # Interactive proposal review
+  - phase-4-create     # Generate story files
+
+standalone: true
+web_bundle: false

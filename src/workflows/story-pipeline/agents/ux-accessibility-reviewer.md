@@ -30,6 +30,30 @@ Review frontend code for accessibility compliance. You're looking for barriers t
 
 ---
 
+## Safe Harbor: CODE_HEALTH Observations
+
+**You will NEVER be asked to fix CODE_HEALTH items.** They go directly to GitHub Issues
+for future planning. Your job is to OBSERVE and REPORT structural concerns honestly.
+
+**Accessibility note:** Systemic a11y patterns are excellent CODE_HEALTH candidates.
+For example, "none of the 20 form components use a consistent label pattern" or
+"focus management is handled differently in every modal" represent structural
+accessibility debt requiring planned remediation across the codebase.
+
+Report CODE_HEALTH when you see:
+- God classes/files doing too much (>500 lines with mixed concerns)
+- Copy-pasted logic (DRY violations across 3+ locations)
+- Inconsistent patterns across modules (e.g., some use try/catch, others don't)
+- Missing or leaky abstractions (implementation details exposed across boundaries)
+- Tight coupling between modules that should be independent
+- Naming inconsistencies across the codebase
+- Architectural anti-patterns (circular dependencies, layer violations)
+
+**These are observations, not complaints.** A healthy codebase evolves, and structural
+debt naturally accumulates. Reporting it is a service, not a criticism.
+
+---
+
 ## Accessibility Review Checklist
 
 ### CRITICAL - Blocks Users Entirely

@@ -46,6 +46,11 @@ Not every story needs forged specialists. Apply this gate before doing any analy
 | complex | Always analyze, forge as needed | 3 |
 | critical | Always analyze, forge aggressively + consider builder | 4 |
 
+> **Note:** Builder forging requires `allow_forged_builder: true` in workflow.yaml.
+> When disabled, the orchestrator suppresses any forged builder from Pygmalion's output.
+> Pygmalion should still output `forged_builder` based on its analysis — the orchestrator
+> handles the config gating.
+
 If the complexity tier is `trivial` or `micro`, output an empty result immediately without analysis:
 
 ```json
@@ -235,6 +240,51 @@ If no meaningful gaps exist (including after registry matches), return an empty 
    "knowledge_file": "knowledge/{{spec.id}}-reference.md"
    ```
 
+**For forged builders (when `forged_builder` is non-null):**
+
+Builders need domain research even more than reviewers — they're writing the code, not just
+checking it. Spawn a research agent focused on implementation patterns rather than review checklists:
+
+```
+Task({
+  subagent_type: "search-web",
+  model: "opus",
+  description: "📚 Research for builder {{builder.name}} ({{builder.title}})",
+  prompt: `
+    Compile authoritative implementation reference documentation for a
+    {{builder.title}} code builder.
+
+    This documentation will be injected into a builder agent's prompt to help it
+    write correct, idiomatic code following established patterns and avoiding
+    known pitfalls.
+
+    Technologies: {{builder.technologies or inferred from build_focus}}
+
+    For each technology, research:
+    - Official API documentation and usage patterns
+    - Idiomatic implementation patterns with code examples
+    - Migration/upgrade considerations and version-specific behavior
+    - Common mistakes and anti-patterns to avoid
+    - Performance considerations and optimization patterns
+    - Testing patterns specific to this technology
+
+    Write as a single markdown document with:
+    - Clear headers for each topic
+    - DO / DON'T patterns with code examples
+    - Concrete API usage examples (not vague descriptions)
+    - A quick-reference implementation checklist at the end
+
+    Target: 20-50KB of substantive content.
+    Save to: docs/specialist-registry/knowledge/{{builder.id}}-reference.md
+  `
+})
+```
+
+Add `knowledge_file` reference to the forged builder spec:
+```json
+"knowledge_file": "knowledge/{{builder.id}}-reference.md"
+```
+
 **For EVOLVE specialists:**
 - If the existing specialist already has a `knowledge_file`, check if the new technologies require supplementary research
 - If new technology clusters are detected, spawn a research agent to create an addendum or update the existing knowledge file
@@ -366,7 +416,8 @@ Save to: `{{sprint_artifacts}}/completions/{{story_key}}-pygmalion.json`
       "express.raw({type: 'application/json'}) — raw body for webhooks",
       "stripe.webhooks.constructEvent(body, sig, secret) — signature verification"
     ],
-    "suggested_claude_agent_type": "dev-typescript"
+    "suggested_claude_agent_type": "dev-typescript",
+    "knowledge_file": "knowledge/stripe-integration-builder-reference.md"
   }
 }
 ```

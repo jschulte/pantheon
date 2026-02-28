@@ -761,6 +761,8 @@ See: `step-4.5-reconcile-story-status.md` for detailed algorithm
 ## Related Workflows
 
 - **story-pipeline:** Individual story implementation (invoked by batch-stories)
+- **batch-review:** Deep hardening sweeps (writes tracked issues to local `tracked-issues.json`, consumed by tech-debt-burndown)
+- **tech-debt-burndown:** Harvest tracked issues → cluster by root cause → create stories (`/tech-debt-burndown`)
 - **create-story-with-gap-analysis:** Create new stories with codebase scan
 - **sprint-status:** View/update sprint status
 - **multi-agent-review:** Standalone code review (part of story-pipeline)

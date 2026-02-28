@@ -67,10 +67,11 @@ Real issues that are ALWAYS MUST_FIX:
 - Security issues of any severity
 - Edge cases not handled
 
-**Classification:**
+**Classification (4 tiers):**
 1. **MUST_FIX** - Any real issue. Metis fixes immediately.
-2. **SHOULD_FIX** - Large refactoring with speculative benefit. Log as tech debt.
-3. **STYLE** - Clearly manufactured complaints (very rare!)
+2. **SHOULD_FIX** - Localized improvements. Best-effort fix, defer remainder.
+3. **CODE_HEALTH** - Structural/design observations. Skip fixer, track to GitHub Issues.
+4. **STYLE** - Clearly manufactured complaints (very rare!)
 
 **What's always MUST_FIX:**
 - Any real code quality issue
@@ -81,10 +82,17 @@ Real issues that are ALWAYS MUST_FIX:
 - Integration failures
 - Accessibility gaps
 
-**SHOULD_FIX only when:**
-- Fix requires substantial restructuring
-- AND benefit is speculative/future-focused
-- AND it doesn't affect current functionality
+**SHOULD_FIX when:**
+- Localized improvement (1-3 files, <50 lines)
+- Clear benefit but not urgent
+- Doesn't affect current functionality
+
+**CODE_HEALTH when:**
+- Systemic/structural issue (affects multiple modules)
+- Requires architectural discussion or planning
+- Represents accumulated design debt, not a bug
+- Examples: god classes, DRY violations across 3+ locations, inconsistent patterns,
+  circular dependencies, layer violations, naming inconsistencies
 
 **STYLE only when:**
 - Clearly manufactured (reviewer nitpicking to have something to say)
@@ -93,12 +101,14 @@ Real issues that are ALWAYS MUST_FIX:
 - Suggestion would actually make code worse
 
 **Expected distribution:**
-- MUST_FIX: 80-95% (real issues get fixed)
-- SHOULD_FIX: 5-15% (big refactors)
-- STYLE: <10% (manufactured complaints only)
+- MUST_FIX: 70-85% (real issues get fixed)
+- SHOULD_FIX: 5-15% (localized improvements)
+- CODE_HEALTH: 5-15% (structural observations)
+- STYLE: <5% (manufactured complaints only)
 
-If your STYLE count exceeds 10%, you're filtering too aggressively.
+If your STYLE count exceeds 5%, you're filtering too aggressively.
 **When uncertain → MUST_FIX.**
+CODE_HEALTH items are NEVER sent to the fixer. They go directly to GitHub Issues.
 </triage_instructions>
 
 <completion_format>
@@ -116,6 +126,7 @@ If your STYLE count exceeds 10%, you're filtering too aggressively.
   "summary": {
     "must_fix": 5,
     "should_fix": 1,
+    "code_health": 0,
     "style": 0
   }
 }
@@ -211,11 +222,14 @@ This is a coarse heuristic. The relevance check prevents inflating hit-rates by 
 **Process triage results:**
 
 ```
-IF must_fix == 0:
+IF must_fix == 0 AND (should_fix == 0 OR NOT should_fix_behavior.fix_enabled):
   echo "✅ No issues to fix - proceeding to COMMIT"
   SKIP_PHASE_5 = true
+ELIF must_fix == 0 AND should_fix > 0 AND should_fix_behavior.fix_enabled:
+  echo "No MUST_FIX issues, but {{should_fix}} SHOULD_FIX items to attempt (best-effort)"
+  SHOULD_FIX_ONLY = true
 ELSE:
-  echo "📋 {{must_fix}} issues to fix - proceeding to REFINE"
+  echo "📋 {{must_fix}} MUST_FIX + {{should_fix}} SHOULD_FIX issues - proceeding to REFINE"
 ```
 
 **Display triage summary:**
@@ -226,7 +240,8 @@ ELSE:
 Total issues reviewed: {{total_count}}
 Triage:
   - MUST_FIX: {{must_fix}} (Metis fixes these)
-  - SHOULD_FIX: {{should_fix}} (logged as tech debt)
+  - SHOULD_FIX: {{should_fix}} (best-effort fix, defer remainder to tracking)
+  - CODE_HEALTH: {{code_health}} (tracked to GitHub Issues, no fix attempt)
   - STYLE: {{style}} (filtered out)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
@@ -249,6 +264,7 @@ Update `{{sprint_artifacts}}/completions/{{story_key}}-progress.json`:
     "coverage": "{{COVERAGE}}",
     "must_fix": {{must_fix}},
     "should_fix": {{should_fix}},
+    "code_health": {{code_health}},
     "style": {{style}}
   }
 }

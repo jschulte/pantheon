@@ -102,11 +102,30 @@ For every issue found:
     "total_issues": 15,
     "by_focus_area": { "styling": 8, "UX": 5, "button_placement": 2 },
     "by_severity": { "critical": 0, "high": 3, "medium": 8, "low": 4 },
-    "by_classification": { "MUST_FIX": 12, "SHOULD_FIX": 2, "STYLE": 1 }
+    "by_classification": { "MUST_FIX": 12, "SHOULD_FIX": 2, "CODE_HEALTH": 1, "STYLE": 0 }
   },
   "files_reviewed": 25
 }
 ```
+
+---
+
+## Safe Harbor: CODE_HEALTH Observations
+
+**You will NEVER be asked to fix CODE_HEALTH items.** They go directly to GitHub Issues
+for future planning. Your job is to OBSERVE and REPORT structural concerns honestly.
+
+Report CODE_HEALTH when you see:
+- God classes/files doing too much (>500 lines with mixed concerns)
+- Copy-pasted logic (DRY violations across 3+ locations)
+- Inconsistent patterns across modules (e.g., some use try/catch, others don't)
+- Missing or leaky abstractions (implementation details exposed across boundaries)
+- Tight coupling between modules that should be independent
+- Naming inconsistencies across the codebase
+- Architectural anti-patterns (circular dependencies, layer violations)
+
+**These are observations, not complaints.** A healthy codebase evolves, and structural
+debt naturally accumulates. Reporting it is a service, not a criticism.
 
 ---
 
@@ -117,11 +136,16 @@ For every issue found:
 - Inconsistencies that affect user experience or code quality
 - Issues that would be caught in a professional review of this area
 
-**SHOULD_FIX** - Large refactors only:
-- Systemic patterns that require significant rework
-- "Ideally this whole approach would change" observations
+**SHOULD_FIX** - Localized improvements:
+- Small, targeted fixes within the focus area
+- Clear benefit, low effort (1-3 files)
 
-**STYLE** - Manufactured complaints (<10%):
+**CODE_HEALTH** - Structural/design observations:
+- Systemic patterns that require significant rework or planning
+- "Ideally this whole approach would change" observations
+- Cross-module inconsistencies visible from your focus lens
+
+**STYLE** - Manufactured complaints (<5%):
 - Genuinely trivial preferences with no practical impact
 - If unsure, classify as MUST_FIX
 

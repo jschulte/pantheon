@@ -12,6 +12,9 @@ Metis fixes + iterate until clean (max 3)
 ### Skip Conditions
 
 ```
+Note: CODE_HEALTH items are excluded from MUST_FIX_COUNT and do not block the pipeline.
+They are tracked to GitHub Issues after SHOULD_FIX processing in section 5.3.5.
+
 IF (MUST_FIX_COUNT == 0) AND (task_completion_pct >= 95):
   → Skip REFINE phase entirely
   → Proceed to Phase 6: COMMIT
@@ -321,9 +324,155 @@ This is IN ADDITION to the compact verification above — fresh eyes catch what 
 
 **END WHILE**
 
+### 5.3.5 Best-Effort SHOULD_FIX Fixes
+
+After all MUST_FIX issues are resolved (or max iterations reached), attempt SHOULD_FIX items.
+**This is non-blocking — failures do not prevent commit.**
+
+```
+IF should_fix_count > 0 AND should_fix_behavior.fix_enabled:
+  Task({
+    subagent_type: "general-purpose",
+    model: "sonnet",
+    description: "🔧 Best-effort SHOULD_FIX fixes on {{story_key}}",
+    prompt: `
+  You are Metis 🔨 performing best-effort improvements on {{story_key}}.
+
+  These are SHOULD_FIX items — nice-to-have improvements. Fix what you can
+  with localized changes. **Do not attempt large refactors.**
+
+  <should_fix_issues>
+  {{SHOULD_FIX issues with file:line citations}}
+  </should_fix_issues>
+
+  **Evaluation criteria for each item:**
+  - FIX if: 1-3 files, <50 lines, clear improvement, no design changes
+  - DEFER if: Multi-file refactor, architectural change, out of scope
+
+  For each item, output:
+  { "issue_id": "...", "action": "fixed" | "deferred", "reason": "..." }
+
+  For deferred items, include:
+  - "reason_deferred": What made it too large
+  - "effort_estimate": "small" | "medium" | "large"
+  - "recommendation": What someone should do later
+
+  Run tests after fixes. If any test breaks, revert that fix and defer the item.
+
+  Save to: {{sprint_artifacts}}/completions/{{story_key}}-should-fix.json
+  `
+  })
+
+  # Track deferred items per config
+  deferred_issues_config = load_config("deferred_issues")
+
+  NEW_FINDINGS=0
+  KNOWN_FINDINGS=0
+
+  IF deferred_issues_config.tracking_method == "tracked_issues_file":
+    # ── Read or init tracked-issues.json ──
+    TRACKED_FILE="{{sprint_artifacts}}/tracked-issues.json"
+    IF file_exists(TRACKED_FILE):
+      tracked = JSON.parse(read(TRACKED_FILE))
+    ELSE:
+      tracked = { "version": 1, "last_updated": null, "issues": [] }
+
+    issue_map = {}
+    FOR EACH entry IN tracked.issues:
+      issue_map[entry.id] = entry
+
+    # ── Upsert deferred SHOULD_FIX items ──
+    FOR EACH deferred item:
+      KEY = "should-fix::{{file}}"
+      sighting = { "date": "{{today}}", "source": "story-pipeline on {{story_key}}", "title": "{{issue_title}}" }
+
+      IF KEY in issue_map:
+        issue_map[KEY].seen_count += 1
+        issue_map[KEY].last_seen = "{{today}}"
+        issue_map[KEY].sightings.append(sighting)
+        KNOWN_FINDINGS++
+      ELSE:
+        issue_map[KEY] = {
+          "id": KEY, "type": "should-fix", "file": "{{file}}", "line": {{line}},
+          "locations": null, "perspective": "{{perspective}}", "severity": "{{severity}}",
+          "description": "{{issue_description}}", "suggested_fix": "{{suggested_fix}}",
+          "reason_deferred": "{{reason_deferred}}", "effort_estimate": "{{effort_estimate}}",
+          "pattern_type": null, "source_workflow": "story-pipeline", "source_scope": "{{story_key}}",
+          "first_seen": "{{today}}", "last_seen": "{{today}}", "seen_count": 1,
+          "sightings": [sighting], "status": "open"
+        }
+        NEW_FINDINGS++
+
+    # ── Upsert CODE_HEALTH items ──
+    IF code_health_count > 0:
+      FOR EACH code_health_item:
+        PRIMARY_FILE = first_location_file("{{locations}}")
+        KEY = "code-health::${PRIMARY_FILE}"
+        sighting = { "date": "{{today}}", "source": "story-pipeline on {{story_key}}", "title": "{{issue_title}}" }
+
+        IF KEY in issue_map:
+          issue_map[KEY].seen_count += 1
+          issue_map[KEY].last_seen = "{{today}}"
+          issue_map[KEY].sightings.append(sighting)
+          KNOWN_FINDINGS++
+        ELSE:
+          issue_map[KEY] = {
+            "id": KEY, "type": "code-health", "file": "${PRIMARY_FILE}", "line": null,
+            "locations": "{{locations}}", "perspective": "{{perspective}}", "severity": "{{severity}}",
+            "description": "{{issue_description}}", "suggested_fix": null,
+            "reason_deferred": null, "effort_estimate": "{{effort_estimate}}",
+            "pattern_type": "{{pattern_type}}", "source_workflow": "story-pipeline",
+            "source_scope": "{{story_key}}", "first_seen": "{{today}}", "last_seen": "{{today}}",
+            "seen_count": 1, "sightings": [sighting], "status": "open"
+          }
+          NEW_FINDINGS++
+
+    # ── Write back ──
+    tracked.last_updated = "{{ISO timestamp}}"
+    tracked.issues = Object.values(issue_map)
+    write(TRACKED_FILE, JSON.stringify(tracked, null, 2))
+    echo "Tracked issues: ${NEW_FINDINGS} new, ${KNOWN_FINDINGS} seen again"
+
+  ELIF deferred_issues_config.tracking_method == "github_issues":
+    FOR EACH deferred item:
+      gh issue create \
+        --title "[Tech Debt] {{issue_title}}" \
+        --body "Found during story-pipeline on {{story_key}}. {{issue_description}}. File: {{file}}:{{line}}. Why deferred: {{reason_deferred}} ({{effort_estimate}})" \
+        --label "tech-debt" --label "should-fix"
+      NEW_FINDINGS++
+
+    IF code_health_count > 0:
+      FOR EACH code_health_item:
+        gh issue create \
+          --title "[Code Health] {{issue_title}}" \
+          --body "Found during story-pipeline on {{story_key}}. {{issue_description}}. Locations: {{locations}}. Pattern: {{pattern_type}}." \
+          --label "tech-debt" --label "code-health"
+        NEW_FINDINGS++
+
+    echo "GitHub Issues: ${NEW_FINDINGS} created"
+
+  ELIF deferred_issues_config.tracking_method == "local_file":
+    Append to {{project_root}}/KNOWN_ISSUES.md:
+      ## [{{date}}] Story {{story_key}}
+      | Issue | File | Why Deferred | Effort |
+      |-------|------|-------------|--------|
+      | {{title}} | {{file}}:{{line}} | {{reason}} | {{est}} |
+
+    IF code_health_count > 0:
+      Append to {{project_root}}/KNOWN_ISSUES.md:
+        ## [{{date}}] Story {{story_key}} — CODE_HEALTH
+        | Observation | Locations | Pattern Type |
+        |------------|-----------|--------------|
+        | {{title}} | {{locations}} | {{pattern_type}} |
+
+  echo "Deferred tracking: ${NEW_FINDINGS} new, ${KNOWN_FINDINGS} seen again"
+```
+
 **Post-loop:**
 - If max iterations reached, escalate to user
-- Log SHOULD_FIX and STYLE as tech debt
+- SHOULD_FIX items that were fixed are included in the commit
+- SHOULD_FIX items deferred are tracked per `deferred_issues` config
+- STYLE items are discarded (no action needed)
 
 ### Update Progress
 

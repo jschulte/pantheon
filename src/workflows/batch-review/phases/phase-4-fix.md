@@ -11,6 +11,8 @@ Mode: {{SWARM or SEQUENTIAL}}
 
 ### 4.1 Group Issues by File Category
 
+**Note:** CODE_HEALTH items are excluded from all fix phases. They are never sent to fixers — they go directly to GitHub Issues tracking in Phase 6.
+
 Group MUST_FIX issues into non-overlapping file categories:
 
 ```
@@ -96,5 +98,77 @@ FOR EACH category WITH issues:
 
 ---
 
+---
+
+### 4.2 Best-Effort SHOULD_FIX Fixes
+
+After all MUST_FIX issues are resolved, attempt SHOULD_FIX items with a best-effort approach.
+**SHOULD_FIX failures never block the pipeline.**
+
+**Triage each SHOULD_FIX item before attempting:**
+
+For each SHOULD_FIX issue, evaluate:
+1. Can this be fixed with a **localized change** (1-3 files, <50 lines)?
+2. Does the fix stay **within the current review scope**?
+3. Is it a **straightforward improvement** (not a design change)?
+
+If YES to all → attempt the fix.
+If NO to any → defer to tracking. Log:
+```json
+{
+  "issue_id": "...",
+  "reason_deferred": "requires multi-file refactor | architectural change | out of scope",
+  "effort_estimate": "small | medium | large",
+  "recommendation": "brief description of what should be done"
+}
+```
+
+**Sequential mode:** Same fixer agent, second pass with SHOULD_FIX list + defer instructions.
+
+```
+FOR EACH category WITH should_fix_issues:
+  subagent = SELECT based on category (same routing as 4.1)
+
+  Task({
+    subagent_type: subagent,
+    model: "sonnet",
+    description: "💊 Best-effort SHOULD_FIX fixes ({{category}})",
+    prompt: `
+  [INLINE: issue-fixer.md persona — SHOULD_FIX mode]
+
+  <should_fix_issues>
+  {{List of SHOULD_FIX issues for this category}}
+  </should_fix_issues>
+
+  These are best-effort items. Fix what you can with localized changes.
+  Defer anything requiring multi-file refactors or architectural changes.
+
+  Save to: {{sprint_artifacts}}/hardening/{{scope_id}}-should-fix-{{category}}.json
+  `
+  })
+```
+
+**Swarm mode:** Same Asclepius workers, unblock SHOULD_FIX tasks after MUST_FIX tasks complete.
+
+```
+FOR EACH category IN [frontend, backend, database] WHERE category HAS should_fix_issues:
+  TaskCreate(
+    subject="SHOULD_FIX: {{category}} ({{sf_count}} items, best-effort)",
+    description=`
+      category: {{category}}
+      scope_id: {{scope_id}}
+      mode: "should_fix_best_effort"
+      issues: {{JSON.stringify(should_fix_category_issues)}}
+      file_boundaries: {{list of files in this category}}
+    `,
+    blockedBy=[FIX_TASK_IDS[category]]  # Wait for MUST_FIX to finish first
+  )
+
+  SendMessage(type="request", recipient="asclepius-{{category}}",
+    content="SHOULD_FIX tasks queued for {{category}}. Best-effort — fix what's localized, defer the rest.")
+```
+
+---
+
 **Orchestrator says:**
-> "Fixed **{{fixed_count}}/{{must_fix_count}}** issues across {{category_count}} categories. Running verification..."
+> "Fixed **{{fixed_count}}/{{must_fix_count}}** MUST_FIX issues across {{category_count}} categories. Best-effort: fixed **{{sf_fixed}}/{{sf_total}}** SHOULD_FIX items. **{{sf_deferred}}** deferred to tracking. Running verification..."
