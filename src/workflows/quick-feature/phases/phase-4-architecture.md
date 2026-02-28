@@ -36,19 +36,19 @@ Follow the BMM workflow file below to generate an architecture document.
 
 ## BMM Workflow to Follow
 Read and follow this workflow file completely:
-{bmm_workflows.create_architecture}
+{{bmm_workflows.create_architecture}}
 
 ## BMM Config
-Load configuration from: {bmm_config}
+Load configuration from: {{bmm_config}}
 
 ## PRD (Primary Input)
-Read the PRD at: {PRD_PATH}
+Read the PRD at: {{PRD_PATH}}
 
 ## Additional Context (Enriched Plan)
-{ENRICHED_PLAN}
+{{ENRICHED_PLAN}}
 
 ## Output Location
-Architecture file: {planning_artifacts}/architecture.md
+Architecture file: {{planning_artifacts}}/architecture.md
 
 ## Execution Rules
 - Follow the workflow step-by-step

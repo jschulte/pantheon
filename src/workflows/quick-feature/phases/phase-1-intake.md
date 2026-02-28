@@ -106,7 +106,8 @@ PLAN_DETAIL_SCORE = assess PLAN_TEXT on 5 dimensions (1 point each):
    - Mentions specific user flows, personas, or interactions? +1
    - No user-facing detail? +0
 
-Final score: 1 (vague idea) to 5 (comprehensive spec)
+Final score: 0 (vague idea) to 5 (comprehensive spec)
+Note: Half-point scores are possible (e.g., LENGTH medium = 0.5)
 ```
 
 ## Step 4: Display Pipeline Configuration
@@ -125,7 +126,7 @@ Architecture:    {{SKIP_ARCHITECTURE ? "Skip (existing)" : "Generate"}}
 Existing epics:  {{epic_count || "None"}}
 Existing stories: {{story_count || "None"}}
 
-Questions needed: ~{{QUESTION_COUNT}} clarifications
+Questions needed: ~{{max(4, min(12, 14 - (PLAN_DETAIL_SCORE * 2)))}} clarifications
 
 Proceeding to CLARIFY phase...
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

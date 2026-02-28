@@ -23,24 +23,24 @@ Follow the BMM workflow file below to generate epics with story breakdowns.
 
 ## BMM Workflow to Follow
 Read and follow this workflow file completely:
-{bmm_workflows.create_epics_and_stories}
+{{bmm_workflows.create_epics_and_stories}}
 
 ## BMM Config
-Load configuration from: {bmm_config}
+Load configuration from: {{bmm_config}}
 
 ## PRD (Primary Input)
-Read the PRD at: {PRD_PATH}
+Read the PRD at: {{PRD_PATH}}
 
 ## Architecture (Secondary Input)
 {{IF ARCHITECTURE_PATH}}
-Read the architecture at: {ARCHITECTURE_PATH}
+Read the architecture at: {{ARCHITECTURE_PATH}}
 {{ELSE}}
 No architecture document available — derive technical approach from PRD.
 {{END IF}}
 
 ## Output Location
-Epics file: {planning_artifacts}/epics.md
-(Or sharded: {planning_artifacts}/epics/ directory)
+Epics file: {{planning_artifacts}}/epics.md
+(Or sharded: {{planning_artifacts}}/epics/ directory)
 
 ## Execution Rules
 - Follow the workflow step-by-step
@@ -85,6 +85,8 @@ For each epic found:
   → Count stories in epic
   → Add to EPIC_LIST
   → TOTAL_STORY_COUNT += story_count
+
+EPIC_COUNT = EPIC_LIST.length
 ```
 
 ## Step 4: User Checkpoint (SECOND AND LAST USER STOP)
@@ -132,13 +134,13 @@ Set BUILD_MODE = Q2 answer (sequential | parallel | review)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 EPICS COMPLETE — PIPELINE RESUMING
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Epics:       {{EPIC_COUNT}} total, {{SELECTED_COUNT}} selected
-Stories:     {{STORY_COUNT}} total
+Epics:       {{EPIC_COUNT}} total, {{SELECTED_EPICS.length}} selected
+Stories:     {{TOTAL_STORY_COUNT}} total
 Build mode:  {{BUILD_MODE}}
 
 Remaining phases run autonomously:
   → Sprint Planning
-  → Story Generation ({{STORY_COUNT}} stories)
+  → Story Generation ({{TOTAL_STORY_COUNT}} stories)
   → Story Validation
   → Build Handoff ({{BUILD_MODE}} mode)
 

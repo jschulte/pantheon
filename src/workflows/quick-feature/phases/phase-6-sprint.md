@@ -24,24 +24,24 @@ You are executing the BMM sprint-planning workflow autonomously.
 Generate a sprint-status.yaml file from the epics document.
 
 ## BMM Workflow
-1. Read the workflow config at: {bmm_workflows.sprint_planning}
-2. Load the workflow.xml engine at: {project-root}/_bmad/core/tasks/workflow.xml
+1. Read the workflow config at: {{bmm_workflows.sprint_planning}}
+2. Load the workflow.xml engine at: {{project-root}}/_bmad/core/tasks/workflow.xml
 3. Pass the workflow.yaml path as the 'workflow-config' parameter
 4. Follow workflow.xml instructions to execute the sprint-planning workflow
 
 ## BMM Config
-Load configuration from: {bmm_config}
+Load configuration from: {{bmm_config}}
 
 ## Inputs
-- Epics file: {EPICS_PATH}
-- PRD file: {PRD_PATH}
+- Epics file: {{EPICS_PATH}}
+- PRD file: {{PRD_PATH}}
 
 ## Selected Epics
-Only include stories from these epics: {SELECTED_EPICS}
+Only include stories from these epics: {{SELECTED_EPICS}}
 (If "all", include all epics)
 
 ## Output Location
-Sprint status: {implementation_artifacts}/sprint-status.yaml
+Sprint status: {{implementation_artifacts}}/sprint-status.yaml
 
 ## Execution Rules
 - Enter YOLO mode immediately when offered
@@ -91,9 +91,9 @@ Log: "Found {{STORY_LIST.length}} stories in backlog"
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 SPRINT PLANNING COMPLETE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Sprint status: {implementation_artifacts}/sprint-status.yaml
+Sprint status: {{implementation_artifacts}}/sprint-status.yaml
 Stories found:  {{STORY_LIST.length}} in backlog
-Epics covered:  {{epic_count}}
+Epics covered:  {{SELECTED_EPICS.length}}
 
 Proceeding to STORY GENERATION...
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

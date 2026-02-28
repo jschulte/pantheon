@@ -16,7 +16,8 @@ Adaptive clarification — last input before autonomy
 ```
 QUESTION_COUNT = max(4, min(12, 14 - (PLAN_DETAIL_SCORE * 2)))
 
-Score 1 (vague idea)       → 12 questions (3 AskUserQuestion calls)
+Score 0 (no detail)        → 12 questions (3 AskUserQuestion calls, capped at 12)
+Score 1 (vague idea)       → 12 questions (3 calls)
 Score 2 (brief outline)    → 10 questions (3 calls)
 Score 3 (decent detail)    → 8 questions  (2 calls)
 Score 4 (solid spec)       → 6 questions  (2 calls)

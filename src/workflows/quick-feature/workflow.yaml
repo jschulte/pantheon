@@ -13,10 +13,11 @@ author: "Jonah Schulte (leveraging BMAD Method)"
 # Philosophy: Automate the "Sure, that looks good" approval messages.
 # The document trail IS the value — we automate approvals, not thinking.
 #
-# User interaction: 2 stops total
+# User interaction: 2-3 stops total (depending on plan_input)
+#   0. INTAKE (Phase 1, conditional): Plan entry prompt if plan_input is empty
 #   1. CLARIFY (Phase 2): 1-3 batched AskUserQuestion calls
 #   2. POST-EPICS (Phase 5): Epic selection + build mode
-# Everything else is autonomous.
+# Everything else is autonomous once the plan has been captured.
 #
 # Usage:
 #   /quick-feature plan="path/to/plan.md"

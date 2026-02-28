@@ -16,7 +16,6 @@ From `STORY_LIST` (extracted in Phase 6), prepare the generation queue:
 ```
 GENERATION_QUEUE = STORY_LIST  (all backlog stories)
 RESULTS = []
-RETRY_QUEUE = []
 ```
 
 ## Step 2: Generate Stories Sequentially
@@ -39,18 +38,18 @@ FOR EACH story IN GENERATION_QUEUE:
   Generate a complete BMAD-formatted story file for story {{story.story_key}}.
 
   ## BMM Workflow
-  1. Read the story creation instructions at: {bmm_workflows.create_story}
+  1. Read the story creation instructions at: {{bmm_workflows.create_story}}
   2. Follow the instructions to generate a complete story file
 
   ## BMM Config
-  Load configuration from: {bmm_config}
+  Load configuration from: {{bmm_config}}
 
   ## Inputs
-  - Sprint status: {SPRINT_STATUS_PATH}
-  - Epics: {EPICS_PATH}
-  - PRD: {PRD_PATH}
+  - Sprint status: {{SPRINT_STATUS_PATH}}
+  - Epics: {{EPICS_PATH}}
+  - PRD: {{PRD_PATH}}
   {{IF ARCHITECTURE_PATH}}
-  - Architecture: {ARCHITECTURE_PATH}
+  - Architecture: {{ARCHITECTURE_PATH}}
   {{END IF}}
 
   ## Story to Generate
@@ -58,7 +57,7 @@ FOR EACH story IN GENERATION_QUEUE:
   - Story title: {{story.story_title}}
 
   ## Output Location
-  Story file: {implementation_artifacts}/stories/{{story.story_key}}.md
+  Story file: {{implementation_artifacts}}/stories/{{story.story_key}}.md
 
   ## Execution Rules
   - Enter YOLO mode immediately

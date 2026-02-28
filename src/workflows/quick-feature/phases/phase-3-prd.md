@@ -35,16 +35,16 @@ Follow the BMM workflow file below to generate/edit a PRD document.
 
 ## BMM Workflow to Follow
 Read and follow this workflow file completely:
-{BMM_WORKFLOW}
+{{BMM_WORKFLOW}}
 
 ## BMM Config
-Load configuration from: {bmm_config}
+Load configuration from: {{bmm_config}}
 
 ## User Requirements (Enriched Plan)
-{ENRICHED_PLAN}
+{{ENRICHED_PLAN}}
 
 ## Output Location
-PRD file: {planning_artifacts}/prd.md
+PRD file: {{planning_artifacts}}/prd.md
 
 ## Execution Rules
 - Follow the workflow step-by-step

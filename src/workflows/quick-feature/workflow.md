@@ -60,7 +60,8 @@ Each BMM workflow sub-agent receives:
 
 **Two BMM invocation patterns:**
 - **Step-file workflows** (edit-prd, create-architecture, create-epics-and-stories): Sub-agent follows the workflow file with YOLO directive — auto-selects [c] Continue at every menu
-- **Workflow.yaml workflows** (sprint-planning, create-story): Sub-agent loads workflow.yaml and enters its native YOLO mode
+- **Workflow.yaml workflows** (sprint-planning): Sub-agent loads workflow.yaml and enters its native YOLO mode
+- **XML-instructions workflows** (create-story): Sub-agent loads instructions.xml and follows its instruction steps with YOLO directive
 </execution_discipline>
 
 ## Phase Routing
