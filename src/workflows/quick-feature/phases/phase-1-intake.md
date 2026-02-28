@@ -1,0 +1,139 @@
+# Phase 1: INTAKE (1/8)
+<!-- Part of Quick Feature Pipeline v1.0 — see workflow.md for config and routing -->
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PHASE 1: INTAKE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Accept plan input, detect mode, assess detail
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+## Step 1: Parse Plan Input
+
+Check the `plan_input` variable from workflow.yaml (passed as command argument).
+
+```
+IF plan_input contains "/" or ends with ".md" or ".txt":
+  → It's a file path. Read the file contents.
+  → Set PLAN_TEXT = file contents
+  → Set PLAN_SOURCE = "file: {path}"
+
+ELSE IF plan_input is non-empty string:
+  → It's inline text. Use directly.
+  → Set PLAN_TEXT = plan_input
+  → Set PLAN_SOURCE = "inline"
+
+ELSE (empty):
+  → Ask user with AskUserQuestion:
+    Q: "No plan provided. How would you like to specify your feature?"
+    Options:
+      - "Describe it now" — user types inline
+      - "Point to a file" — user provides path
+  → Read their response and set PLAN_TEXT accordingly
+```
+
+## Step 2: Detect Existing Artifacts
+
+Scan the planning and implementation artifact directories to determine what already exists.
+
+```bash
+# Check for existing PRD
+Read {planning_artifacts}/prd.md (or glob {planning_artifacts}/prd*.md)
+
+# Check for existing architecture
+Read {planning_artifacts}/architecture.md (or glob {planning_artifacts}/architecture*.md)
+
+# Check for existing epics
+Read {planning_artifacts}/epics.md (or glob {planning_artifacts}/epics*.md)
+
+# Check for sprint-status
+Read {implementation_artifacts}/sprint-status.yaml
+
+# Check for existing story files
+Glob {implementation_artifacts}/stories/*.md
+```
+
+**Mode detection logic:**
+
+```
+IF prd.md exists AND prd_mode == "auto":
+  → Set PRD_MODE = "edit" (update existing PRD with new plan)
+ELSE IF prd_mode == "edit":
+  → Set PRD_MODE = "edit" (user override)
+ELSE:
+  → Set PRD_MODE = "create" (generate from scratch)
+
+IF architecture.md exists AND plan doesn't mention architectural changes:
+  → Set SKIP_ARCHITECTURE = true
+  → Log: "Existing architecture detected. Skipping architecture phase."
+ELSE:
+  → Set SKIP_ARCHITECTURE = skip_architecture (from workflow.yaml)
+
+IF sprint-status.yaml exists:
+  → Log: "Existing sprint-status detected. Will be updated."
+
+IF story files exist:
+  → Count existing stories
+  → Log: "{N} existing story files detected."
+```
+
+## Step 3: Compute Plan Detail Score
+
+Assess the plan to determine how many clarifying questions Phase 2 should ask.
+
+```
+PLAN_DETAIL_SCORE = assess PLAN_TEXT on 5 dimensions (1 point each):
+
+1. LENGTH
+   - Short (< 500 chars): 0 points
+   - Medium (500-2000 chars): 0.5 points
+   - Long (> 2000 chars): 1 point
+
+2. SPECIFICITY
+   - Mentions specific components, APIs, endpoints, data models? +1
+   - Generic/vague description only? +0
+
+3. TECHNICAL_DEPTH
+   - Mentions frameworks, libraries, patterns, architecture? +1
+   - No technical details? +0
+
+4. SCOPE_CLARITY
+   - Mentions what's in/out of scope? +1
+   - No scope boundaries? +0
+
+5. USER_STORIES
+   - Mentions specific user flows, personas, or interactions? +1
+   - No user-facing detail? +0
+
+Final score: 1 (vague idea) to 5 (comprehensive spec)
+```
+
+## Step 4: Display Pipeline Configuration
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+QUICK FEATURE PIPELINE — INTAKE COMPLETE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Plan source:     {{PLAN_SOURCE}}
+Plan length:     {{char_count}} characters
+Detail score:    {{PLAN_DETAIL_SCORE}}/5
+
+PRD mode:        {{PRD_MODE}}
+Architecture:    {{SKIP_ARCHITECTURE ? "Skip (existing)" : "Generate"}}
+Existing epics:  {{epic_count || "None"}}
+Existing stories: {{story_count || "None"}}
+
+Questions needed: ~{{QUESTION_COUNT}} clarifications
+
+Proceeding to CLARIFY phase...
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+**Carry forward to Phase 2:**
+- `PLAN_TEXT` — raw plan content
+- `PLAN_DETAIL_SCORE` — 1-5 score
+- `PRD_MODE` — "edit" or "create"
+- `SKIP_ARCHITECTURE` — boolean
+- Existing artifact inventory
