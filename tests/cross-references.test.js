@@ -109,6 +109,30 @@ describe('workflow phase files', () => {
   });
 });
 
+describe('tech-debt-burndown phase files', () => {
+  const expectedPhases = [
+    'phase-1-harvest.md',
+    'phase-2-analyze.md',
+    'phase-3-propose.md',
+    'phase-4-create.md',
+  ];
+
+  it('has required phase files', () => {
+    expectedPhases.forEach((phase) => {
+      const path = `src/workflows/tech-debt-burndown/phases/${phase}`;
+      expect(existsSync(path), `Missing phase file: ${path}`).toBe(true);
+    });
+  });
+
+  it('has agent files', () => {
+    const expectedAgents = ['harvester.md', 'root-cause-analyst.md', 'story-architect.md'];
+    expectedAgents.forEach((agent) => {
+      const path = `src/workflows/tech-debt-burndown/agents/${agent}`;
+      expect(existsSync(path), `Missing agent file: ${path}`).toBe(true);
+    });
+  });
+});
+
 describe('adapter files', () => {
   const platforms = ['opencode', 'copilot', 'codex'];
 

@@ -91,6 +91,13 @@ Generate a markdown report saved to `{{scope_id}}-report.md`:
 | Fixes incomplete | {{incomplete}} |
 | Regressions | {{regressions}} |
 | New issues from fixes | {{new_issues}} |
+| SHOULD_FIX attempted | {{sf_attempted}} |
+| SHOULD_FIX fixed | {{sf_fixed}} |
+| SHOULD_FIX deferred | {{sf_deferred}} |
+| CODE_HEALTH found | {{code_health_found}} |
+| CODE_HEALTH tracked | {{code_health_tracked}} |
+| New Findings | {{new_findings}} |
+| Known (seen again) | {{known_findings}} |
 | **MUST_FIX remaining** | **{{must_fix_remaining}}** |
 
 ## Issues by Perspective
@@ -111,6 +118,40 @@ Generate a markdown report saved to `{{scope_id}}-report.md`:
 | High | {{n}} | {{n}} | {{n}} |
 | Medium | {{n}} | {{n}} | {{n}} |
 | Low | {{n}} | {{n}} | {{n}} |
+
+## Deferred Items (Tracked)
+
+{{IF tracking_method == "tracked_issues_file"}}
+{{sf_deferred}} deferred items tracked to `tracked-issues.json` ({{new_findings}} new, {{known_findings}} seen again)
+{{FOR EACH deferred_item}}
+- **{{title}}** — `{{file}}:{{line}}` — {{reason_deferred}} ({{IF known}}seen {{seen_count}}x{{ELSE}}new{{ENDIF}})
+{{END FOR}}
+{{ELIF tracking_method == "github_issues"}}
+{{sf_deferred}} deferred items tracked ({{new_findings}} new issues, {{known_findings}} deduplicated)
+{{FOR EACH deferred_item}}
+- **{{title}}** — `{{file}}:{{line}}` — {{reason_deferred}} ([#{{issue_number}}]({{issue_url}}))
+{{END FOR}}
+{{ELIF tracking_method == "local_file"}}
+{{sf_deferred}} items appended to {{local_file_path}}
+{{END IF}}
+
+## CODE_HEALTH Observations
+
+{{IF code_health_found > 0}}
+Structural and design observations tracked for future planning.
+
+| Pattern Type | Count | Description |
+|-------------|-------|-------------|
+{{FOR EACH pattern_type}}
+| {{type}} | {{count}} | {{description}} |
+{{END FOR}}
+
+{{FOR EACH code_health_item}}
+- **{{title}}** — `{{locations}}` — {{pattern_type}} ({{IF known}}seen {{seen_count}}x{{ELSE}}new{{ENDIF}})
+{{END FOR}}
+{{ELSE}}
+No CODE_HEALTH observations in this pass.
+{{ENDIF}}
 
 ## Remaining MUST_FIX Issues
 
@@ -136,6 +177,14 @@ Also produce a machine-readable JSON summary:
     "total_found": 15,
     "total_fixed": 12,
     "total_deferred": 1,
+    "sf_attempted": 5,
+    "sf_fixed": 3,
+    "sf_deferred": 2,
+    "code_health_found": 3,
+    "code_health_tracked": 3,
+    "tracking_method": "tracked_issues_file",
+    "new_findings": 3,
+    "known_findings": 2,
     "verified": 11,
     "incomplete": 1,
     "regressions": 0,

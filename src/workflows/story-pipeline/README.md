@@ -144,6 +144,7 @@ Phase 7:   REFLECT ────────────────────�
 - **Task Verification:** ALL tasks need file:line evidence
 - **Critical Issues:** MUST fix
 - **High Issues:** MUST fix
+- **CODE_HEALTH:** Track to local index (never blocks pipeline)
 
 ## Token Efficiency
 
@@ -184,7 +185,7 @@ The workflow uses agents for **verification parallelism**, not **implementation 
 - `agents/builder.md` - **Metis** 🔨 - Implementation agent (with playbook awareness)
 - `agents/inspector.md` - **Argus** 👁️ - Validation agent (requires code citations)
 - `agents/test-quality.md` - **Nemesis** 🧪 - Test quality validation
-- `agents/arbiter.md` - **Themis** ⚖️ - Issue triage (MUST_FIX/SHOULD_FIX/STYLE)
+- `agents/arbiter.md` - **Themis** ⚖️ - Issue triage (MUST_FIX/SHOULD_FIX/CODE_HEALTH/STYLE)
 - `agents/fixer.md` - **Metis** 🔨 (resumed) - Issue resolution
 - `agents/reflection-reporter.md` - **Hermes** 📜 - Combined reflection + reporting (v6.1)
 - `agents/reflection.md` - **Mnemosyne** 📚 - Playbook learning (deprecated, use reflection-reporter)
@@ -210,6 +211,25 @@ The workflow uses agents for **verification parallelism**, not **implementation 
 # Run story-pipeline
 /story-pipeline story_key=17-10
 ```
+
+## Issue Classification (4-Tier)
+
+Themis triages issues into 4 tiers:
+
+| Tier | Action | Blocks Pipeline? |
+|------|--------|-----------------|
+| **MUST_FIX** (70-85%) | Fix in Phase 5 | Yes |
+| **SHOULD_FIX** (5-15%) | Best-effort fix, defer remainder | No |
+| **CODE_HEALTH** (5-15%) | Track to local index | No |
+| **STYLE** (<5%) | Ignore | No |
+
+All reviewers include a **Safe Harbor** guarantee for CODE_HEALTH — they will never be asked to fix structural observations. CODE_HEALTH items are tracked locally in `tracked-issues.json`. Use `/tech-debt-burndown` to convert accumulated items into actionable stories.
+
+## Related Workflows
+
+- **batch-stories:** Batch-process multiple stories (`/batch-stories`)
+- **batch-review:** Deep hardening sweeps (`/batch-review`)
+- **tech-debt-burndown:** Convert CODE_HEALTH + SHOULD_FIX issues into stories (`/tech-debt-burndown`)
 
 ## Backward Compatibility
 

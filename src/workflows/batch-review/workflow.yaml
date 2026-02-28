@@ -188,8 +188,26 @@ deduplication:
 # Issue classification (same as story-pipeline)
 issue_classification:
   MUST_FIX: "Real issues that need fixing"
-  SHOULD_FIX: "Large refactors, log as tech debt"
+  SHOULD_FIX: "Localized improvements, attempt best-effort"
+  CODE_HEALTH: "Structural/design observations, track to GitHub Issues"
   STYLE: "Manufactured complaints only"
+
+# SHOULD_FIX best-effort fixing behavior
+should_fix_behavior:
+  fix_enabled: true                   # Attempt best-effort fixes for SHOULD_FIX
+  effort_limit: "moderate"            # "light" | "moderate" | "aggressive"
+  skip_criteria:                      # Skip SHOULD_FIX item if ANY of these are true
+    - "requires_multi_file_refactor"  # Touches >3 files for structural change
+    - "architectural_change"          # Changes system design patterns
+    - "out_of_scope"                  # Unrelated to the current review scope
+  track_deferred: true                # Create tracking items for skipped SHOULD_FIX
+
+# CODE_HEALTH behavior — structural/design observations
+code_health_behavior:
+  fix_enabled: false                    # CODE_HEALTH items NEVER go to fixer
+  track_always: true                    # Always create tracking items
+  github_label: "code-health"           # Distinct label from should-fix
+  skip_in_completion: true              # Does not count toward clean pass
 
 # Output
 output:
@@ -199,7 +217,7 @@ output:
 
 # Completion criteria
 completion:
-  clean_pass: true  # Stop when no MUST_FIX issues found
+  clean_pass: true  # Based on MUST_FIX only (SHOULD_FIX doesn't block)
   max_passes: 5     # Safety limit
 
 standalone: true

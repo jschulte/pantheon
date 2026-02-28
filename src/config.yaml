@@ -21,4 +21,16 @@ pantheon:
   parallel_config:
     max_concurrent: 3             # Stories per wave
     smart_ordering: true          # Auto-detect dependencies
+    worktree_deps: symlink        # symlink (default) | install — symlink reuses main repo's node_modules
   use_consolidated_review: "auto" # Complexity-based routing
+  deferred_issues:
+    tracking_method: "tracked_issues_file"  # "tracked_issues_file" | "github_issues" | "local_file"
+    tracked_issues_file:
+      path: "tracked-issues.json"         # Relative to sprint_artifacts
+    github_issues:
+      labels: ["tech-debt", "should-fix", "code-health"]
+      assignee: null                    # Optional: auto-assign to someone
+      project: null                     # Optional: add to a GitHub project
+    local_file:
+      path: "KNOWN_ISSUES.md"          # Relative to project root
+      append_mode: true                 # Append new items (don't overwrite)

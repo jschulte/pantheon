@@ -1,6 +1,10 @@
 # Git Commit Queue Protocol
 <!-- Extracted from agents/heracles.md — shared protocol for swarm commit serialization -->
 
+<!-- DEPRECATION: Only used in non-worktree mode (shared filesystem).
+     When worktree_isolation is enabled (default for parallel), workers
+     own their worktree and commit freely. No locking needed. -->
+
 **Multiple workers commit in parallel. You MUST serialize commits with a directory-based lock.**
 
 **CRITICAL: Skip pre-commit type-check and lint in batch mode.** The pipeline already ran

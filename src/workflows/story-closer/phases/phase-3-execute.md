@@ -94,50 +94,208 @@ IF result.status == "error":
 
 Continue to next story.
 
-### 3.4 Parallel Processing
+### 3.4 Parallel Processing (Worktree Isolation)
 
-Group selected stories into waves. Wave size depends on story count:
-- ≤5 stories: 1 wave (all at once)
-- 6-15 stories: waves of 5
-- 16+ stories: waves of 8
+Uses the same persistent worktree + early integration pattern as batch-stories.
+Each worktree gets its own filesystem, symlinked `node_modules`, and git branch — no contention.
+Session-scoped naming prevents collisions when multiple terminals run concurrently.
 
-**For each wave:**
-
-```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔧 Wave {{wave_num}}/{{total_waves}}
-   Processing {{wave_size}} stories in parallel
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
-
-**Route NEEDS_PIPELINE stories first** (just log them, no spawn needed).
-
-**Spawn Teleos workers in parallel for CLOSEABLE stories:**
+**Step 1: Generate Session ID + Create Integration Branch + Persistent Worktrees**
 
 ```
-FOR EACH closeable story in wave:
-  Task({
+# Generate a unique 6-character hex session ID (same pattern as batch-stories)
+SESSION_ID = Bash("echo -n $$$(date +%s%N) | shasum | head -c 6").trim()
+Display: "🔑 Session ID: {{SESSION_ID}}"
+
+INTEGRATION = "integration-{{SESSION_ID}}"
+Bash("git branch -f {{INTEGRATION}} HEAD")  # -f for idempotent rerun
+
+max_worktrees = 3  # matches batch-stories parallel_config
+dep_strategy = parallel_config.worktree_deps  # "symlink" (default) or "install"
+WORKTREES = {}
+MANIFEST_PATH = "{{project_root}}/.claude/worktrees/manifest.json"
+Bash("mkdir -p {{project_root}}/.claude/worktrees")
+
+# Orphan cleanup: check manifest for dead sessions
+IF file_exists(MANIFEST_PATH):
+  manifest = JSON.parse(Read(MANIFEST_PATH))
+  FOR EACH (sid, session) IN manifest.sessions:
+    pid_alive = Bash("kill -0 {{session.pid}} 2>/dev/null && echo alive || echo dead").trim() == "alive"
+    age_hours = (now() - session.started_at) / 3600
+    IF NOT pid_alive AND age_hours > 4:
+      Display: "🧹 Cleaning orphaned session {{sid}}"
+      FOR EACH wt IN session.worktrees:
+        Bash("git worktree remove {{wt.path}} --force 2>/dev/null || true")
+        Bash("git branch -D {{wt.branch}} 2>/dev/null || true")
+      Bash("git branch -D {{session.integration_branch}} 2>/dev/null || true")
+      delete manifest.sessions[sid]
+  Write(MANIFEST_PATH, JSON.stringify(manifest, null, 2))
+ELSE:
+  manifest = { sessions: {} }
+
+FOR n IN 1..max_worktrees:
+  branch = "worktree/teleos-{{SESSION_ID}}-{{n}}"
+  path = "{{project_root}}/.claude/worktrees/teleos-{{SESSION_ID}}-{{n}}"
+
+  Bash("git worktree add -b {{branch}} {{path}} HEAD")
+
+  IF dep_strategy == "symlink":
+    # Find all node_modules directories in the main repo and symlink them into the worktree
+    node_modules_dirs = Bash("find {{project_root}} -name node_modules -maxdepth 3 -type d -not -path '*/.*'")
+    FOR EACH nm_dir IN node_modules_dirs:
+      relative = nm_dir relative to project_root
+      target_in_worktree = "{{path}}/{{relative}}"
+      Bash("rm -rf {{target_in_worktree}} 2>/dev/null; ln -s {{nm_dir}} {{target_in_worktree}}")
+  ELSE:
+    Bash("cd {{path}} && npm ci")
+
+  WORKTREES[n] = { path, branch, stories: [], agent_task_id: null }
+
+# Write session to manifest
+manifest.sessions[SESSION_ID] = {
+  pid: Bash("echo $$").trim(),
+  started_at: now(),
+  workflow: "story-closer",
+  integration_branch: INTEGRATION,
+  worktrees: WORKTREES.values().map(wt → { path: wt.path, branch: wt.branch }),
+  status: "active"
+}
+Write(MANIFEST_PATH, JSON.stringify(manifest, null, 2))
+```
+
+**Step 2: Assign Stories to Worktrees**
+
+Route NEEDS_PIPELINE stories first (log them, no spawn needed).
+
+For CLOSEABLE stories:
+- If story depends on another assigned story → same worktree
+- Otherwise → worktree with fewest stories (load balance)
+
+```
+FOR EACH closeable story IN selected_stories:
+  IF story.depends_on intersects any worktree's story list:
+    target_wt = worktree containing the dependency
+  ELSE:
+    target_wt = worktree with fewest stories
+  WORKTREES[target_wt].stories.append(story)
+```
+
+**Step 3: Spawn Initial Workers (One Story Per Worker)**
+
+Each worker gets exactly ONE story. When a worker finishes, the lead merges to integration
+and spawns a NEW worker in the same worktree for the next story in that worktree's queue.
+
+```
+FUNCTION spawn_teleos_in_worktree(wt_id, wt, story):
+  is_first_story = (wt.completed_count == 0)
+
+  agent = Task({
     subagent_type: "general-purpose",
-    description: "🔧 Teleos closing {{story_key}}",
+    description: "🔧 Teleos: {{story.story_key}} (wt-{{wt_id}})",
     run_in_background: true,
-    prompt: `[same prompt as sequential mode]`
+    prompt: `
+You are Teleos, the Story Closer worker agent.
+
+Read your full instructions from:
+  src/workflows/story-closer/agents/closer-worker.md
+
+## Worktree Mode
+- worktree_mode: true
+- worktree_path: {{wt.path}}
+- You OWN this worktree. Commit freely, no lock protocol needed.
+
+## Your Assignment — ONE Story
+- story_key: {{story.story_key}}
+- story_file: {{story.story_file}}
+- unchecked_count: {{story.unchecked}}
+
+{{IF NOT is_first_story:}}
+## Pre-Flight: Pull Integration
+Before starting, pull the latest integration branch:
+  cd {{wt.path}} && git merge integration --no-edit
+{{END IF}}
+
+sprint_artifacts: {{sprint_artifacts}}
+current_date: {{date}}
+
+Human-validation patterns to skip:
+{{human_validation_patterns from workflow.md config}}
+
+CRITICAL: Return a structured JSON result as your final output.
+Do NOT stop to ask questions — log blockers and continue.
+`
   })
+  WORKTREES[wt_id].agent_task_id = agent.task_id
+  WORKTREES[wt_id].current_story = story
+
+# Spawn first story in each worktree
+FOR EACH (wt_id, wt) IN WORKTREES WHERE wt.stories is not empty:
+  wt.story_index = 0
+  wt.completed_count = 0
+  spawn_teleos_in_worktree(wt_id, wt, wt.stories[0])
 ```
 
-Wait for all workers in wave to complete. Collect results.
+**Step 4: Monitor, Early Integration, Re-Dispatch**
 
-**Display wave summary:**
+```
+WHILE any workers active OR any worktrees have remaining stories:
+  FOR EACH (wt_id, wt) IN WORKTREES WHERE wt.agent_task_id is not null:
+    result = TaskOutput(task_id=wt.agent_task_id, block=false, timeout=5000)
+
+    IF result.status == "completed":
+      # Merge worktree branch into integration
+      Bash("git checkout {{INTEGRATION}} && git merge {{wt.branch}} --no-edit && git checkout main")
+      Parse result, merge into batch_results
+      wt.completed_count++
+      wt.agent_task_id = null
+
+      # Re-dispatch: spawn new worker for next story in this worktree's queue
+      wt.story_index++
+      IF wt.story_index < wt.stories.length:
+        next_story = wt.stories[wt.story_index]
+        spawn_teleos_in_worktree(wt_id, wt, next_story)
+
+    ELIF result.status == "failed":
+      batch_results.errors.append({ story_key: wt.current_story.story_key, error: result.error })
+      wt.agent_task_id = null
+      wt.story_index++
+      IF wt.story_index < wt.stories.length:
+        next_story = wt.stories[wt.story_index]
+        spawn_teleos_in_worktree(wt_id, wt, next_story)
+
+  sleep(10s)
+```
+
+**Step 5: Final Merge + Cleanup**
+
+```
+# Merge integration into main
+Bash("git checkout main && git merge {{INTEGRATION}} --no-edit")
+
+# Cleanup worktrees and branches
+FOR EACH (wt_id, wt) IN WORKTREES:
+  Bash("git worktree remove {{wt.path}} --force")
+  Bash("git branch -d {{wt.branch}}")
+Bash("git branch -d {{INTEGRATION}}")
+
+# Remove session from manifest
+IF file_exists(MANIFEST_PATH):
+  manifest = JSON.parse(Read(MANIFEST_PATH))
+  delete manifest.sessions[SESSION_ID]
+  Write(MANIFEST_PATH, JSON.stringify(manifest, null, 2))
+```
+
+**Display batch summary:**
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📊 Wave {{wave_num}} Complete
+📊 Parallel Execution Complete
    ✅ {{completed}} completed
    ⚠️ {{partial}} partial
    ❌ {{errors}} errors
+   🔀 {{routed}} routed to pipeline
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
-
-Continue to next wave until all waves complete.
 
 ### 3.5 Aggregate Results
 

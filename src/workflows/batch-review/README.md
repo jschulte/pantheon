@@ -91,10 +91,23 @@ Each pass generates:
 - `hardening/{{scope_id}}-report.md` - Human-readable summary
 - `hardening/{{scope_id}}-history.json` - Multi-pass history
 
+## Issue Classification (4-Tier)
+
+| Tier | Action | Blocks Clean Pass? |
+|------|--------|--------------------|
+| **MUST_FIX** | Fix immediately | Yes |
+| **SHOULD_FIX** | Best-effort fix, defer remainder | No |
+| **CODE_HEALTH** | Track to local index (never fixed in-pipeline) | No |
+| **STYLE** | Ignore | No |
+
+**CODE_HEALTH** items are structural/design observations (god classes, DRY violations, inconsistent patterns, layer violations) that are tracked to the local `tracked-issues.json` index (dedup by `{type}::{file_path}`). Reviewers have a **Safe Harbor** guarantee — they will never be asked to fix CODE_HEALTH items. This encourages honest structural reporting.
+
+After accumulating issues, use `/tech-debt-burndown` to convert CODE_HEALTH + SHOULD_FIX items into actionable stories.
+
 ## Completion Criteria
 
 A **clean pass** means:
-- No MUST_FIX issues remaining
+- No MUST_FIX issues remaining (CODE_HEALTH and SHOULD_FIX deferred items do NOT block clean pass)
 - All fixes verified
 - Tests passing
 
@@ -112,7 +125,7 @@ You can (and should) run again with different focus to find other issue types.
 | Themis (Arbiter) | ⚖️ | Triages + deduplicates findings from all reviewers |
 | Asclepius (Fixer Worker) | 💊 | Claims a file category, fixes MUST_FIX issues |
 | Aletheia (Verify Worker) | 🔍 | Claims a category, verifies fixes are correct |
-| Hardening Reporter | — | Generates summary |
+| Hardening Reporter | — | Generates summary + CODE_HEALTH observations |
 
 ### Sequential Mode (Fallback)
 
@@ -209,6 +222,12 @@ Each pass with a different focus finds different issue types:
 **Pass 5 (consistency):** Pattern mismatches, naming inconsistencies
 
 **Result:** Progressively more robust code with each iteration.
+
+## Related Workflows
+
+- **tech-debt-burndown:** Convert accumulated CODE_HEALTH + SHOULD_FIX issues into stories (`/tech-debt-burndown`)
+- **story-pipeline:** Implement individual stories
+- **batch-stories:** Batch-process multiple stories
 
 ---
 

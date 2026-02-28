@@ -8,7 +8,7 @@ This document defines the mapping between Pantheon pipeline roles and Claude Cod
 
 | Story Type | Claude Code Agent | Pantheon Persona | Combined Power |
 |------------|-------------------|-------------|----------------|
-| React/Next.js components | `dev-frontend` | `builders/frontend-react.md` | Frontend expertise + Apollo persona |
+| React/Next.js components | `dev-frontend` | `builders/frontend-react.md` | Frontend expertise + Helios persona |
 | TypeScript APIs | `dev-typescript` | `builders/backend-typescript.md` | TS mastery + Hephaestus persona |
 | Python backends | `dev-python` | `builders/backend-python.md` | Python expertise + Pythia persona |
 | Go services | `dev-go` | `builders/backend-go.md` | Go mastery + Gopher persona |
