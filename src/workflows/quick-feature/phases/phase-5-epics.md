@@ -11,6 +11,16 @@ Autonomous generation + USER CHECKPOINT
 
 ## Step 1: Spawn Epics Sub-Agent
 
+```
+IF BROWNFIELD_ONBOARD:
+  - Epics already exist at {EPICS_PATH}
+  - Do NOT spawn epics sub-agent
+  - Read existing epics file directly
+  - Proceed to Step 3 (Parse Epic Summary)
+ELSE:
+  - (existing logic below: spawn epics sub-agent)
+```
+
 Spawn a `Task` sub-agent (`general-purpose`, model: `opus`) with the following prompt:
 
 ```
