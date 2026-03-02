@@ -13,7 +13,7 @@ describe('worktree isolation config', () => {
 
   it('has required config fields', () => {
     expect(worktreeConfig.max_worktrees).toBeDefined();
-    expect(worktreeConfig.install_cmd).toBeDefined();
+    expect(worktreeConfig.dep_strategy).toBeDefined();
     expect(worktreeConfig.branch_pattern).toBeDefined();
     expect(worktreeConfig.integration_branch).toBeDefined();
     expect(worktreeConfig.manifest_file).toBeDefined();
