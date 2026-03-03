@@ -13,6 +13,16 @@ Parse input, detect mode, load existing artifacts
 
 Check `plan_input` and `sweep_range` from workflow.yaml.
 
+**IMPORTANT — Intent Detection:** The user may provide natural language that expresses sweep intent
+rather than a literal plan. Before classifying input as inline plan text, check whether the user is
+asking you to scan git history. Examples:
+- "Scan the past 2 days of git commits and look for changes that should be tracked as stories"
+- "Find undocumented work from last week"
+- "Check recent commits for anything missing from stories"
+
+If the input expresses sweep intent, extract the time range from the natural language and treat it
+as if `sweep_range` were set to that value.
+
 ```
 IF plan_input contains "/" or ends with ".md" or ".txt":
   → It's a file path. Read the file contents.
@@ -21,10 +31,22 @@ IF plan_input contains "/" or ends with ".md" or ".txt":
   → Set initial MODE = "check-content" (resolved in Step 4)
 
 ELSE IF plan_input is non-empty string:
-  → It's inline text. Use directly.
-  → Set PLAN_TEXT = plan_input
-  → Set PLAN_SOURCE = "inline"
-  → Set initial MODE = "check-content" (resolved in Step 4)
+  → First, check for SWEEP INTENT in the text:
+    Does plan_input express a request to scan git history, find undocumented work,
+    or review recent commits? (e.g. mentions "commits", "git", "scan", "undocumented",
+    "recent changes", "past N days/weeks", "history")
+    → IF sweep intent detected:
+      → Extract time range from the natural language (e.g. "past 2 days" → "2 days",
+        "last week" → "1 week"). Default to "1 week" if no range is clear.
+      → Set sweep_range = extracted range
+      → Set MODE = "sweep"
+      → Set PLAN_SOURCE = "sweep (from natural language): {sweep_range}"
+      → Proceed to Step 2 (sweep discovery)
+    → ELSE:
+      → It's inline plan text. Use directly.
+      → Set PLAN_TEXT = plan_input
+      → Set PLAN_SOURCE = "inline"
+      → Set initial MODE = "check-content" (resolved in Step 4)
 
 ELSE IF plan_input is empty AND sweep_range is set:
   → Set MODE = "sweep"
