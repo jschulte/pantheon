@@ -18,13 +18,16 @@ IF SPRINT_EXISTS:
   → Read {implementation_artifacts}/sprint-status.yaml
   → Parse development_status section
 
-  # Add epic entry if not present
-  IF epic-{{TARGET_EPIC_NUM}} key does NOT exist in development_status:
-    → Append: "  epic-{{TARGET_EPIC_NUM}}: in-progress"
+  # Add epic entries for all epics that have stories
+  epic_nums_used = unique epic_num values from STORY_SPECS
+  FOR EACH epic_num IN epic_nums_used:
+    IF epic-{{epic_num}} key does NOT exist in development_status:
+      → Append: "  epic-{{epic_num}}: in-progress"
 
-  # Add story entries
-  FOR EACH story IN STORY_SPECS where RESULTS[story] != FAIL:
-    story_key = "{{story.epic_num}}-{{story.story_num}}-{{story.title_slug}}"
+  # Add story entries (iterate RESULTS, which are objects with story_key and status)
+  FOR EACH result IN RESULTS where result.status != "FAIL":
+    story = result.story  # The original STORY_SPECS entry
+    story_key = result.story_key
 
     # Determine status based on mode
     IF MODE == "pre-build":
@@ -48,14 +51,16 @@ IF SPRINT_EXISTS:
 
     → Append to development_status: "  {{story_key}}: {{story_status}}"
 
-  # Add retrospective entry if new epic
+  # Add retrospective entry for any newly created epics
   IF EPIC_STRATEGY == "new" OR EPIC_STRATEGY == "create":
-    → Append: "  epic-{{TARGET_EPIC_NUM}}-retrospective: optional"
+    FOR EACH new epic_num (newly created, not pre-existing):
+      → Append: "  epic-{{epic_num}}-retrospective: optional"
 
-  # Check if epic is fully done (post-build only)
+  # Check if any epic is fully done (post-build only)
   IF MODE == "post-build":
-    → Count all stories for epic-{{TARGET_EPIC_NUM}}
-    → If ALL stories are "done" → update epic status to "done"
+    FOR EACH epic_num IN epic_nums_used:
+      → Count all stories for epic-{{epic_num}} in development_status
+      → If ALL stories are "done" → update epic status to "done"
 
   → Write updated sprint-status.yaml (preserve all comments and existing entries)
 
@@ -82,11 +87,13 @@ ELSE (no sprint-status.yaml):
    #   - done: Story completed
 
    development_status:
-     epic-{{TARGET_EPIC_NUM}}: in-progress
-     {{FOR EACH story with status}}
-     {{story_key}}: {{story_status}}
+     {{FOR EACH epic_num IN epic_nums_used}}
+     epic-{{epic_num}}: in-progress
+     {{FOR EACH result in that epic where status != FAIL}}
+     {{result.story_key}}: {{story_status}}
      {{END FOR}}
-     epic-{{TARGET_EPIC_NUM}}-retrospective: optional
+     epic-{{epic_num}}-retrospective: optional
+     {{END FOR}}
   "
 ```
 
@@ -113,7 +120,7 @@ Summary:
   Epics updated:      {{EPIC_STRATEGY}}
   Sprint status:      Updated
 
-{{IF MODE == "post-build" AND SWEEP_RESULTS}}
+{{IF IS_SWEEP AND SWEEP_RESULTS}}
 Sweep coverage:
   Commits documented: {{documented_commit_count}}/{{total_commits}}
   Groups documented:  {{SWEEP_RESULTS.undocumented}} previously undocumented
@@ -151,7 +158,7 @@ All work verified complete:
 
   {{END IF}}
 
-  {{IF SWEEP_RESULTS}}
+  {{IF IS_SWEEP}}
 Sweep follow-up:
   - Run /plan-to-story sweep_range="{{different_range}}" to scan a different period
   - Review documented stories for accuracy

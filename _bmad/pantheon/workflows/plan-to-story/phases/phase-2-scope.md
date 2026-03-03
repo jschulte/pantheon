@@ -51,19 +51,32 @@ IF EPICS_EXISTS:
     → For each epic, count existing stories (### Story N.M: Title)
     → Build EPIC_MAP: {epic_num, title, story_count, topics/keywords}
 
+  EPIC_ASSIGNMENTS = {}   # Map: plan_item → epic_num (or "new")
+
   FOR EACH plan item (from PLAN_ITEMS):
     Determine best-fit epic by topic/domain overlap:
       → Compare plan item keywords against each epic's title and story topics
       → Select epic with strongest overlap
       → If no clear overlap → mark for new epic
+      → Record EPIC_ASSIGNMENTS[item] = epic_num (or "new" for new-epic items)
 
-  IF all items fit existing epics:
-    → EPIC_STRATEGY = "append"
-    → TARGET_EPIC_NUM = best-fit epic number
-    → NEXT_STORY_NUM = EPIC_MAP[TARGET_EPIC_NUM].story_count + 1
+  # Count distinct epics referenced
+  assigned_epics = unique epic_nums in EPIC_ASSIGNMENTS (excluding "new")
+
+  IF all items fit existing epics (no item marked "new"):
+    IF assigned_epics.length == 1:
+      → EPIC_STRATEGY = "append"
+      → TARGET_EPIC_NUM = the single assigned epic number
+      → NEXT_STORY_NUM = EPIC_MAP[TARGET_EPIC_NUM].story_count + 1
+    ELSE:
+      → EPIC_STRATEGY = "append-multi"   (items span multiple existing epics)
+      → For each epic_num in assigned_epics:
+          NEXT_STORY_NUM_PER_EPIC[epic_num] = EPIC_MAP[epic_num].story_count + 1
   ELSE IF some items need a new epic:
-    → EPIC_STRATEGY = "mixed" (some append, some new epic)
+    → EPIC_STRATEGY = "mixed" (some append to existing epics, some go to a new epic)
     → NEW_EPIC_NUM = max(existing epic numbers) + 1
+    → For each existing epic referenced in EPIC_ASSIGNMENTS:
+        NEXT_STORY_NUM_PER_EPIC[epic_num] = EPIC_MAP[epic_num].story_count + 1
   ELSE:
     → EPIC_STRATEGY = "new"
     → NEW_EPIC_NUM = max(existing epic numbers) + 1
@@ -133,6 +146,19 @@ IF EPIC_STRATEGY == "append":
     ],
     multiSelect: false
   })
+ELSE IF EPIC_STRATEGY == "append-multi":
+  # Items span multiple existing epics — list the placement
+  epic_summary = for each epic_num in assigned_epics: "Epic {num}: {title} ({count} stories)"
+  QUESTIONS.append({
+    question: "Stories span multiple epics: {{epic_summary}}. Accept placement?",
+    header: "Epic",
+    options: [
+      { label: "Accept multi-epic placement (Recommended)", description: "Each story goes to its best-fit epic" },
+      { label: "All in one epic", description: "Force all stories into a single epic" },
+      { label: "All in new epic", description: "Create a new epic for all stories" }
+    ],
+    multiSelect: false
+  })
 ELSE IF EPIC_STRATEGY == "mixed":
   QUESTIONS.append({
     question: "Some stories fit existing epics, others need a new Epic {{NEW_EPIC_NUM}}. Accept?",
@@ -176,13 +202,16 @@ IF "Skip" or "Continue":
   → Set PRD_AMEND = false
 
 # Epic
-IF "Choose different epic" or "Choose existing epic":
+IF "Choose different epic" or "Choose existing epic" or "All in one epic":
   → Follow up with AskUserQuestion listing available epics
-  → Update TARGET_EPIC_NUM based on selection
+  → Update EPIC_ASSIGNMENTS to point all items to selected epic
+  → Set EPIC_STRATEGY = "append", TARGET_EPIC_NUM = selected epic
 IF "All in new epic" or "Create new epic":
-  → Set EPIC_STRATEGY = "new", TARGET_EPIC_NUM = NEW_EPIC_NUM
+  → Set EPIC_STRATEGY = "new"
+  → NEW_EPIC_NUM = max(existing epic numbers) + 1
+  → Update EPIC_ASSIGNMENTS to point all items to "new"
 IF accepted recommended:
-  → Keep EPIC_STRATEGY and TARGET_EPIC_NUM as analyzed
+  → Keep EPIC_STRATEGY, EPIC_ASSIGNMENTS, and per-epic data as analyzed
 ```
 
 ## Step 4: Conditional — Spawn Edit-PRD Sub-Agent
@@ -250,9 +279,11 @@ No further input required.
 - `PLAN_ITEMS` — decomposed plan items
 - `SCOPE_CLASS` — "existing", "mixed", "new", or "no-prd"
 - `PRD_AMEND` — boolean
-- `EPIC_STRATEGY` — "append", "mixed", "new", or "create"
-- `TARGET_EPIC_NUM` — target epic number
-- `NEXT_STORY_NUM` — next available story number in target epic
+- `EPIC_STRATEGY` — "append", "append-multi", "mixed", "new", or "create"
+- `EPIC_ASSIGNMENTS` — map of plan_item → epic_num (or "new")
+- `TARGET_EPIC_NUM` — target epic number (when single epic)
+- `NEXT_STORY_NUM` — next available story number (when single epic)
+- `NEXT_STORY_NUM_PER_EPIC` — map of epic_num → next story num (when multi-epic)
 - `NEW_EPIC_NUM` — new epic number (if creating)
 - `EPICS_CONTENT`, `EPICS_EXISTS`
 - `PRD_CONTENT`, `PRD_EXISTS`

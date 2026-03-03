@@ -80,7 +80,17 @@ ELSE (plan_input is empty AND no sweep_range):
 
 > Skip this step entirely if MODE is not "sweep".
 
-**2a — Gather recent commit history:**
+**2a — Validate and gather recent commit history:**
+
+Before running any git commands, validate `sweep_range` against a strict time-range pattern.
+Acceptable formats: `N day(s)`, `N week(s)`, `N month(s)`, `N hour(s)` where N is 1-99.
+Reject any value that does not match (e.g. contains quotes, semicolons, pipes, or other shell metacharacters).
+
+```
+IF sweep_range does NOT match pattern /^\d{1,2}\s+(day|days|week|weeks|month|months|hour|hours)$/i:
+  → HALT: "Invalid sweep_range: '{sweep_range}'. Expected format: '2 days', '1 week', etc."
+```
+
 ```bash
 git log --oneline --since="{sweep_range}" --no-merges
 ```
@@ -134,6 +144,7 @@ Display: "All recent work in the last {sweep_range} is already documented in sto
 → EXIT pipeline gracefully
 ```
 
+Set IS_SWEEP = true (preserved for display/handoff — sweep origin is tracked separately from story generation mode).
 Set MODE = "post-build" (sweep always produces post-build stories since work is already done).
 
 ## Step 3: Load Existing Artifacts
@@ -236,7 +247,7 @@ Existing artifacts:
   Sprint status:  {{SPRINT_EXISTS ? "Found" : "Missing"}}
   Stories:        {{EXISTING_STORY_COUNT}} existing
 
-{{IF MODE == "sweep"}}
+{{IF IS_SWEEP}}
 Sweep results:
   Commits scanned: {{SWEEP_RESULTS.total_commits}}
   Groups found:    {{SWEEP_RESULTS.groups_found}}
@@ -250,10 +261,11 @@ Proceeding to SCOPE phase...
 **Carry forward to Phase 2:**
 - `PLAN_TEXT` — raw or synthesized plan content
 - `PLAN_SOURCE` — origin of plan input
-- `MODE` — "pre-build", "post-build", or detected mode
+- `MODE` — "pre-build" or "post-build"
+- `IS_SWEEP` — boolean, true if input came from sweep discovery
 - `PRD_CONTENT`, `PRD_EXISTS`
 - `EPICS_CONTENT`, `EPICS_EXISTS`
 - `SPRINT_STATUS`, `SPRINT_EXISTS`
 - `ARCHITECTURE_PATH`
 - `EXISTING_STORY_COUNT`, `EXISTING_STORY_FILES`
-- `SWEEP_RESULTS` (sweep mode only)
+- `SWEEP_RESULTS` (when IS_SWEEP is true)

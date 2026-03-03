@@ -23,15 +23,22 @@ FOR EACH plan item IN PLAN_ITEMS:
     → Tightly coupled items may be combined into 1 story
     → Small/focused plans may produce just 1 story
 
+  Determine epic and story number from EPIC_ASSIGNMENTS:
+    → epic_num = EPIC_ASSIGNMENTS[item] (resolved to actual number, or NEW_EPIC_NUM if "new")
+    → story_num = NEXT_STORY_NUM_PER_EPIC[epic_num]++ (or NEXT_STORY_NUM++ for single-epic)
+
   Create story spec:
+    title_slug = kebab-case slug derived from descriptive title
+                 (e.g. "User Authentication Flow" → "user-authentication-flow")
     STORY_SPECS.append({
-      epic_num: TARGET_EPIC_NUM (or NEW_EPIC_NUM for new-epic items),
-      story_num: NEXT_STORY_NUM++,
-      title: descriptive title (kebab-case slug for filename),
+      epic_num: epic_num,
+      story_num: story_num,
+      title: descriptive title (human-readable),
+      title_slug: title_slug,
       user_story: "As a {persona}, I want {action}, so that {benefit}",
       acceptance_criteria: [BDD Given/When/Then statements],
       plan_context: relevant excerpt from PLAN_TEXT,
-      source_commits: [commit references if sweep mode]
+      source_commits: [commit references if IS_SWEEP]
     })
 
 TOTAL_STORIES = STORY_SPECS.length
@@ -67,6 +74,15 @@ ELSE IF EPIC_STRATEGY == "append":
   → Find the last ### Story entry within that epic section
   → After the last story entry (before the next ## Epic or end of file), append:
     New story entries in the same format as above
+  → Write updated epics.md
+
+ELSE IF EPIC_STRATEGY == "append-multi":
+  → Read {planning_artifacts}/epics.md
+  → Group STORY_SPECS by epic_num
+  → For each epic_num group:
+    → Find section "## Epic {{epic_num}}:"
+    → Find the last ### Story entry within that epic section
+    → Append new story entries for that group
   → Write updated epics.md
 
 ELSE IF EPIC_STRATEGY == "new":
@@ -188,7 +204,7 @@ FOR EACH story IN STORY_SPECS:
 
   → Wait for sub-agent completion
   → Run validation (Step 4)
-  → Add result to RESULTS
+  → Add result to RESULTS as: {story_key, story, status, path, size, section_count, task_count}
 
 END FOR
 ```
