@@ -70,7 +70,7 @@ ELSE (no sprint-status.yaml):
   "# generated: {{date}}
    # project: (from config)
    # tracking_system: file-system
-   # story_location: "{implementation_artifacts}/stories"
+   # story_location: "{implementation_artifacts}"
 
    # STATUS DEFINITIONS:
    # ==================
@@ -141,7 +141,7 @@ NEXT STEPS
 Stories are ready for development:
   1. Run /batch-stories to build all stories
   2. Run /story-pipeline for a specific story
-  3. Review story files in {{implementation_artifacts}}/stories/
+  3. Review story files in {{implementation_artifacts}}/
 
 {{ELSE IF MODE == "post-build"}}
   {{IF any stories have unchecked tasks}}
@@ -169,7 +169,7 @@ Sweep follow-up:
 Artifacts updated:
   - Epics:         {{planning_artifacts}}/epics.md
   - Sprint status: {{implementation_artifacts}}/sprint-status.yaml
-  - Stories:       {{implementation_artifacts}}/stories/
+  - Stories:       {{implementation_artifacts}}/
   {{IF PRD_AMEND}}
   - PRD:           {{planning_artifacts}}/prd.md
   {{END IF}}
