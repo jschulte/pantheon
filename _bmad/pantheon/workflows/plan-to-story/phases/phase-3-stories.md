@@ -121,7 +121,7 @@ RESULTS = []
 FOR EACH story IN STORY_SPECS:
 
   story_key = "{{story.epic_num}}-{{story.story_num}}-{{story.title_slug}}"
-  story_path = "{{implementation_artifacts}}/stories/{{story_key}}.md"
+  story_path = "{{implementation_artifacts}}/{{story_key}}.md"
 
   Log: "Generating story {{story_key}} ({{index+1}}/{{TOTAL_STORIES}})"
 
@@ -216,7 +216,7 @@ After each story sub-agent completes, validate the output:
 ```
 VALIDATE(story_key):
 
-  story_path = {implementation_artifacts}/stories/{{story_key}}.md
+  story_path = {implementation_artifacts}/{{story_key}}.md
 
   1. FILE EXISTS:
      → Missing = FAIL

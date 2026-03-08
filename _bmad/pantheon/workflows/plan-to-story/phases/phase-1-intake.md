@@ -107,7 +107,7 @@ Analyze commit messages and changed files to group related commits into logical 
 ```
 Read {implementation_artifacts}/sprint-status.yaml
   → Extract all tracked story keys
-Read existing story files in {implementation_artifacts}/stories/
+Read existing story files in {implementation_artifacts}/
   → Extract task descriptions and file references
 
 For each commit group:
@@ -172,7 +172,7 @@ Read {implementation_artifacts}/sprint-status.yaml
   → Set SPRINT_EXISTS = true/false
 
 # Check for existing story files
-Glob {implementation_artifacts}/stories/*.md
+Glob {implementation_artifacts}/*.md
   → Set EXISTING_STORY_COUNT = count
   → Set EXISTING_STORY_FILES = list of paths
 ```
