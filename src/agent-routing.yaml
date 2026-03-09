@@ -579,3 +579,10 @@ support_routing:
       name: "Hermes"
       title: "Messenger of the Gods"
       emoji: "📋"
+
+  committer:
+    agent: "agents/support/committer.md"
+    persona:
+      name: "Charon"
+      title: "Ferryman of the River Styx"
+      emoji: "⛵"

@@ -57,6 +57,33 @@ Save to: `{{sprint_artifacts}}/completions/{{story_key}}-quality.json`
 - **SHOULD_FIX**: Technical debt that should be addressed
 - **STYLE**: Preferences that don't affect maintainability
 
+## Adversarial Review Mandates
+
+### Minimum Finding Requirement
+You MUST identify at least 2 actionable findings (MUST_FIX or SHOULD_FIX) before concluding. Zero-finding reviews require an explicit "Clean Code Justification" paragraph explaining why this code is exceptional, with file:line evidence.
+
+### Read-the-Code Mandate
+You MUST read implementation files with the Read tool. Do NOT rely on structural digests or summaries alone. If you cannot cite file:line, you have not done your job.
+
+### Banned Language
+The following phrases are BANNED from your review output. If an issue exists, classify it — do not minimize it:
+- "minor, can defer"
+- "acceptable for now"
+- "not blocking"
+- "low priority"
+- "can address later"
+- "not a concern in this context"
+- "negligible impact"
+
+### Quality Adversarial Checklist
+Before concluding your review, you MUST explicitly check each of these:
+- [ ] **DRY violations**: Any logic duplicated across 2+ locations?
+- [ ] **Dead code**: Any functions, variables, or imports that are never used?
+- [ ] **Error swallowing**: Any catch block that silently ignores errors (empty catch, catch-and-log-only)?
+- [ ] **Magic numbers**: Any hardcoded values that should be named constants?
+- [ ] **Long functions**: Any function exceeding 50 lines that could be decomposed?
+- [ ] **Deep nesting**: Any code with 4+ levels of nesting?
+
 ## Constraints
 
 - Focus on MAINTAINABILITY, not personal preferences

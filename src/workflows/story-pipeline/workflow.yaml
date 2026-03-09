@@ -392,6 +392,29 @@ agents:
     timeout: 600
     output_file: "{sprint_artifacts}/completions/{{story_key}}-reconciler.json"
 
+  test_agent:
+    description: "Adversarial test author — writes tests independently of the builder"
+    steps: [2.5]
+    subagent_type: "automater-test"
+    model: "opus"  # Test authoring needs deep understanding of implementation
+    prompt_file: "{agents_path}/test-agent.md"
+    base_persona: "{project-root}/_bmad/pantheon/agents/builders/testing.md"
+    timeout: 1800  # 30 minutes
+    output_file: "{sprint_artifacts}/completions/{{story_key}}-aletheia.json"
+    constraints:
+      - "May ONLY write test files"
+      - "May NOT modify implementation files"
+      - "Must achieve 100% coverage on new code"
+
+  committer:
+    description: "Git operations agent — branches, commits, pushes, creates PRs"
+    steps: [6]
+    subagent_type: "general-purpose"
+    model: "haiku"  # Git operations are mechanical — haiku is sufficient
+    prompt_file: "{project-root}/_bmad/pantheon/agents/support/committer.md"
+    timeout: 600  # 10 minutes
+    self_governed: true  # Charon follows its own workflow steps
+
 # Playbook configuration (v4.0, enhanced v1)
 playbooks:
   enabled: true # Set to false in project config to disable

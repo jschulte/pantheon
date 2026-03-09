@@ -1,0 +1,100 @@
+name: plan-to-story
+description: "Lightweight plan-to-story pipeline. Slots work into the existing BMAD document trail without full quick-feature overhead. Three modes: pre-build, post-build, sweep."
+author: "Jonah Schulte (leveraging BMAD Method)"
+
+# ============================================================================
+# PLAN-TO-STORY: Lightweight BMAD Document Trail Integration
+# ============================================================================
+# Purpose: Accept a plan (file, inline, or sweep git history) and produce
+# BMAD stories slotted into the existing document trail. Unlike quick-feature,
+# this assumes the trail already exists and adds to it surgically.
+#
+# Philosophy: quick-feature creates the document trail from scratch.
+# plan-to-story assumes the trail exists and adds to it.
+#
+# Three modes:
+#   pre-build  — Turn a plan into stories BEFORE building
+#   post-build — Retroactively document already-built work
+#   sweep      — Find undocumented work in recent git commits
+#
+# User interaction: 1 mandatory stop (Phase 2 SCOPE)
+# Everything else runs autonomously.
+#
+# Usage:
+#   /plan-to-story plan=".claude/plans/my-plan.md"
+#   /plan-to-story plan="Add caching to API responses"
+#   /plan-to-story sweep_range="1 day"
+#   /plan-to-story                          # Auto-detects plan
+# ============================================================================
+
+# Critical variables from config
+config_source: "{project-root}/_bmad/pantheon/config.yaml"
+output_folder: "{project-root}/_bmad-output"
+communication_language: "{config_source}:communication_language"
+date: system-generated
+
+# Artifact directories
+planning_artifacts: "{output_folder}/planning-artifacts"
+implementation_artifacts: "{output_folder}/implementation-artifacts"
+
+# Workflow paths
+installed_path: "{project-root}/_bmad/pantheon/workflows/plan-to-story"
+instructions: "{installed_path}/workflow.md"
+
+# BMM workflow paths (only edit-prd and create-story — lightweight by design)
+bmm_workflows:
+  edit_prd: "{project-root}/_bmad/bmm/workflows/2-plan-workflows/create-prd/workflow-edit-prd.md"
+  create_story: "{project-root}/_bmad/bmm/workflows/4-implementation/create-story/instructions.xml"
+
+# BMM config (passed to sub-agents for their own resolution)
+bmm_config: "{project-root}/_bmad/bmm/config.yaml"
+
+# Input variables
+plan_input: ""              # File path, inline text, or empty (triggers auto-detect/sweep)
+sweep_range: ""             # Time range for sweep mode (e.g. "1 day", "1 week", "3 days")
+
+# Plan auto-detection paths (checked in order when plan_input is empty)
+plan_auto_detect:
+  - "{project-root}/.claude/plan.md"
+  - "{project-root}/.claude/plans/*.md"   # Most recently modified
+
+# Sub-agent configuration
+sub_agent:
+  yolo_directive: |
+    CRITICAL EXECUTION DIRECTIVE: You are running in YOLO mode.
+    - At EVERY menu prompt, select [c] Continue (or [y] YOLO if offered)
+    - Do NOT wait for user input at any checkpoint
+    - Do NOT ask for confirmation — auto-approve all decisions
+    - Complete the ENTIRE workflow from start to finish without stopping
+    - If a step has multiple options, choose the most comprehensive/complete option
+    - If asked to review output, approve it and continue
+  timeout_per_phase: 1800   # 30 minutes max per BMM workflow phase
+  model: "opus"
+
+# Story validation settings (same as quick-feature)
+story_validation:
+  min_file_size_bytes: 10240  # 10KB minimum
+  required_sections:
+    - "Business Context"
+    - "Acceptance Criteria"
+    - "Tasks"
+    - "Dev Agent Guardrails"
+    - "Technical Requirements"
+    - "Testing Requirements"
+    - "Current State"
+    - "Story Metadata"
+    - "Dependencies"
+    - "Performance Requirements"
+    - "Security Requirements"
+    - "Error Handling"
+  max_retries: 2
+
+# Phases (4 — lean pipeline)
+phases:
+  - phase-1-intake
+  - phase-2-scope
+  - phase-3-stories
+  - phase-4-handoff
+
+standalone: true
+web_bundle: false
