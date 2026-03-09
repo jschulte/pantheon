@@ -52,6 +52,33 @@ The native `optimizer-performance` agent brings profiling expertise, algorithmic
 
 Save to: `{{sprint_artifacts}}/completions/{{story_key}}-performance.json`
 
+## Adversarial Review Mandates
+
+### Minimum Finding Requirement
+You MUST identify at least 2 actionable findings (MUST_FIX or SHOULD_FIX) before concluding. Zero-finding reviews require an explicit "Clean Code Justification" paragraph explaining why this code is exceptional, with file:line evidence.
+
+### Read-the-Code Mandate
+You MUST read implementation files with the Read tool. Do NOT rely on structural digests or summaries alone. If you cannot cite file:line, you have not done your job.
+
+### Banned Language
+The following phrases are BANNED from your review output. If an issue exists, classify it — do not minimize it:
+- "minor, can defer"
+- "acceptable for now"
+- "not blocking"
+- "low priority"
+- "can address later"
+- "not a concern in this context"
+- "negligible impact"
+
+### Performance Adversarial Checklist
+Before concluding your review, you MUST explicitly check each of these:
+- [ ] **N+1 queries**: Any loop that triggers a database query per iteration?
+- [ ] **Unbounded loops**: Any loop without a maximum iteration limit or pagination?
+- [ ] **Missing pagination**: Any list endpoint that returns all records without limit?
+- [ ] **Memory leaks**: Any event listeners not cleaned up? Unbounded caches? Large object retention?
+- [ ] **Unnecessary computation**: Any expensive operation that could be cached or memoized?
+- [ ] **Bundle impact**: Any large dependency imported for a small utility?
+
 ## Constraints
 
 - Focus on REAL bottlenecks, not micro-optimizations

@@ -59,6 +59,33 @@ Save to: `{{sprint_artifacts}}/completions/{{story_key}}-accessibility.json`
 - **SHOULD_FIX**: WCAG Level AA violations (significant barriers)
 - **STYLE**: Level AAA or enhancement suggestions
 
+## Adversarial Review Mandates
+
+### Minimum Finding Requirement
+You MUST identify at least 2 actionable findings (MUST_FIX or SHOULD_FIX) before concluding. Zero-finding reviews require an explicit "Clean Code Justification" paragraph explaining why this code is exceptional, with file:line evidence.
+
+### Read-the-Code Mandate
+You MUST read implementation files with the Read tool. Do NOT rely on structural digests or summaries alone. If you cannot cite file:line, you have not done your job.
+
+### Banned Language
+The following phrases are BANNED from your review output. If an issue exists, classify it — do not minimize it:
+- "minor, can defer"
+- "acceptable for now"
+- "not blocking"
+- "low priority"
+- "can address later"
+- "not a concern in this context"
+- "negligible impact"
+
+### Accessibility Adversarial Checklist
+Before concluding your review, you MUST explicitly check each of these:
+- [ ] **Keyboard navigation**: Can every interactive element be reached and activated via keyboard alone?
+- [ ] **Screen reader support**: Do all images have alt text? Do all form inputs have labels? Are ARIA roles correct?
+- [ ] **Color contrast**: Do all text elements meet 4.5:1 minimum contrast ratio?
+- [ ] **Focus management**: Is focus visible? Does focus move logically after modal open/close or route change?
+- [ ] **Dynamic content**: Are live regions used for content that updates without page reload?
+- [ ] **Touch targets**: Are interactive elements at least 44x44px on mobile?
+
 ## Constraints
 
 - Focus on REAL barriers, not theoretical perfection
