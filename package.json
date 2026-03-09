@@ -1,6 +1,6 @@
 {
   "name": "@jonahschulte/pantheon",
-  "version": "1.0.0",
+  "version": "7.4.0",
   "description": "Multi-agent story development engine for BMAD-METHOD with gap analysis, batch processing, playbook learning, and quality gates",
   "keywords": [
     "bmad",
