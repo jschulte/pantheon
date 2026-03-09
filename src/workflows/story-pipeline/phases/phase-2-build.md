@@ -192,7 +192,8 @@ Files already modified:
 - VERIFY then address ALL unchecked tasks listed above — every [ ] is mandatory
 - For each task: READ the file, CONFIRM the implementation, cite the file:line in your report
 - Do NOT bulk-report tasks as done. Each task requires individual file inspection.
-- Code-level tasks (breadcrumbs, component migration, styling, test writing) are ALWAYS in scope
+- **DO NOT write test files.** Files matching *.test.*, *.spec.*, __tests__/* are the exclusive domain of Aletheia in Phase 2.5. If you create or modify any test file, this is a violation.
+- Code-level tasks (breadcrumbs, component migration, styling) are ALWAYS in scope
 - **CRITICAL: Infrastructure-as-code tasks are ALWAYS in scope** — If a task says "write Terraform module", "create Dockerfile", "add GitHub Action workflow", "write deployment script" — YOU WRITE IT. Infrastructure code is code. The ONLY exception is tasks requiring actual deployment/apply commands that need live AWS credentials. Writing the .tf/.yml/.dockerfile IS your job.
 - **CRITICAL: NEVER self-defer tasks** — You cannot decide a task is "too hard", "infrastructure only", "requires manual work", or "out of scope". If the task involves writing code, configuration, tests, or documentation — DO IT. The ONLY tasks you cannot complete are: (1) tasks requiring external human decisions (stakeholder approval, user research), (2) tasks requiring live production access you don't have (run terraform apply in prod, deploy to AWS, merge PR). Everything else is actionable.
 - **DELEGATION IS MANDATORY FOR SPECIALIZED WORK** — You have access to the Task tool. When you encounter tasks requiring specialized expertise (infrastructure, testing, security, database), you MUST spawn specialized sub-agents using appropriate subagent_type (specialist-terraform, engineer-deployment, database-administrator, etc.). Collect their work and include it in your completion artifact. You are responsible for ALL tasks - either do them yourself OR delegate them. Never say "cannot complete" without attempting delegation.
@@ -225,7 +226,7 @@ Return this JSON artifact when done:
   "status": "COMPLETE" | "PARTIAL",
   "files_created": [...],
   "files_modified": [...],
-  "tests_added": { "total": N, "passing": N },
+  "test_suggestions": ["What SHOULD be tested — advisory notes for Aletheia in Phase 2.5"],
   "tasks_addressed": [
     {"task": "task 1 text", "evidence": "path/to/file.ts:42 — implementation description", "action": "verified|fixed|implemented"},
     ...
@@ -311,7 +312,7 @@ Use Write tool to update `{{sprint_artifacts}}/completions/{{story_key}}-progres
     "PREPARE": { "status": "complete", "details": "..." },
     "BUILD": {
       "status": "complete",
-      "details": "{{ITERATION}} iterations, {{tasks_addressed}} tasks, {{files_changed}} files, {{tests_added}} tests",
+      "details": "{{ITERATION}} iterations, {{tasks_addressed}} tasks, {{files_changed}} files",
       "iterations": "{{ITERATION}}",
       "tasks_start": "{{BUILD_PROGRESS.tasks_remaining_start}}",
       "tasks_end": "{{UNCHECKED_TASKS}}"
@@ -321,7 +322,7 @@ Use Write tool to update `{{sprint_artifacts}}/completions/{{story_key}}-progres
   "metrics": {
     "files_changed": "{{files_created + files_modified}}",
     "lines_added": "{{lines_added}}",
-    "tests_added": "{{tests_added}}",
+    "test_suggestions": "{{test_suggestions}}",
     "build_iterations": "{{ITERATION}}"
   }
 }

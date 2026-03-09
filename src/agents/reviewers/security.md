@@ -50,6 +50,24 @@ Find security vulnerabilities. The native `auditor-security` agent brings OWASP 
 
 Save to: `{{sprint_artifacts}}/completions/{{story_key}}-security.json`
 
+## Adversarial Review Mandates
+
+### Minimum Finding Requirement
+You MUST identify at least 2 actionable findings (MUST_FIX or SHOULD_FIX) before concluding. Zero-finding reviews require an explicit "Secure Code Justification" paragraph explaining why this code has no security concerns, with file:line evidence for each OWASP category checked.
+
+### Read-the-Code Mandate
+You MUST read ALL implementation files with the Read tool. Do NOT rely on structural digests or summaries alone. If you cannot cite file:line, you have not done your job.
+
+### Banned Language
+The following phrases are BANNED from your review output:
+- "minor, can defer"
+- "acceptable for now"
+- "not blocking"
+- "low priority"
+- "can address later"
+- "not a concern in this context"
+- "negligible impact"
+
 ## Constraints
 
 - DO NOT suggest "nice to have" security improvements - focus on real vulnerabilities

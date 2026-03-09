@@ -13,6 +13,42 @@ Eunomia reconciles → Hard gate validates → Commit
 
 Read all artifacts from `{{sprint_artifacts}}/completions/{{story_key}}-*.json`
 
+### 6.1.5 User Git Scope Selection
+
+Before reconciliation and commit, ask the user what git workflow they want:
+
+```
+AskUserQuestion({
+  question: "Story {{story_key}} is ready to commit ({{tasks_checked}}/{{tasks_total}} tasks).
+             What git workflow would you like?",
+  options: [
+    {
+      label: "Full PR workflow (branch → commit → push → PR → merge) (Recommended)",
+      description: "Creates a branch, commits, pushes, opens a PR with pipeline stats"
+    },
+    {
+      label: "Commit only (branch + commit, no push/PR)",
+      description: "Creates a branch and commits locally — you push when ready"
+    },
+    {
+      label: "Stage only (branch + stage, no commit)",
+      description: "Creates a branch and stages files — you review and commit"
+    },
+    {
+      label: "Skip git (output summary only)",
+      description: "No git operations — just output the prepared data and proceed to REFLECT"
+    }
+  ]
+})
+
+GIT_SCOPE = user_selection  # "full-pr" | "commit-only" | "stage-only" | "skip"
+
+IF GIT_SCOPE == "skip":
+  → Output prepared data summary (files, stats, review results)
+  → Skip Eunomia reconciliation and Charon
+  → Proceed directly to Phase 7 REFLECT
+```
+
 ### 6.2 Spawn Eunomia reconciliation agent
 
 **Eunomia** 📋 is a dedicated reconciliation agent that checks off tasks with evidence
@@ -108,21 +144,42 @@ leaving 60-90% of tasks unchecked was fraudulent — it hid incomplete work from
 # Edit: "{{story_key}}: ready-for-dev" → "{{story_key}}: {{status}}"
 ```
 
-### 6.5 Commit reconciliation
+### 6.5 Spawn Charon (Commit Agent)
 
-```bash
-git add {{sprint_artifacts}}/{{story_key}}.md
-git add {{implementation_artifacts}}/sprint-status.yaml
-git add {{sprint_artifacts}}/completions/
+**Charon handles all git operations.** The orchestrator does NOT do git work directly.
 
-git commit -m "$(cat <<'EOF'
-chore({{story_key}}): reconcile story completion
+```
+IF GIT_SCOPE != "skip":
+  Task({
+    subagent_type: "general-purpose",
+    model: "haiku",  # Git operations are mechanical — haiku is sufficient
+    description: "⛵ Charon committing {{story_key}} ({{GIT_SCOPE}})",
+    prompt: `
+Read your full instructions from:
+  {{project_root}}/_bmad/pantheon/agents/support/committer.md
 
-- Eunomia checked off {{tasks_checked}}/{{tasks_total}} tasks with evidence
-- Dev Agent Record filled with pipeline metrics
-- Update sprint-status to {{status}}
-EOF
-)"
+Then execute with this data:
+
+- git_scope: {{GIT_SCOPE}}
+- files_to_commit: {{all_files_from_builder_and_test_artifacts}}
+- commit_message: "feat({{story_key}}): {{story_title}}"
+- story_key: {{story_key}}
+- pipeline_stats:
+    iterations: {{iterations}}
+    files_changed: {{files_changed}}
+    tests_added: {{tests_added}}
+    coverage: {{coverage}}%
+    agents_used: {{agent_count}}
+- review_summary:
+    must_fix_resolved: {{must_fix_resolved}}
+    should_fix_deferred: {{should_fix_deferred}}
+
+Also commit the reconciliation changes:
+- {{sprint_artifacts}}/{{story_key}}.md
+- {{implementation_artifacts}}/sprint-status.yaml
+- {{sprint_artifacts}}/completions/
+`
+  })
 ```
 
 ### Update Progress

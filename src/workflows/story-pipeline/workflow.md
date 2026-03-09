@@ -14,11 +14,12 @@ Anti-pattern documentation captures "looks right but fails" patterns for future 
 
 - Phase 1 PREPARE: Validate story quality, load playbooks
 - Phase 1.5 FORGE: Pygmalion analyzes domain, forges specialist personas (if complexity >= light)
-- Phase 2 BUILD: Metis implements with TDD
+- Phase 2 BUILD: Metis implements (NO tests — implementation only)
+- Phase 2.5 TEST: Aletheia writes adversarial tests independently
 - Phase 3 VERIFY: Argus + Nemesis + Eudaimonia + reviewers + forged specialists validate in parallel
 - Phase 4 ASSESS: Coverage gate + Themis triages issues pragmatically
 - Phase 5 REFINE: Metis fixes real issues, iterate until clean (includes completion loop for <95%)
-- Phase 6 COMMIT: Reconcile story, update status
+- Phase 6 COMMIT: Reconcile story, Charon handles git workflow
 - Phase 7 REFLECT: Mnemosyne updates playbooks for future
 - Phase 8 AUTO-CLOSE: Story-closer automatically pushes 70-94% stories to completion
 
@@ -42,6 +43,8 @@ Measure twice, cut once. Trust but verify. Evidence-based validation. Self-impro
 | Reflection | **Mnemosyne** | Titan of memory | 📚 |
 | Accessibility | **Iris** | Goddess of the rainbow, bridges realms | 🌈 |
 | Persona Forge | **Pygmalion** | The sculptor who brought the perfect being to life | 🗿 |
+| Test Author | **Aletheia** | Goddess of truth and test revelation | 🎯 |
+| Committer | **Charon** | Ferryman of the River Styx | ⛵ |
 | Reconciler | **Eunomia** | Goddess of lawful conduct and good order | 📝 |
 | *Forged Specialists* | *Dynamic* | *Domain-specific experts created by Pygmalion* | *Varies* |
 </agents>
@@ -81,7 +84,8 @@ When running as a background Task agent (spawned by the batch lead):
 ### Task Agents Used Per Phase (same in both contexts):
 
 - Phase 1.5 FORGE: `Task(subagent_type: "general-purpose")` → Pygmalion (Persona Forge) — complexity >= light only
-- Phase 2 BUILD: `Task(subagent_type: "general-purpose")` → Metis (Builder)
+- Phase 2 BUILD: `Task(subagent_type: "general-purpose")` → Metis (Builder — NO tests)
+- Phase 2.5 TEST: `Task(subagent_type: "automater-test")` → Aletheia (Adversarial Test Author)
 - Phase 3 VERIFY: `Task(subagent_type: ...)` → Argus + Nemesis + Eudaimonia + Cerberus/Apollo/Hestia/Arete + forged specialists - in parallel
 - Phase 4 ASSESS: `Task(subagent_type: ...)` → Themis (triage arbiter)
 - Phase 5 REFINE: Iterative loop:
@@ -89,6 +93,7 @@ When running as a background Task agent (spawned by the batch lead):
   - `Task(resume: reviewer_id)` → Original reviewers verify their issues
   - `Task(subagent_type: ...)` → Fresh eyes (iteration 2+)
 - Phase 6 COMMIT: `Task(subagent_type: "general-purpose")` → Eunomia (Reconciler) + hard validation gate
+- Phase 6 COMMIT (git): `Task(subagent_type: "general-purpose")` → Charon (Git Workflow)
 - Phase 7 REFLECT: `Task(subagent_type: ...)` → Mnemosyne (Reflection)
 
 ### NEVER DO THIS (applies in BOTH contexts):
@@ -163,6 +168,44 @@ Phase 6 (COMMIT) spawns Eunomia for reconciliation + runs a hard validation gate
 Phase 1 and the Phase 6 validation gate have detailed steps since the orchestrator IS the executor.
 </orchestration_discipline>
 
+<orchestrator_boundaries>
+**CRITICAL: What the Orchestrator Must NEVER Do**
+
+The orchestrator is a coordinator, not a worker. It dispatches agents, collects artifacts, enforces gates, tracks progress, reports status, and presents escalation choices to the user.
+
+### The Orchestrator MUST NOT:
+
+1. **Write code** — that is Metis's job (Phase 2)
+2. **Write tests** — that is Aletheia's job (Phase 2.5)
+3. **Review code** — that is the reviewers' job (Phase 3)
+4. **Triage issues** — that is Themis's job (Phase 4)
+5. **Modify story checkboxes** — that is Eunomia's job (Phase 6)
+6. **Do git operations** — that is Charon's job (Phase 6)
+7. **Step in when an agent fails** — failures are escalated, not absorbed
+
+### On Agent Failure:
+
+```
+IF agent fails or returns error:
+  1. STOP — do not attempt the agent's work yourself
+  2. REPORT — tell the user what failed and why
+  3. ASK — present choices via AskUserQuestion:
+     - "Retry the agent"
+     - "Skip this step and continue"
+     - "Abort the pipeline"
+```
+
+### The Orchestrator's ONLY Jobs:
+
+- Dispatch agents with correct data payloads
+- Collect and validate agent artifacts
+- Enforce quality gates (coverage, task completion %)
+- Track progress (progress.json updates)
+- Report status to user (narrative checkpoints)
+- Present escalation choices when gates fail or agents error
+- Route between phases based on gate outcomes
+</orchestrator_boundaries>
+
 <config>
 name: story-pipeline
 execution_mode: multi_agent
@@ -170,7 +213,8 @@ execution_mode: multi_agent
 phases:
   phase_1: PREPARE (story quality gate + playbook query)
   phase_1_5: FORGE (Pygmalion forges specialist personas — complexity >= light)
-  phase_2: BUILD (Metis implements with TDD)
+  phase_2: BUILD (Metis implements — NO tests)
+  phase_2_5: TEST (Aletheia writes adversarial tests independently)
   phase_3: VERIFY (Argus + Nemesis + Eudaimonia + reviewers + forged specialists in parallel)
   phase_4: ASSESS (coverage gate + Themis triage)
   phase_5: REFINE (Metis fixes + iterate until clean)
@@ -331,6 +375,7 @@ with the Read tool when you reach it. Execute phases sequentially.
 | 1 PREPARE | `phases/phase-1-prepare.md` | Always | ~160 |
 | 1.5 FORGE | `phases/phase-1.5-forge.md` | complexity >= light | ~150 |
 | 2 BUILD | `phases/phase-2-build.md` | Always | ~130 |
+| 2.5 TEST | `phases/phase-2.5-test.md` | Always | ~200 |
 | 3A VERIFY | `phases/phase-3a-verify-consolidated.md` | consolidated | ~115 |
 | 3B VERIFY | `phases/phase-3b-verify-parallel.md` | parallel | ~450 |
 | 4 ASSESS | `phases/phase-4-assess.md` | Always | ~215 |
