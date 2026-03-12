@@ -185,6 +185,37 @@ Update sprint-status.yaml with revalidation result:
 {{story_key}}: {{status}}  # Revalidated: {{pct}}% ({{timestamp}})
 ```
 
+**Tracker Sync (Push revalidation results):**
+
+Check `tracker.provider` from config.yaml:
+- If `none` or not configured → skip (zero overhead)
+Check session flag `tracker_available`:
+- If `false` → skip (user chose to disable sync this session)
+- If not yet set → probe MCP now; on failure present prompt:
+  [R] Retry  [S] Skip this operation  [D] Disable for session  [H] Halt workflow
+  (Only [D] sets `tracker_available = false`)
+- If `true` → proceed:
+
+**Branch-aware push guard:**
+`git rev-parse --abbrev-ref HEAD`
+- On `{tracker.main_branch}` → all statuses allowed
+- On feature branch → only In-Progress, Completed, Accepted
+- Restricted status → log "⚠️ Skipped: {status} push restricted to {main_branch} (current: {branch})", continue workflow
+
+1. Load `{{sprint_artifacts}}/.tracker-mapping.yaml`
+2. Look up `{{story_key}}` in mapping
+3. If mapped:
+   - Map revalidated BMAD status to tracker status
+   - Call `updateRallyStory` with:
+     - `objectId`: story's tracker_id
+     - `scheduleState`: mapped status
+     - `addComment`: "BMAD revalidation: {{verified}}/{{total}} verified ({{pct}}%). Previous: {{pct_before}}%."
+   - Update mapping entry `last_synced`, `local_status`, `tracker_status`
+   - Report: "📡 Pushed revalidation to tracker: {story_key} → {tracker_status}"
+4. If not mapped → skip
+
+Reference: `_bmad/pantheon/workflows/rally-sync/data/tracker-operations.md` → "Embedded Push"
+
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ✅ REVALIDATION COMPLETE

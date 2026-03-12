@@ -312,7 +312,7 @@ Use Write tool to update `{{sprint_artifacts}}/completions/{{story_key}}-progres
     "PREPARE": { "status": "complete", "details": "..." },
     "BUILD": {
       "status": "complete",
-      "details": "{{ITERATION}} iterations, {{tasks_addressed}} tasks, {{files_changed}} files",
+      "details": "{{ITERATION}} iterations, {{tasks_addressed}} tasks, {{files_changed}} files, {{tests_added}} tests",
       "iterations": "{{ITERATION}}",
       "tasks_start": "{{BUILD_PROGRESS.tasks_remaining_start}}",
       "tasks_end": "{{UNCHECKED_TASKS}}"
@@ -322,7 +322,7 @@ Use Write tool to update `{{sprint_artifacts}}/completions/{{story_key}}-progres
   "metrics": {
     "files_changed": "{{files_created + files_modified}}",
     "lines_added": "{{lines_added}}",
-    "test_suggestions": "{{test_suggestions}}",
+    "tests_added": "{{tests_added}}",
     "build_iterations": "{{ITERATION}}"
   }
 }

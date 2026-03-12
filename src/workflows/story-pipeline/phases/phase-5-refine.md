@@ -317,6 +317,43 @@ IF ITERATION >= 2:
   })
 ```
 
+### 5.2.5 Cerberus Security Re-Review
+
+**If any security BLOCK findings were in the MUST_FIX list, Cerberus MUST re-review ALL files after builder fixes.** Cerberus always reviews the complete file set — never selective.
+
+```
+IF security_blocks_in_must_fix > 0:
+  Task({
+    subagent_type: "auditor-security",
+    model: "opus",
+    description: "🔐 Cerberus re-review (iteration {{ITERATION}}) for {{story_key}}",
+    prompt: `
+<agent_definition>
+[INLINE: Content from agents/reviewers/security.md]
+</agent_definition>
+
+<goal>
+Re-review ALL implementation files after builder security fixes.
+Previous BLOCK findings:
+{{security_block_findings}}
+
+Verify each BLOCK is resolved. Check for new vulnerabilities introduced by fixes.
+</goal>
+
+<all_implementation_files>
+[INLINE: ALL current implementation files — not just changed ones]
+</all_implementation_files>
+
+Save to: {{sprint_artifacts}}/completions/{{story_key}}-security-gate.json
+`
+  })
+
+  # If security BLOCKs remain after max iterations → MANDATORY user escalation
+  IF cerberus_recheck.summary.blocks > 0 AND ITERATION >= MAX_ITERATIONS:
+    → Pipeline MUST NOT proceed to commit
+    → Mandatory user escalation (circuit breaker engages)
+```
+
 ### 5.3 Fresh eyes on iteration 2+
 
 On iteration 2+, add ONE fresh reviewer (possibly Iris if frontend files).
@@ -468,8 +505,58 @@ IF should_fix_count > 0 AND should_fix_behavior.fix_enabled:
   echo "Deferred tracking: ${NEW_FINDINGS} new, ${KNOWN_FINDINGS} seen again"
 ```
 
+### 5.3.3 Circuit Breaker (User Escalation)
+
+When the refinement loop does not converge after max iterations, present the user with explicit choices instead of silently proceeding:
+
+```
+IF ITERATION > MAX_ITERATIONS AND MUST_FIX_COUNT > 0:
+  AskUserQuestion({
+    question: "Refine cycle has not converged after {{ITERATION}} rounds.
+               {{MUST_FIX_COUNT}} MUST_FIX issues remain.
+               What would you like to do?",
+    options: [
+      {
+        label: "Continue iterating (1 more round)",
+        description: "Increment max iterations by 1 and re-enter the refinement loop"
+      },
+      {
+        label: "Intervene manually (show remaining issues)",
+        description: "Display all remaining MUST_FIX issues with file:line details, then pause for your manual fix"
+      },
+      {
+        label: "Accept current state and proceed to commit",
+        description: "Proceed to Phase 6 with in-progress status. Remaining issues logged to deferred tracking."
+      },
+      {
+        label: "Abort workflow for this story",
+        description: "Halt the pipeline entirely. No commit, no status update."
+      }
+    ]
+  })
+
+  IF user chose "Continue iterating":
+    MAX_ITERATIONS += 1
+    → Re-enter WHILE loop
+
+  ELIF user chose "Intervene manually":
+    → Display remaining MUST_FIX issues with file:line citations
+    → Pause pipeline — wait for user to make changes
+    → After user signals ready, re-run verification on affected files
+
+  ELIF user chose "Accept current state":
+    → Log remaining issues to deferred tracking (same as SHOULD_FIX flow)
+    → Set story status to "in-progress"
+    → Proceed to Phase 6 COMMIT
+
+  ELIF user chose "Abort":
+    → HALT pipeline for this story
+    → No commit, no sprint-status update
+    → Output: "Pipeline aborted for {{story_key}}. {{MUST_FIX_COUNT}} issues unresolved."
+```
+
 **Post-loop:**
-- If max iterations reached, escalate to user
+- If max iterations reached, circuit breaker engages (see above)
 - SHOULD_FIX items that were fixed are included in the commit
 - SHOULD_FIX items deferred are tracked per `deferred_issues` config
 - STYLE items are discarded (no action needed)

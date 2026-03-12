@@ -13,12 +13,10 @@
 #   2. src/agent-routing.yaml (this file)      — AUTHORITATIVE routing rules, persona name/emoji
 #   3. src/workflows/*/workflow.yaml            — Workflow-specific config (references, not definitions)
 #   4. src/agents/*.agent.yaml                  — BMAD web/UI rendering metadata (not runtime behavior)
-#   5. src/adapters/{platform}/agents/*.md      — Platform-adapted summaries (canonical source wins)
 #
 # When adding or modifying an agent:
 #   - Update (1) for persona/behavior changes
 #   - Update (2) for routing rule changes
-#   - Adapters (5) should be regenerated from (1) periodically
 #   - .agent.yaml (4) files are for BMAD UI only — do not affect pipeline behavior
 # =============================================================================
 
@@ -382,7 +380,7 @@ reviewer_routing:
     priority: 0
     custom_override: "_config/custom/pantheon/agents/reviewers/requirements.md"
 
-  # Security review - ALWAYS included
+  # Security review - ALWAYS included (independent gate)
   security:
     agent: "agents/reviewers/security.md"
     persona:
@@ -391,6 +389,10 @@ reviewer_routing:
       emoji: "🔐"
     always_include: true
     priority: 1
+    independent_gate: true
+    severity_model: "BLOCK_WARN"
+    always_reviews_all_files: true
+    mcp_server_hint: "security"
 
   # Architecture review - ALWAYS included
   architecture:

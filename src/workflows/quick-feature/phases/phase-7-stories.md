@@ -57,7 +57,7 @@ FOR EACH story IN GENERATION_QUEUE:
   - Story title: {{story.story_title}}
 
   ## Output Location
-  Story file: {{implementation_artifacts}}/{{story.story_key}}.md
+  Story file: {{implementation_artifacts}}/stories/{{story.story_key}}.md
 
   ## Execution Rules
   - Enter YOLO mode immediately
@@ -87,7 +87,7 @@ After each story sub-agent completes, validate the output:
 ```
 VALIDATE(story_key):
 
-  story_path = {implementation_artifacts}/{{story_key}}.md
+  story_path = {implementation_artifacts}/stories/{{story_key}}.md
 
   1. FILE EXISTS:
      → Missing = FAIL

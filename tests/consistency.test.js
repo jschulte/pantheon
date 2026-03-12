@@ -9,9 +9,6 @@ describe('triage percentage consistency', () => {
   const filesToCheck = [
     ...globSync('src/agents/support/arbiter.md'),
     ...globSync('src/workflows/story-pipeline/agents/arbiter.md'),
-    ...globSync('src/adapters/**/pantheon-arbiter*.md'),
-    ...globSync('src/adapters/**/pantheon-pipeline*.md'),
-    ...globSync('src/adapters/**/codex-copilot-instructions*.md'),
   ];
 
   it('should find files containing triage percentages', () => {
@@ -71,6 +68,31 @@ describe('version consistency', () => {
   });
 });
 
+describe('phase count consistency', () => {
+  it('no active source files reference "7-phase" or "7 phase"', () => {
+    const activeFiles = [
+      ...globSync('src/**/*.md'),
+      ...globSync('src/**/*.yaml'),
+      ...globSync('docs/**/*.md'),
+      ...globSync('*.md'),
+    ];
+    // Exclude changelogs, validation reports, and batch-review workflow.md
+    // (which refers to "7 phase files" — a literal file count, not the pipeline)
+    const excluded = /CHANGELOG|validation-report|batch-review\/workflow\.md/i;
+    const violations = [];
+
+    activeFiles.forEach((file) => {
+      if (excluded.test(file)) return;
+      const content = readFileSync(file, 'utf8');
+      if (/7[- ]phase/i.test(content)) {
+        violations.push(file);
+      }
+    });
+
+    expect(violations, `Files still referencing "7-phase": ${violations.join(', ')}`).toHaveLength(0);
+  });
+});
+
 describe('input validation patterns', () => {
   it('story_key pattern is consistent across schemas and workflow', () => {
     const schemas = globSync('src/schemas/*.schema.json');
@@ -83,6 +105,18 @@ describe('input validation patterns', () => {
     const unique = new Set(storyKeyPatterns);
     expect(unique.size, 'story_key patterns differ across schemas').toBe(1);
     expect(storyKeyPatterns[0]).toBe('^[0-9]+-[0-9]+$');
+  });
+});
+
+describe('severity isolation', () => {
+  it('reviewer-findings.schema.json uses MUST_FIX/SHOULD_FIX/STYLE severity', () => {
+    const reviewerSchema = JSON.parse(readFileSync('src/schemas/reviewer-findings.schema.json', 'utf8'));
+    const severities = reviewerSchema.properties.findings.items.properties.severity.enum;
+    expect(severities).toContain('MUST_FIX');
+    expect(severities).toContain('SHOULD_FIX');
+    expect(severities).toContain('STYLE');
+    expect(severities).not.toContain('BLOCK');
+    expect(severities).not.toContain('WARN');
   });
 });
 

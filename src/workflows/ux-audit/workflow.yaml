@@ -1,0 +1,66 @@
+name: ux-audit
+description: "UX design audit — bootstrap design language reference or audit pages for consistency"
+author: "Jonah Schulte (leveraging BMAD Method)"
+
+# ============================================================================
+# UX-AUDIT: Design Consistency Workflow
+# ============================================================================
+# Purpose: Establish and maintain design consistency across an application's UI/UX.
+# Two modes:
+#   BOOTSTRAP — Extract patterns from the existing app, create a Design Language Reference (DLR)
+#   AUDIT — Compare pages against the DLR, find and report inconsistencies
+#
+# Usage:
+#   /ux-audit mode=bootstrap
+#   /ux-audit mode=audit scope=full
+#   /ux-audit mode=audit pages="src/app/dashboard,src/app/settings"
+# ============================================================================
+
+execution_mode: "single_agent"
+
+# Critical variables from config
+config_source: "{project-root}/_bmad/pantheon/config.yaml"
+output_folder: "{project-root}/_bmad-output"
+sprint_artifacts: "{output_folder}/sprint-artifacts"
+
+# Paths
+installed_path: "{project-root}/_bmad/pantheon/workflows/ux-audit"
+instructions: "{installed_path}/workflow.md"
+agents_path: "{installed_path}/agents"
+
+# Mode selection (set at runtime)
+mode: null  # "bootstrap" | "audit"
+
+# Scope options (for audit mode)
+scope:
+  type: null  # "full" | "targeted" | "story-scoped"
+  pages: null  # Specific pages to audit
+  story_key: null  # For story-scoped audits
+
+# Configuration
+ux_config:
+  dlr_path: "docs/design-language-reference.md"
+  framework: null  # react | vue | svelte | angular (auto-detected)
+  css_approach: null  # tailwind | css-modules | styled-components | scss
+  component_library: null  # shadcn | material | ant | custom | none
+  design_tokens: null  # Path to design tokens
+  storybook: false
+
+# Agents
+agents:
+  harmonia:
+    description: "UX design auditor — bootstraps DLR or audits pages for consistency"
+    subagent_type: "designer-ui-ux"
+    model: "opus"
+    prompt_file: "{agents_path}/harmonia.md"
+    timeout: 2400  # 40 minutes for full-app audit
+    template_file: "{installed_path}/templates/design-language-reference.md"
+
+# Output artifacts
+output:
+  dlr_file: "docs/design-language-reference.md"
+  findings_file: "{sprint_artifacts}/completions/{{story_key}}-harmonia.json"
+  score_history: "{sprint_artifacts}/ux-consistency-scores.json"
+
+standalone: true
+web_bundle: true

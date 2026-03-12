@@ -16,8 +16,8 @@ Anti-pattern documentation captures "looks right but fails" patterns for future 
 - Phase 1.5 FORGE: Pygmalion analyzes domain, forges specialist personas (if complexity >= light)
 - Phase 2 BUILD: Metis implements (NO tests — implementation only)
 - Phase 2.5 TEST: Aletheia writes adversarial tests independently
-- Phase 3 VERIFY: Argus + Nemesis + Eudaimonia + reviewers + forged specialists validate in parallel
-- Phase 4 ASSESS: Coverage gate + Themis triages issues pragmatically
+- Phase 3 VERIFY: Argus + Nemesis + Eudaimonia + Cerberus gate + reviewers + forged specialists validate in parallel
+- Phase 4 ASSESS: Security gate check + Coverage gate + Themis triages issues pragmatically
 - Phase 5 REFINE: Metis fixes real issues, iterate until clean (includes completion loop for <95%)
 - Phase 6 COMMIT: Reconcile story, Charon handles git workflow
 - Phase 7 REFLECT: Mnemosyne updates playbooks for future
@@ -86,14 +86,13 @@ When running as a background Task agent (spawned by the batch lead):
 - Phase 1.5 FORGE: `Task(subagent_type: "general-purpose")` → Pygmalion (Persona Forge) — complexity >= light only
 - Phase 2 BUILD: `Task(subagent_type: "general-purpose")` → Metis (Builder — NO tests)
 - Phase 2.5 TEST: `Task(subagent_type: "automater-test")` → Aletheia (Adversarial Test Author)
-- Phase 3 VERIFY: `Task(subagent_type: ...)` → Argus + Nemesis + Eudaimonia + Cerberus/Apollo/Hestia/Arete + forged specialists - in parallel
+- Phase 3 VERIFY: `Task(subagent_type: ...)` → Argus + Nemesis + Eudaimonia + Cerberus gate + Apollo/Hestia/Arete + forged specialists - in parallel
 - Phase 4 ASSESS: `Task(subagent_type: ...)` → Themis (triage arbiter)
 - Phase 5 REFINE: Iterative loop:
   - `Task(resume: builder_id)` → Metis fixes MUST_FIX
   - `Task(resume: reviewer_id)` → Original reviewers verify their issues
   - `Task(subagent_type: ...)` → Fresh eyes (iteration 2+)
 - Phase 6 COMMIT: `Task(subagent_type: "general-purpose")` → Eunomia (Reconciler) + hard validation gate
-- Phase 6 COMMIT (git): `Task(subagent_type: "general-purpose")` → Charon (Git Workflow)
 - Phase 7 REFLECT: `Task(subagent_type: ...)` → Mnemosyne (Reflection)
 
 ### NEVER DO THIS (applies in BOTH contexts):
@@ -213,8 +212,7 @@ execution_mode: multi_agent
 phases:
   phase_1: PREPARE (story quality gate + playbook query)
   phase_1_5: FORGE (Pygmalion forges specialist personas — complexity >= light)
-  phase_2: BUILD (Metis implements — NO tests)
-  phase_2_5: TEST (Aletheia writes adversarial tests independently)
+  phase_2: BUILD (Metis implements with TDD)
   phase_3: VERIFY (Argus + Nemesis + Eudaimonia + reviewers + forged specialists in parallel)
   phase_4: ASSESS (coverage gate + Themis triage)
   phase_5: REFINE (Metis fixes + iterate until clean)

@@ -151,7 +151,56 @@ Save to: {{sprint_artifacts}}/completions/{{story_key}}-{{spec.id}}.json
     })
 ```
 
-**After all reviews complete (consolidated + Eudaimonia + forged), proceed to Phase 4 (ASSESS).**
+### Independent Cerberus Security Gate
+
+**ALWAYS spawn Cerberus independently, regardless of complexity.** Cerberus receives ALL implementation files (not a subset) and produces a separate security gate artifact.
+
+The multi-reviewer still covers a basic Cerberus security perspective for awareness, but the independent gate is the authoritative security check.
+
+```
+Task({
+  subagent_type: "auditor-security",
+  model: "opus",
+  description: "🔐 Cerberus security gate for {{story_key}}",
+  prompt: `
+<agent_definition>
+[INLINE: Content from agents/reviewers/security.md — the FULL independent security gate definition]
+</agent_definition>
+
+<goal>
+Perform independent security gate review of ALL implementation files for {{story_key}}.
+Use BLOCK/WARN severity model (NOT MUST_FIX/SHOULD_FIX/STYLE).
+</goal>
+
+<context>
+<story>
+[INLINE: story content]
+</story>
+
+<all_implementation_files>
+[INLINE: ALL files from metis.json — Cerberus always gets everything]
+</all_implementation_files>
+</context>
+
+Save to: {{sprint_artifacts}}/completions/{{story_key}}-security-gate.json
+`
+})
+```
+
+**Error handling for Cerberus:**
+```
+IF cerberus_result.status == "ERROR":
+  AskUserQuestion({
+    question: "Cerberus security gate returned an error. What would you like to do?",
+    options: [
+      { label: "Retry security gate", description: "Re-spawn Cerberus" },
+      { label: "Proceed without security gate", description: "Continue pipeline — security gate skipped" },
+      { label: "Abort workflow", description: "Halt pipeline for this story" }
+    ]
+  })
+```
+
+**After all reviews complete (consolidated + Eudaimonia + Cerberus gate + forged), proceed to Phase 4 (ASSESS).**
 
 ---
 

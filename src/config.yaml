@@ -34,3 +34,22 @@ pantheon:
     local_file:
       path: "KNOWN_ISSUES.md"          # Relative to project root
       append_mode: true                 # Append new items (don't overwrite)
+
+# External tracker integration
+# Set provider to "rally", "github-issues", or "none" (default)
+# Per-developer overrides (rally.owner) go in config.local.yaml (gitignored)
+# MCP availability is auto-detected at runtime — no manual toggle needed
+tracker:
+  provider: none                   # none = all sync is silent no-op, zero overhead
+  main_branch: main                # only this branch can push Released/planning statuses
+  rally:
+    project: auto                  # auto-detect or explicit Rally project name
+    epic_id: null                  # scope to Rally Epic (E1234) — limits Feature discovery
+    tag_filter: null               # only sync items with this Rally tag
+    owner: ""                      # Rally display name for story assignment (e.g., "Jonah Schulte")
+  status_mapping:                  # BMAD status → Rally scheduleState (override defaults)
+    backlog: Idea
+    ready-for-dev: Defined
+    in-progress: In-Progress
+    review: Completed
+    done: Accepted

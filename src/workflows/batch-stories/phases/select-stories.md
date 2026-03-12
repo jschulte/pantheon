@@ -20,6 +20,27 @@ Use Read tool on sprint-status.yaml. Extract:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
+**Tracker Sync (Pull statuses):**
+
+Check `tracker.provider` from config.yaml:
+- If `none` or not configured → skip (zero overhead)
+Check session flag `tracker_available`:
+- If `false` → skip (user chose to disable sync this session)
+- If not yet set → probe MCP now; on failure present prompt:
+  [R] Retry  [S] Skip this operation  [D] Disable for session  [H] Halt workflow
+  (Only [D] sets `tracker_available = false`)
+- If `true` → proceed:
+
+1. Load `{{sprint_artifacts}}/.tracker-mapping.yaml`
+2. For each story in sprint-status.yaml that is also in .tracker-mapping.yaml:
+   - Call `getRallyItem` (or provider equivalent) with the story's `tracker_id`
+   - Map tracker `scheduleState` to BMAD status
+   - If tracker status differs from sprint-status.yaml → update sprint-status.yaml
+   - Update mapping entry `tracker_status` and `last_synced`
+3. Report: "📡 Synced {N} story statuses from tracker"
+
+This ensures the story list reflects current tracker state before user selects stories.
+
 If no available stories: report "All stories complete!" and exit.
 </step>
 

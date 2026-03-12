@@ -183,7 +183,7 @@ The output must conform to `src/schemas/security-gate.schema.json`:
 | Story file not found | Emit ERROR status with message "Story file not found at expected path" |
 | No source files found for story | Emit PASSED status with zero findings and a note that no reviewable code was found |
 | Grep/Glob command fails | Log the error, continue with remaining checks, note incomplete coverage in output |
-| Custom policy source unavailable | Fall back to built-in OWASP checklist and set `policies_source` to `builtin-owasp` |
+| Enterprise policy MCP unavailable | Fall back to built-in OWASP checklist and set `policies_source` to `builtin-owasp` |
 
 ## Constraints
 

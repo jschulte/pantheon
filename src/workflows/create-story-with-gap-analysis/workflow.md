@@ -222,6 +222,49 @@ Write: {{sprint_status}}
 ```
 </step>
 
+<step name="tracker_sync_push" if="tracker.provider != 'none'">
+**Push new/updated story to tracker**
+
+Check `tracker.provider` from config.yaml:
+- If `none` or not configured → skip this step entirely (zero overhead)
+Check session flag `tracker_available`:
+- If `false` → skip (user chose to disable sync this session)
+- If not yet set → probe MCP now; on failure present prompt:
+  [R] Retry  [S] Skip this operation  [D] Disable for session  [H] Halt workflow
+  (Only [D] sets `tracker_available = false`)
+- If `true` → proceed:
+
+**Branch-aware push guard:**
+`git rev-parse --abbrev-ref HEAD`
+- On `{tracker.main_branch}` → all statuses allowed
+- On feature branch → only In-Progress, Completed, Accepted
+- Restricted status → log "⚠️ Skipped: {status} push restricted to {main_branch} (current: {branch})", continue workflow
+
+1. Load `{{sprint_artifacts}}/.tracker-mapping.yaml`
+2. Look up `{{story_key}}` (e.g., `5.9`) in mapping
+
+**If mapped (story exists in tracker):**
+- Call `updateRallyStory` with:
+  - `objectId`: story's tracker_id
+  - `addComment`: "BMAD: Story regenerated with gap analysis. {{implemented_count}} verified, {{missing_count}} missing, {{partial_count}} partial."
+- Update mapping entry `last_synced`
+- Report: "📡 Updated tracker: {story_key} ({tracker_id})"
+
+**If NOT mapped (new story):**
+- Determine parent Feature tracker_id from epic mapping
+- Call `createRallyStory` with:
+  - `name`: story title
+  - `description`: story description/ACs
+  - `featureId`: parent Feature tracker_id
+  - `owner`: from `tracker.rally.owner` config
+  - `scheduleState`: mapped from current BMAD status (likely "Defined" for ready-for-dev)
+  - `storyPoints`: from story file (if set)
+- Add new entry to .tracker-mapping.yaml
+- Report: "📡 Created in tracker: {story_key} → {new_tracker_id}"
+
+Reference: `_bmad/pantheon/workflows/rally-sync/data/tracker-operations.md` → "Embedded Push"
+</step>
+
 <step name="final_summary">
 **Report completion**
 

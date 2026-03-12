@@ -173,6 +173,7 @@ Then execute with this data:
 - review_summary:
     must_fix_resolved: {{must_fix_resolved}}
     should_fix_deferred: {{should_fix_deferred}}
+- security_verdict: {{security_gate_status}}
 
 Also commit the reconciliation changes:
 - {{sprint_artifacts}}/{{story_key}}.md
@@ -181,6 +182,39 @@ Also commit the reconciliation changes:
 `
   })
 ```
+
+### 6.5.5 Tracker Sync (Push)
+
+> Push reconciliation results to external tracker after commit.
+
+Check `tracker.provider` from config.yaml:
+- If `none` or not configured → skip this section entirely (zero overhead)
+Check session flag `tracker_available`:
+- If `false` → skip (user chose to disable sync this session)
+- If not yet set → probe MCP now; on failure present prompt:
+  [R] Retry  [S] Skip this operation  [D] Disable for session  [H] Halt workflow
+  (Only [D] sets `tracker_available = false`)
+- If `true` → proceed:
+
+**Branch-aware push guard:**
+`git rev-parse --abbrev-ref HEAD`
+- On `{tracker.main_branch}` → all statuses allowed
+- On feature branch → only In-Progress, Completed, Accepted
+- Restricted status → log "⚠️ Skipped: {status} push restricted to {main_branch} (current: {branch})", continue workflow
+
+1. Load `{{sprint_artifacts}}/.tracker-mapping.yaml`
+2. Look up `{{story_key}}` in the stories section
+3. If mapped:
+   - Map the BMAD status (from sprint-status.yaml update in 6.4) to tracker status using `tracker.status_mapping`
+   - Call `updateRallyStory` (or provider equivalent) with:
+     - `objectId`: story's tracker_id
+     - `scheduleState`: mapped status
+     - `addComment`: "BMAD sync: {{tasks_checked}}/{{tasks_total}} tasks reconciled ({{pct}}%). Status: {{status}}"
+   - Update mapping entry `last_synced`, `local_status`, and `tracker_status`
+   - Report: "📡 Pushed to tracker: {story_key} → {tracker_status}"
+4. If not mapped → skip
+
+Reference: `_bmad/pantheon/workflows/rally-sync/data/tracker-operations.md` → "Embedded Push"
 
 ### Update Progress
 

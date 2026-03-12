@@ -1,8 +1,8 @@
 # Contributing to Pantheon
 
-Pantheon is a BMAD Method plugin that provides a multi-agent story development engine. Agents are named after Greek mythology figures and operate in a 7-phase pipeline:
+Pantheon is a BMAD Method plugin that provides a multi-agent story development engine. Agents are named after Greek mythology figures and operate in an 8-phase pipeline:
 
-**PREPARE > FORGE > BUILD > VERIFY > ASSESS > REFINE > REFLECT**
+**PREPARE > FORGE > BUILD > VERIFY > ASSESS > REFINE > COMMIT + REFLECT**
 
 ---
 
@@ -15,11 +15,17 @@ Pantheon is a BMAD Method plugin that provides a multi-agent story development e
    cd pantheon
    ```
 
-2. Ensure you have Node.js >= 18 installed.
+2. Install dependencies:
 
-3. Pantheon requires `bmad-method >= 6.0.0` as a peer dependency.
+   ```bash
+   npm install
+   ```
 
-4. Validate YAML files:
+3. Ensure you have Node.js >= 18 installed.
+
+4. Pantheon requires `bmad-method >= 6.0.0` as a peer dependency.
+
+5. Validate YAML files:
 
    ```bash
    npm run validate:yaml
@@ -39,18 +45,13 @@ src/
     validators/              # Validation agents (Argus, Nemesis)
     support/                 # Support agents (Themis, Mnemosyne, Hermes)
   workflows/
-    story-pipeline/          # Core 7-phase pipeline
+    story-pipeline/          # Core 8-phase pipeline
     batch-stories/           # Batch processing of multiple stories
     batch-review/            # Batch code review
     gap-analysis/            # Gap analysis between stories and code
     multi-agent-review/      # Parallel multi-agent review
     validate/                # Story validation
     ...
-  adapters/
-    opencode/                # OpenCode adapter
-    copilot/                 # GitHub Copilot adapter
-    codex/                   # Codex adapter
-    universal/               # Platform-agnostic adapter
 docs/
   specialist-registry/       # Registry of forged specialist personas
 scripts/
@@ -182,15 +183,9 @@ Before submitting a PR:
 
 ---
 
-## Adapter Development
+## Platform Support
 
-Adapters in `src/adapters/` translate Pantheon agent definitions into platform-specific formats (OpenCode, Copilot, Codex). The `universal/` adapter serves as the reference implementation.
-
-When creating or modifying an adapter:
-
-- Map Pantheon agent personas (builder, reviewer, validator, support) to the platform's agent model.
-- Preserve the agent's persona name, title, and domain instructions.
-- Test with the installer: `src/adapters/install.sh`.
+Platform-specific launchers (Copilot skills, OpenCode agents, Codex instructions) are auto-generated from `.agent.yaml` and `workflow.yaml` files by BMAD's IDE manager. There are no hand-crafted adapters to maintain.
 
 ---
 

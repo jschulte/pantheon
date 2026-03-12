@@ -6,12 +6,14 @@ How to switch between Pantheon's supported AI coding platforms.
 
 ## Supported Platforms
 
-| Platform | Adapter Path | Multi-Agent | Swarm Mode | Full Pipeline |
-|----------|-------------|-------------|------------|---------------|
-| **Claude Code** | Native (no adapter) | Yes | Yes | Yes |
-| **OpenCode** | `src/adapters/opencode/` | Partial | No | Partial |
-| **GitHub Copilot** | `src/adapters/copilot/` | No | No | Simplified |
-| **Codex CLI** | `src/adapters/codex/` | No | No | Degraded |
+| Platform | Multi-Agent | Swarm Mode | Full Pipeline |
+|----------|-------------|------------|---------------|
+| **Claude Code** | Yes | Yes | Yes |
+| **OpenCode** | Partial | No | Partial |
+| **GitHub Copilot** | No | No | Simplified |
+| **Codex CLI** | Experimental | No | Per-skill |
+
+Platform-specific launchers are auto-generated from `.agent.yaml` and `workflow.yaml` files by BMAD's IDE manager. No hand-crafted adapters are needed.
 
 ---
 
@@ -28,7 +30,7 @@ Claude Code is the primary platform. All features work natively.
 2. Run story pipeline: `/pantheon_story-pipeline`
 3. Run batch stories: `/pantheon_batch-stories`
 
-No adapter configuration needed.
+No additional configuration needed.
 
 ---
 
@@ -48,8 +50,8 @@ OpenCode supports multi-agent via sequential agent invocation.
 - Automated phase transitions (manual progression)
 
 **Setup:**
-1. Copy `src/adapters/opencode/agents/` to your OpenCode agents directory
-2. Configure `.opencode.yaml` to reference Pantheon agents
+1. Install Pantheon via BMAD — IDE manager generates OpenCode agent files
+2. Configure `.opencode.yaml` to reference generated agent files
 3. Use `/pantheon-pipeline` as the entry point
 
 **Key differences:**
@@ -76,7 +78,7 @@ Copilot uses Skills (slash commands) for agent invocation.
 - Specialist forging
 
 **Setup:**
-1. Copy `src/adapters/copilot/skills/` to your `.github/copilot/skills/` directory
+1. Install Pantheon via BMAD — IDE manager generates Copilot skill files
 2. Each skill becomes a `/pantheon-*` slash command
 3. Invoke skills manually in sequence
 
@@ -89,28 +91,28 @@ Copilot uses Skills (slash commands) for agent invocation.
 
 ## Migrating To Codex CLI
 
-Codex provides a single-agent pipeline with persona switching.
+Codex CLI now supports sub-agents, parallel execution, and the Agent Skills Standard.
 
 **What works:**
-- Full pipeline flow (persona switching within one agent)
-- Story validation
-- Build + review cycle
+- Full pipeline flow via skills (same `SKILL.md` format as Copilot)
+- Sub-agent spawning with parallel fan-out (up to 6 concurrent threads)
+- Agent roles: `default`, `worker`, `explorer`, `monitor`
+- Blind review via separate sub-agent threads
 
-**Limitations (Degraded Mode):**
-- Same agent builds AND reviews code — loses independent verification
-- No parallel execution
-- No swarm mode
-- Persona switching is advisory, not enforced
+**Limitations:**
+- Multi-agent is experimental (enable via `[features] multi_agent = true` in `~/.codex/config.toml`)
+- Max spawn depth defaults to 1 (configurable up to 3)
+- Agent threads don't share context (similar to Claude Code's blind review)
 
 **Setup:**
-1. Copy `src/adapters/codex/instructions/` to your Codex instructions directory
-2. Use `pantheon-pipeline.md` as the primary instruction file
-3. Invoke via Codex CLI with the instruction file
+1. Install Pantheon via BMAD — IDE manager generates Codex instruction files
+2. Enable multi-agent: add `[features] multi_agent = true` to `~/.codex/config.toml`
+3. Invoke skills explicitly (`$pantheon-pipeline`) or let Codex auto-activate them
 
-**Key differences:**
-- Single agent adopts each persona sequentially
-- The "blind reviewer" pattern is lost (reviewer has seen builder's reasoning)
-- This is explicitly a **degraded mode** — use for convenience, not rigor
+**Key differences from Claude Code:**
+- Sub-agent management via `/agent` command instead of TeamCreate
+- CSV batch fan-out (`spawn_agents_on_csv`) for bulk operations
+- Agent roles configured in `config.toml` instead of `subagent_type` parameter
 
 ---
 
@@ -118,23 +120,22 @@ Codex provides a single-agent pipeline with persona switching.
 
 | Feature | Claude Code | OpenCode | Copilot | Codex |
 |---------|------------|----------|---------|-------|
-| 7-phase pipeline | Automated | Manual | Per-skill | Single-agent |
-| Parallel reviewers | 3-6 agents | Sequential | No | No |
-| Blind review | Yes | Yes | No | No |
-| Pygmalion forging | Yes | Yes | No | No |
-| Specialist registry | Yes | Yes | No | No |
-| Playbook learning | Yes | Yes | No | No |
+| 8-phase pipeline | Automated | Manual | Per-skill | Per-skill |
+| Parallel reviewers | 3-6 agents | Sequential | Yes | Yes (experimental) |
+| Blind review | Yes | Yes | Yes | Yes (separate threads) |
+| Pygmalion forging | Yes | Yes | Via skill | Via skill |
+| Specialist registry | Yes | Yes | Via skill | Via skill |
+| Playbook learning | Yes | Yes | Via skill | Via skill |
 | Swarm mode | Yes | No | No | No |
-| Complexity routing | Automatic | Manual | No | No |
-| Coverage gates | Automated | Manual | No | No |
-| Artifact chain | Full | Manual | No | Single |
+| Complexity routing | Automatic | Manual | Via skill | Via skill |
+| Coverage gates | Automated | Manual | Via skill | Via skill |
+| Artifact chain | Full | Manual | Per-skill | Per-skill |
 
 ---
 
 ## Tips for Migration
 
-1. **Start with Claude Code** if possible — it's the only platform with full feature support
-2. **OpenCode is the best alternative** — most features work, just without parallelism
-3. **Copilot/Codex are convenience modes** — useful for quick reviews, not full pipeline runs
-4. **Don't expect equivalent quality** across platforms — multi-agent verification is the core value proposition, and only Claude Code fully supports it
-5. **Run `npm run check:drift`** after updating adapters to verify they're in sync with canonical agent definitions
+1. **Start with Claude Code** if possible — it has the most mature multi-agent support
+2. **Codex CLI is the closest alternative** — sub-agents + skills + parallel execution (experimental)
+3. **Copilot works well** — skills auto-activate and can run in parallel
+4. **OpenCode is functional** — most features work, just without built-in parallelism

@@ -265,36 +265,55 @@ Save to: {{sprint_artifacts}}/completions/{{story_key}}-nemesis.json
 })
 ```
 
-### Cerberus (Security) - standard+ — Focused Context (security-relevant files)
+### Cerberus (Independent Security Gate) - ALWAYS SPAWN — Full File Set
+
+**Cerberus is an independent security gate, NOT a regular reviewer.** It receives ALL implementation files (not a partitioned subset), uses BLOCK/WARN severity (not MUST_FIX/SHOULD_FIX/STYLE), and its output bypasses Themis triage.
 
 ```
 Task({
   subagent_type: "auditor-security",
   model: "opus",
-  description: "🔐 Cerberus guarding {{story_key}}",
+  description: "🔐 Cerberus security gate for {{story_key}}",
   prompt: `
-${SHARED_PREFIX_FULL}
+<agent_definition>
+[INLINE: Content from agents/reviewers/security.md — the FULL independent security gate definition]
+</agent_definition>
 
-<files_for_review>
-[INLINE: CERBERUS_FILES — route, auth, database, security, config files]
-</files_for_review>
+<goal>
+Perform independent security gate review of ALL implementation files for {{story_key}}.
+Use BLOCK/WARN severity model (NOT MUST_FIX/SHOULD_FIX/STYLE).
+</goal>
 
-You are CERBERUS 🔐 - The Three-Headed Guardian.
+<context>
+<story>
+[INLINE: Full story file content]
+</story>
 
-Nothing unsafe passes your gates.
+<structural_digest>
+[INLINE: The structural digest built above]
+</structural_digest>
 
-The structural digest above shows ALL files and their exports. You have been given the security-relevant files inline. If you need to inspect additional files (e.g., a utility referenced from an auth file), use the Read tool — this is your escape hatch.
+<all_implementation_files>
+[INLINE: ALL files from metis.json — Cerberus ALWAYS gets everything, never a partition]
+</all_implementation_files>
+</context>
 
-Focus: Security vulnerabilities, injection attacks, auth issues, data exposure.
-
-<issue_classification>
-Classify each issue: MUST_FIX / SHOULD_FIX / STYLE
-Security issues are almost always MUST_FIX.
-</issue_classification>
-
-Save to: {{sprint_artifacts}}/completions/{{story_key}}-cerberus.json
+Save to: {{sprint_artifacts}}/completions/{{story_key}}-security-gate.json
 `
 })
+```
+
+**Error handling:**
+```
+IF cerberus_result.status == "ERROR":
+  AskUserQuestion({
+    question: "Cerberus security gate returned an error. What would you like to do?",
+    options: [
+      { label: "Retry security gate", description: "Re-spawn Cerberus" },
+      { label: "Proceed without security gate", description: "Continue pipeline — security gate skipped" },
+      { label: "Abort workflow", description: "Halt pipeline for this story" }
+    ]
+  })
 ```
 
 ### Apollo (Logic/Performance) - complex+ — Focused Context (logic files)

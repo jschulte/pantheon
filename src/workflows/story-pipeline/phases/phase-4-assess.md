@@ -25,6 +25,59 @@ if (( $(echo "$COVERAGE < {{coverage_threshold}}" | bc -l) )); then
 fi
 ```
 
+### 4.1.5 Security Gate Check (Pre-Themis)
+
+**Before Themis triage, process the independent Cerberus security gate result.**
+
+Cerberus findings use BLOCK/WARN severity and bypass Themis triage entirely for BLOCKs.
+
+```
+security_gate = Read("{{sprint_artifacts}}/completions/{{story_key}}-security-gate.json")
+
+# Display security verdict banner
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔐 CERBERUS SECURITY VERDICT: {{security_gate.status}}
+   BLOCKs: {{security_gate.summary.blocks}}
+   WARNs: {{security_gate.summary.warnings}}
+   Policies: {{security_gate.policies_source}}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+IF security_gate.status == "BLOCKED":
+  # Extract all BLOCK findings → these bypass Themis completely
+  security_blocks = security_gate.findings.filter(f => f.severity == "BLOCK")
+  # WARN findings flow to Themis as SHOULD_FIX inputs
+  security_warns_as_should_fix = security_gate.findings
+    .filter(f => f.severity == "WARN")
+    .map(f => ({ ...f, severity: "SHOULD_FIX", source: "cerberus-gate" }))
+
+ELIF security_gate.status == "ERROR":
+  # Check enterprise failure policy
+  IF security_gate.enterprise_config.failure_policy == "fail-closed":
+    AskUserQuestion({
+      question: "Security gate ERROR with fail-closed policy. Only Abort or Retry allowed.",
+      options: [
+        { label: "Abort workflow", description: "Halt pipeline" },
+        { label: "Retry security gate", description: "Re-run Cerberus" }
+      ]
+    })
+  ELSE:  # fail-open or null
+    AskUserQuestion({
+      question: "Security gate returned ERROR. What would you like to do?",
+      options: [
+        { label: "Abort workflow", description: "Halt pipeline" },
+        { label: "Proceed without security gate", description: "Continue — security gate skipped" },
+        { label: "Retry security gate", description: "Re-run Cerberus" }
+      ]
+    })
+
+ELIF security_gate.status == "PASSED":
+  security_blocks = []
+  # WARN findings still flow to Themis
+  security_warns_as_should_fix = security_gate.findings
+    .filter(f => f.severity == "WARN")
+    .map(f => ({ ...f, severity: "SHOULD_FIX", source: "cerberus-gate" }))
+```
+
 ### 4.2 Themis Triage
 
 **Purpose:** Triage issues pragmatically, but **strongly err on the side of fixing**. Only filter clearly manufactured complaints.
@@ -218,6 +271,33 @@ FOR EACH playbook loaded in Phase 1:
 This is a coarse heuristic. The relevance check prevents inflating hit-rates by counting irrelevant domain loads as "hits." Over 20+ stories it becomes meaningful even if individual measurements are noisy.
 
 ---
+
+### 4.3.5 Merge Security Gate Results
+
+After Themis completes triage, merge the security gate BLOCK findings into the MUST_FIX list. These were NOT sent to Themis and cannot be triaged away.
+
+```
+# Instruct Themis: "Do NOT triage findings from security-gate. They are pre-triaged."
+# (This instruction is included in the Themis prompt above)
+
+# Merge security BLOCKs into the final MUST_FIX list
+IF security_blocks.length > 0:
+  must_fix += security_blocks.length
+  # Append security blocks to MUST_FIX list with clear provenance
+  FOR EACH block IN security_blocks:
+    MUST_FIX_LIST.append({
+      issue: block.description,
+      reviewer: "cerberus-gate",
+      classification: "MUST_FIX",
+      source: "security-gate-BLOCK",
+      location: block.location,
+      rule: block.rule,
+      non_negotiable: true  # Cannot be triaged away
+    })
+
+# Merge security WARNs that Themis may have received
+# (These were already sent to Themis as SHOULD_FIX inputs)
+```
 
 **Process triage results:**
 

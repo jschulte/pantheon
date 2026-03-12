@@ -34,7 +34,7 @@
 - Sub-agents can be run in parallel (multiple Task calls in one message) or in background
 
 **Why this matters for story-pipeline:**
-- The 7-phase pipeline requires spawning specialized agents (builders, reviewers, arbiter)
+- The 8-phase pipeline requires spawning specialized agents (builders, reviewers, arbiter)
 - Without sub-agent spawning, workers can only self-implement and self-certify (no independent verification)
 - The entire quality model depends on separation of concerns: builder writes, reviewers verify independently
 

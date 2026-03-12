@@ -124,7 +124,37 @@ Phase 6 is defined in `story-pipeline/phases/phase-6-commit.md`. It:
 **Manual fallback:** If Eunomia fails to spawn or returns no artifact, fall back to
 the manual reconciliation procedure in `step-4.5-reconcile-story-status.md`.
 
-**Step D: Next story or complete**
+**Step D: Tracker sync and next story**
+
+**Tracker Sync (Push after story complete):**
+
+Check `tracker.provider` from config.yaml:
+- If `none` or not configured → skip (zero overhead)
+Check session flag `tracker_available`:
+- If `false` → skip (user chose to disable sync this session)
+- If not yet set → probe MCP now; on failure present prompt:
+  [R] Retry  [S] Skip this operation  [D] Disable for session  [H] Halt workflow
+  (Only [D] sets `tracker_available = false`)
+- If `true` → proceed:
+
+**Branch-aware push guard:**
+`git rev-parse --abbrev-ref HEAD`
+- On `{tracker.main_branch}` → all statuses allowed
+- On feature branch → only In-Progress, Completed, Accepted
+- Restricted status → log "⚠️ Skipped: {status} push restricted to {main_branch} (current: {branch})", continue workflow
+
+1. Load `{{sprint_artifacts}}/.tracker-mapping.yaml`
+2. Look up `{{story_key}}` in mapping
+3. If mapped:
+   - Read current status from sprint-status.yaml (set in Phase 6)
+   - Map to tracker status and push via `updateRallyStory`
+   - Push completion comment with task counts
+   - Update mapping entry
+   - Report: "📡 Pushed to tracker: {story_key} → {tracker_status}"
+4. If not mapped → skip
+
+Continue to next story or summary.
+
 - If more stories: continue loop
 - If complete: proceed to `summary`
 </step>

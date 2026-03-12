@@ -21,6 +21,32 @@ Use Read tool. Extract:
 - Acceptance criteria count
 - Keywords for risk scoring
 
+### 1.1.5 Tracker Sync (Pull)
+
+> Pull latest story data from external tracker before quality checks.
+
+Check `tracker.provider` from config.yaml:
+- If `none` or not configured → skip this section entirely (zero overhead)
+Check session flag `tracker_available`:
+- If `false` → skip (user chose to disable sync this session)
+- If not yet set → probe MCP now; on failure present prompt:
+  [R] Retry  [S] Skip this operation  [D] Disable for session  [H] Halt workflow
+  (Only [D] sets `tracker_available = false`)
+- If `true` → proceed:
+
+1. Load `{{sprint_artifacts}}/.tracker-mapping.yaml`
+2. Look up `{{story_key}}` in the stories section
+3. If mapped:
+   - Call `getRallyItem` (or provider equivalent) with the story's `tracker_id`
+   - Compare tracker-owned fields (title, description, ACs, story points) against local file
+   - Update local story file where tracker fields differ
+   - **PRESERVE** local-only fields: Dev Agent Record, task checkboxes, local metadata
+   - Update mapping entry `last_synced` timestamp and `tracker_status`
+   - Report: "📡 Synced from tracker: {story_key} ({tracker_id})"
+4. If not mapped → skip (story exists locally but not in tracker)
+
+Reference: `_bmad/pantheon/workflows/rally-sync/data/tracker-operations.md` → "Embedded Pull"
+
 ### 1.2 Story Size Quality Check
 
 > This check is trivially fast (single `wc -c`) and safe to run even when

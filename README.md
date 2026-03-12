@@ -39,7 +39,7 @@ BUILD    Metis (or a routed specialist) implements — code only, no tests
    |
 TEST     Aletheia writes adversarial tests independently (bug loop: max 3 rounds)
    |
-VERIFY   Cerberus (security), Argus (inspector), Nemesis (tests),
+VERIFY   Cerberus (security gate), Argus (inspector), Nemesis (tests),
    |      Hestia (architecture) review in parallel
    |
 ASSESS   Themis triages findings — real bug or style nit?
@@ -97,12 +97,13 @@ This is operational knowledge extracted from real code reviews and fed forward i
 
 ### Security is a first-class gate, not an afterthought
 
-Cerberus is an **independent security reviewer** — not a regular reviewer. Its findings are triaged alongside other reviewers but security issues are always treated with high severity.
+Cerberus is an **independent security gate** — not a regular reviewer. Its BLOCK findings stop the pipeline. No agent, no orchestrator, and no triage process can override a BLOCK.
 
-Every review runs through two tiers:
+Every review runs through three tiers:
 
 1. **Deterministic secrets scanner** — 11 regex patterns (AWS keys, GitHub/Slack/Stripe tokens, JWTs, private keys, connection strings) via a portable shell script. No LLM guessing — regex catches `AKIA[0-9A-Z]{16}` every time.
-2. **Bundled security policies** — 10 policy files (OWASP Top 10, 7 ADRs, severity config) and 2 review playbooks ship with Pantheon. Cerberus uses these automatically for thorough, production-grade security review.
+2. **Enterprise MCP policies** (when available) — connects to a security MCP server for live policies, ADRs, severity thresholds, and automated scanning tools. Security team updates policies centrally; every project picks them up immediately.
+3. **Bundled policy fallback** — 10 policy files (OWASP Top 10, 7 ADRs, severity config) and 2 review playbooks ship with Pantheon. When no MCP server is configured, Cerberus uses these automatically — same enterprise-grade review, just not centrally managed.
 
 ### Every finding requires evidence
 
@@ -526,7 +527,7 @@ One-time migration utility for repos with existing playbooks. Converts legacy fo
 
 | Agent | Focus | Included |
 |-------|-------|----------|
-| **Cerberus** | Security | Always — runs secrets scanner + policy review |
+| **Cerberus** | Independent security gate (BLOCK/WARN severity) | Always — runs secrets scanner + policy review |
 | **Hestia** | Architecture | Always |
 | **Argus** | Task verification (file:line evidence) | Always |
 | **Nemesis** | Test quality (meaningful assertions, not just coverage) | Always |
@@ -562,7 +563,7 @@ One-time migration utility for repos with existing playbooks. Converts legacy fo
 
 1. Clone this repo somewhere on your machine:
    ```bash
-   git clone https://github.com/jschulte/pantheon.git ~/git/pantheon
+   git clone git@ghe.coxautoinc.com:DDC-AI/pantheon.git ~/git/pantheon
    ```
 
 2. In your target project, run the BMAD installer:
@@ -577,29 +578,9 @@ One-time migration utility for repos with existing playbooks. Converts legacy fo
 
 That's it. The installer will wire Pantheon's agents and workflows into your project alongside the rest of BMAD.
 
-### Platform-Specific Installation
-
-For non-Claude Code platforms, use the adapter installer:
-
-```bash
-# GitHub Copilot
-./src/adapters/install.sh --platform copilot
-
-# OpenCode
-./src/adapters/install.sh --platform opencode
-
-# Codex CLI
-./src/adapters/install.sh --platform codex
-```
-
 ### Platform Compatibility
 
-| Platform | Parallel Agents | Full Features | Invocation |
-|----------|----------------|---------------|------------|
-| **Claude Code** | Native | Yes | `/story-pipeline story_key=17-1` |
-| **GitHub Copilot** | Auto | Yes | `@workspace /pantheon-pipeline` |
-| **OpenCode** | Manual | Yes | `@pantheon-orchestrator /implement-story` |
-| **Codex CLI** | Sequential | Yes | Load instruction file, then natural language |
+Pantheon agents and workflows are defined as `.agent.yaml` and `workflow.yaml` files. BMAD's IDE manager auto-generates platform-specific launchers (Claude Code skills, Copilot skills, OpenCode agents, etc.) from these canonical definitions.
 
 ---
 
@@ -618,6 +599,10 @@ pantheon:
     max_concurrent: 3             # Stories per wave
     smart_ordering: true          # Auto-detect dependencies
   use_consolidated_review: "auto" # Complexity-based routing
+
+# External tracker integration (optional)
+tracker:
+  provider: none  # "rally", "github", or "none" (auto-detected at runtime)
 ```
 
 ---
@@ -731,7 +716,7 @@ pantheon/
 │   ├── agent-routing.yaml        # Builder/reviewer routing rules
 │   ├── agents/
 │   │   ├── builders/             # Domain-specific builder personas
-│   │   ├── reviewers/            # Specialist reviewer personas (incl. Cerberus security reviewer)
+│   │   ├── reviewers/            # Specialist reviewer personas (incl. Cerberus security gate)
 │   │   ├── validators/           # Verification agents
 │   │   └── support/              # Triage, reflection, commit (Charon), coordination
 │   ├── skills/                   # Platform-portable skill definitions (SKILL.md)
@@ -755,14 +740,9 @@ pantheon/
 │   │   ├── ux-audit/             # Design consistency (Harmonia)
 │   │   ├── playbook-migration/   # Legacy playbook upgrade
 │   │   └── multi-agent-review/   # Parallel review coordination
-│   └── adapters/                 # Multi-platform support
-│       ├── opencode/
-│       ├── copilot/
-│       └── codex/
 ├── scripts/
 │   ├── validate-all-stories.sh   # Pre-batch story validation
-│   ├── sanitize-story.sh         # Story file sanitization
-│   └── detect-adapter-drift.sh   # Adapter sync verification
+│   └── sanitize-story.sh         # Story file sanitization
 └── docs/
     ├── specialist-registry/      # Forged specialist personas
     ├── adrs/                     # Architecture Decision Records

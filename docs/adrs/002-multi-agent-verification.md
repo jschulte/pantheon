@@ -29,5 +29,5 @@ The builder and reviewers never share a context window. This is enforced by spaw
 **Harder:**
 - Higher token cost (3-6x vs single-agent review)
 - Requires orchestration logic to manage multiple agents
-- Platform adapters that can't spawn multiple agents lose this benefit (see Codex "degraded mode")
+- Platforms that can't spawn multiple agents lose this benefit
 - Reviewers may lack context about _why_ certain decisions were made (mitigated: structural digest provides architecture context without builder reasoning)

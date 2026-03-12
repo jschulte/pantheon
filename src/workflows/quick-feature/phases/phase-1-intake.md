@@ -71,7 +71,7 @@ Read {planning_artifacts}/epics.md (or glob {planning_artifacts}/epics*.md)
 Read {implementation_artifacts}/sprint-status.yaml
 
 # Check for existing story files
-Glob {implementation_artifacts}/*.md
+Glob {implementation_artifacts}/stories/*.md
 ```
 
 **Mode detection logic:**

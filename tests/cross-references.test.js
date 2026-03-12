@@ -134,17 +134,11 @@ describe('tech-debt-burndown phase files', () => {
   });
 });
 
-describe('adapter files', () => {
-  const platforms = ['opencode', 'copilot', 'codex'];
-
-  platforms.forEach((platform) => {
-    it(`${platform} adapter directory exists`, () => {
-      expect(existsSync(`src/adapters/${platform}`)).toBe(true);
-    });
-  });
-
-  it('adapter README exists', () => {
-    expect(existsSync('src/adapters/README.md')).toBe(true);
+describe('committer agent cross-references', () => {
+  it('Charon agent file exists and is referenced from routing', () => {
+    const routing = parse(readFileSync('src/agent-routing.yaml', 'utf8'));
+    const charonPath = `src/${routing.support_routing.committer.agent}`;
+    expect(existsSync(charonPath), `Charon file not found: ${charonPath}`).toBe(true);
   });
 });
 

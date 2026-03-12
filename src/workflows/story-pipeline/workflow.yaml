@@ -415,6 +415,17 @@ agents:
     timeout: 600  # 10 minutes
     self_governed: true  # Charon follows its own workflow steps
 
+  cerberus_gate:
+    description: "Independent security gate — BLOCK/WARN severity, bypasses Themis triage"
+    steps: [3]
+    subagent_type: "auditor-security"
+    model: "opus"  # Security review needs deep reasoning
+    prompt_file: "{project-root}/_bmad/pantheon/agents/reviewers/security.md"
+    timeout: 900  # 15 minutes
+    output_file: "{sprint_artifacts}/completions/{{story_key}}-security-gate.json"
+    always_reviews_all_files: true
+    severity_model: "BLOCK_WARN"
+
 # Playbook configuration (v4.0, enhanced v1)
 playbooks:
   enabled: true # Set to false in project config to disable
@@ -436,6 +447,13 @@ quality_gates:
   task_verification: "all_with_evidence" # Inspector must provide file:line citations
   critical_issues: "must_fix"
   high_issues: "must_fix"
+  security_gate: "cerberus"  # Independent security gate — BLOCK findings stop pipeline
+
+# Enterprise security configuration
+enterprise_security:
+  mcp_server: "security"  # MCP server hint for Cerberus discovery
+  failure_policy: "fail-open"  # fail-closed | fail-open — what happens on Cerberus error
+  owasp_fallback: true  # Use OWASP Top 10 when no MCP server available
 
 # Complexity level (determines which steps to execute)
 complexity_level: "standard" # micro | standard | complex

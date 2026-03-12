@@ -1,6 +1,6 @@
 {
   "name": "@jonahschulte/pantheon",
-  "version": "1.0.0",
+  "version": "7.5.0",
   "description": "Multi-agent story development engine for BMAD-METHOD with gap analysis, batch processing, playbook learning, and quality gates",
   "keywords": [
     "bmad",
@@ -38,10 +38,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "validate:yaml": "node -e \"const yaml=require('yaml');const fs=require('fs');const glob=require('glob');glob.sync('src/**/*.yaml').forEach(f=>{try{yaml.parse(fs.readFileSync(f,'utf8'));console.log('OK:',f)}catch(e){console.error('FAIL:',f,e.message);process.exit(1)}})\"",
+    "validate:yaml": "node scripts/validate-yaml.mjs",
     "lint:md": "markdownlint 'src/**/*.md' --ignore node_modules",
     "validate:stories": "bash scripts/validate-all-stories.sh",
-    "check:drift": "bash scripts/detect-adapter-drift.sh",
     "sanitize": "bash scripts/sanitize-story.sh"
   },
   "peerDependencies": {
@@ -58,9 +57,9 @@
     "code": "pantheon"
   },
   "devDependencies": {
-    "ajv": "^8.17.1",
+    "ajv": "^8.18.0",
     "ajv-formats": "^3.0.1",
-    "glob": "^13.0.1",
+    "glob": "^13.0.6",
     "vitest": "^4.0.18",
     "yaml": "^2.8.2"
   }
