@@ -1,3 +1,8 @@
+---
+name: "playbook-migration"
+description: "One-time migration utility: converts legacy playbooks to v1 standardized format, bootstraps _index.json, and retroactively backfills learnings from historical mnemosyne/themis/review artifacts."
+---
+
 # Playbook Migration — Legacy Format Conversion
 
 <purpose>

@@ -1,3 +1,8 @@
+---
+name: "plan-to-story"
+description: "Lightweight plan-to-story pipeline. Slots work into the existing BMAD document trail without full quick-feature overhead. Three modes: pre-build, post-build, sweep."
+---
+
 # Plan-to-Story — Lightweight BMAD Document Trail Integration
 
 ```

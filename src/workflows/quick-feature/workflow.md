@@ -1,3 +1,8 @@
+---
+name: "quick-feature"
+description: "Plan-to-implementation pipeline. Asks clarifying questions, then autonomously runs PRD → architecture → epics → sprint → stories → build."
+---
+
 # Quick Feature — Automated BMAD Planning Pipeline
 
 ```

@@ -1,3 +1,8 @@
+---
+name: "plan-execution"
+description: "Team work distribution and parallelization planner - dependency DAG + optimal developer assignment"
+---
+
 # Plan Execution v1.0 - Team Execution Planner
 
 <purpose>

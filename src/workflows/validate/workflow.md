@@ -1,3 +1,8 @@
+---
+name: "validate"
+description: "Unified validation workflow. Validates stories against codebase, detects false positives, reports health scores. Replaces validate-story, validate-story-deep, validate-all-stories, validate-all-stories-deep, validate-epic-status, validate-all-epics."
+---
+
 # Validate - Unified Story/Epic Validation
 
 <purpose>

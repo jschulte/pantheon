@@ -1,3 +1,8 @@
+---
+name: "batch-review"
+description: "Deep code review and hardening workflow - run repeatedly until bulletproof"
+---
+
 # Batch Review - Hardening Sweep Workflow
 
 **Purpose:** Deep code review and hardening with swarm parallelism + Pygmalion persona forging

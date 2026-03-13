@@ -1,3 +1,8 @@
+---
+name: "multi-agent-review"
+description: "Smart multi-agent code review with dynamic agent selection based on changed code. Uses multiple specialized AI agents to review different aspects: architecture, security, performance, testing, and code quality."
+---
+
 # Multi-Agent Code Review
 
 <purpose>

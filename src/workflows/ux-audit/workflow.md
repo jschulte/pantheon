@@ -1,3 +1,8 @@
+---
+name: "ux-audit"
+description: "UX design audit — bootstrap design language reference or audit pages for consistency"
+---
+
 # UX Design Audit Workflow
 
 **Agent:** Harmonia 🎼 (Goddess of Harmony and Concord)

@@ -1,3 +1,8 @@
+---
+name: "story-pipeline"
+description: "Enhanced multi-agent pipeline with smart builder spawning, playbook learning, code citation evidence, test quality validation, resume-builder fixes, and per-story completion reports"
+---
+
 # Story Pipeline
 
 <purpose>

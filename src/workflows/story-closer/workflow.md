@@ -1,3 +1,8 @@
+---
+name: "story-closer"
+description: "Lightweight batch story closer — scans ALL stories for unchecked tasks (ignoring sprint-status), autonomously executes remaining work, reviews quality, and updates artifacts. Routes stories >30% unchecked to full story-pipeline."
+---
+
 # Story Closer
 
 <purpose>

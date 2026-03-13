@@ -1,3 +1,8 @@
+---
+name: "detect-ghost-features"
+description: "Reverse gap analysis: Find functionality in codebase that has no corresponding story (vibe-coded or undocumented features). Propose backfill stories."
+---
+
 # Detect Ghost Features - Reverse Gap Analysis
 
 <purpose>

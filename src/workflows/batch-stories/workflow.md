@@ -1,3 +1,8 @@
+---
+name: "batch-stories"
+description: "Interactive batch selector for story-pipeline with complexity-based routing, smart wave ordering, and comprehensive session reporting."
+---
+
 # Batch Stories - Unified Workflow
 
 <purpose>

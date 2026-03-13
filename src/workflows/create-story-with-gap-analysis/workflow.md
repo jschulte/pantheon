@@ -1,3 +1,8 @@
+---
+name: "create-story-with-gap-analysis"
+description: "Create/regenerate story with SYSTEMATIC codebase gap analysis using verified file scanning (Glob/Read tools)"
+---
+
 # Create Story with Gap Analysis - Verified Story Generation
 
 <purpose>

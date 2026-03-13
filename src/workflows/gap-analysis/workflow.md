@@ -1,3 +1,8 @@
+---
+name: "gap-analysis"
+description: "Validate story tasks against actual codebase - audit completed stories or validate before development"
+---
+
 # Gap Analysis - Verify Story Tasks Against Codebase
 
 <purpose>

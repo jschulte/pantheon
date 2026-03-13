@@ -1,3 +1,8 @@
+---
+name: "revalidate-story"
+description: "Clear checkboxes and re-verify story against actual codebase implementation. Identifies gaps and optionally fills them."
+---
+
 # Revalidate Story - Verify Checkboxes Against Codebase
 
 <purpose>
