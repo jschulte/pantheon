@@ -1,0 +1,138 @@
+name: epic-retrospective
+description: "Automated epic retrospective — ingests all build artifacts from an epic's stories, performs pattern analysis, produces actionable outputs (playbook updates, CLAUDE.md patches, process suggestions), and generates a retrospective document."
+author: "Jonah Schulte (leveraging BMAD Method)"
+
+# ============================================================================
+# EXECUTION DISCIPLINE
+# ============================================================================
+# This workflow is invoked via Skill (/pantheon-retrospective)
+# The orchestrator follows workflow.md phases sequentially.
+#
+# Phase 1 GATHER: Orchestrator discovers epic, loads all artifacts
+# Phase 2 ANALYZE: Clio (analyst agent) performs pattern analysis
+# Phase 3 SYNTHESIZE: Clio generates outputs (retro doc, patches, playbook updates)
+# Phase 4 PRESENT: Orchestrator shows findings, user approves/rejects changes
+#
+# Single analyst agent (Clio) handles both analysis and synthesis to preserve
+# cross-story context. Splitting into separate agents would lose the pattern
+# connections that make retrospectives valuable.
+# ============================================================================
+
+execution_mode: "multi_agent"
+
+# Critical variables from config
+config_source: "{project-root}/_bmad/pantheon/config.yaml"
+output_folder: "{project-root}/_bmad-output"
+sprint_artifacts: "{output_folder}/sprint-artifacts"
+implementation_artifacts: "{output_folder}/implementation-artifacts"
+planning_artifacts: "{config_source}:planning_artifacts"
+communication_language: "{config_source}:communication_language"
+date: system-generated
+
+# Workflow paths
+installed_path: "{project-root}/_bmad/pantheon/workflows/epic-retrospective"
+instructions: "{installed_path}/workflow.md"
+agents_path: "{installed_path}/agents"
+
+# =============================================================================
+# ARTIFACT INPUT SOURCES
+# =============================================================================
+# The retrospective ingests structured artifacts produced by the story pipeline
+# and batch-stories workflows. These are the "testimony" of what happened.
+artifact_sources:
+  completions: "{sprint_artifacts}/completions"
+  hardening: "{sprint_artifacts}/hardening"
+  stories: "{sprint_artifacts}/stories"
+  session_reports: "{sprint_artifacts}/session-reports"
+  playbooks: "docs/implementation-playbooks"
+
+# =============================================================================
+# ARTIFACT TYPES CONSUMED (per story)
+# =============================================================================
+# Each story may produce some or all of these. The analyst handles missing ones.
+story_artifact_types:
+  - suffix: "-progress.json"
+    description: "Pipeline metrics — iterations, task counts, issue counts"
+    required: false
+  - suffix: "-review.json"
+    description: "Multi-reviewer findings — perspectives, severity, evidence"
+    required: false
+  - suffix: "-narrative.log"
+    description: "Timestamped execution trace — phase transitions, agent spawning"
+    required: false
+  - suffix: "-summary.md"
+    description: "Human-readable completion report with AC status"
+    required: false
+  - suffix: "-mnemosyne.json"
+    description: "Per-story reflection — learnings extracted, playbook updates"
+    required: false
+  - suffix: "-themis.json"
+    description: "Triage decisions — issue classification rationale"
+    required: false
+  - suffix: "-builder.json"
+    description: "Builder output — files created/modified, tasks addressed"
+    required: false
+  - suffix: "-pygmalion.json"
+    description: "Specialist forging — domain experts created on-the-fly"
+    required: false
+  - suffix: "-hermes.json"
+    description: "Reporter output — TL;DR, quick stats"
+    required: false
+
+# =============================================================================
+# EPIC-LEVEL ARTIFACTS CONSUMED
+# =============================================================================
+epic_artifact_types:
+  - pattern: "epic-{{epic_num}}-pass-*-report.md"
+    description: "Hardening report — cross-story review, deferred stories, tech debt"
+  - pattern: "epic-{{epic_num}}-pass-*-triage.json"
+    description: "Hardening triage — dedup logic, issue linkage"
+  - pattern: "epic-{{epic_num}}-pass-*-remaining.json"
+    description: "Outstanding items after hardening"
+
+# =============================================================================
+# OUTPUT CONFIGURATION
+# =============================================================================
+outputs:
+  # Primary retrospective document
+  retro_document: "{implementation_artifacts}/epic-{{epic_num}}-retro-{{date}}.md"
+
+  # Actionable change proposals (approved by user before applying)
+  proposals_dir: "{sprint_artifacts}/retro-proposals"
+  playbook_proposals: "{sprint_artifacts}/retro-proposals/playbook-updates.md"
+  claude_md_proposals: "{sprint_artifacts}/retro-proposals/claude-md-patches.md"
+  process_proposals: "{sprint_artifacts}/retro-proposals/pantheon-suggestions.md"
+
+# =============================================================================
+# AGENT CONFIGURATION
+# =============================================================================
+agents:
+  analyst:
+    description: "Clio — Muse of History. Reads all epic artifacts, performs pattern analysis, generates retrospective outputs."
+    subagent_type: "general-purpose"
+    model: "opus"  # Deep reasoning needed for cross-story pattern recognition
+    prompt_file: "{agents_path}/analyst.md"
+    fresh_context: true
+    timeout: 3600  # 1 hour — may process 15+ stories of artifacts
+    output_files:
+      - "{sprint_artifacts}/retro-proposals/analysis.json"
+      - "{outputs.retro_document}"
+      - "{outputs.playbook_proposals}"
+      - "{outputs.claude_md_proposals}"
+      - "{outputs.process_proposals}"
+
+# =============================================================================
+# PREVIOUS RETROSPECTIVE
+# =============================================================================
+# Used for continuity — tracking action item follow-through across epics
+previous_retro:
+  pattern: "{implementation_artifacts}/epic-*-retro-*.md"
+  load_strategy: "SELECTIVE_LOAD"  # Only load the most recent one
+
+# =============================================================================
+# SPRINT STATUS
+# =============================================================================
+sprint_status_file: "{implementation_artifacts}/sprint-status.yaml"
+
+standalone: true
+web_bundle: false

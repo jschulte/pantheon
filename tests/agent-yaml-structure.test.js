@@ -43,8 +43,8 @@ describe('.agent.yaml structural validation', () => {
 });
 
 describe('workflow.yaml count', () => {
-	it('should have 16 workflow yaml files', () => {
-		expect(workflowYamls.length).toBe(16);
+	it('should have 18 workflow yaml files', () => {
+		expect(workflowYamls.length).toBe(18);
 	});
 
 	workflowYamls.forEach((file) => {

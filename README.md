@@ -449,6 +449,33 @@ Give it your epics, architecture, and team composition. It builds a dependency D
 
 ### Maintenance & Ops
 
+#### `/epic-retrospective` — Automated epic retrospective
+
+Ingests all build artifacts from a completed epic (narrative logs, review findings, progress metrics, reflections), performs cross-story pattern analysis, and produces actionable outputs.
+
+```bash
+# Auto-detect completed epic from sprint-status
+/epic-retrospective
+
+# Retrospect a specific epic
+/epic-retrospective epic=2
+```
+
+**Phases:**
+1. **GATHER** — Discover epic, collect all completion artifacts
+2-3. **ANALYZE + SYNTHESIZE** — Clio identifies patterns across stories, generates outputs
+4. **PRESENT** — Single checkpoint: review findings, approve changes
+
+**Outputs:**
+| Output | Applied? |
+|--------|----------|
+| Retrospective document | Always saved |
+| Playbook update proposals | User approves |
+| CLAUDE.md patch proposals | User approves (very high bar) |
+| Pantheon process suggestions | Never auto-applied — take to source repo |
+
+---
+
 #### `/story-closer` — Close out nearly-complete stories
 
 Scans all story files for unchecked tasks, autonomously executes remaining work, reviews quality, and updates artifacts. Designed to run at scale across 100+ stories.
@@ -554,6 +581,7 @@ One-time migration utility for repos with existing playbooks. Converts legacy fo
 | **Charon** | Self-governed git operations — commit, PR, scope selection |
 | **Mnemosyne** | Reflection + playbook management — extracts learnings, updates/creates playbooks |
 | **Hermes** | Session reporter — generates comprehensive batch completion summaries |
+| **Clio** | Epic retrospective analyst — cross-story pattern analysis, produces actionable outputs |
 | **Harmonia** | UX design audit — bootstraps Design Language Reference or audits against it |
 | **Hygeia** | Coordinates quality gates across parallel swarm workers |
 
@@ -704,6 +732,16 @@ Playbooks are structured knowledge files that capture patterns, gotchas, and ant
 /gap-analysis story_key=17-2 auto_update=true
 ```
 
+### Epic complete: Learn and improve
+
+```bash
+# 1. Run automated retrospective on the completed epic
+/epic-retrospective epic=17
+
+# 2. Review and approve playbook updates, CLAUDE.md patches
+# 3. Take Pantheon process suggestions back to the source repo
+```
+
 ---
 
 ## Project Structure
@@ -738,6 +776,7 @@ pantheon/
 │   │   ├── story-closer/         # Close nearly-complete stories at scale
 │   │   ├── tech-debt-burndown/   # Issue-to-story conversion
 │   │   ├── ux-audit/             # Design consistency (Harmonia)
+│   │   ├── rally-sync/           # External tracker sync
 │   │   ├── playbook-migration/   # Legacy playbook upgrade
 │   │   └── multi-agent-review/   # Parallel review coordination
 ├── scripts/
@@ -768,8 +807,10 @@ pantheon/
 | `/gap-analysis` | Verify story vs codebase | `/gap-analysis story_key=17-1` |
 | `/revalidate-story` | Fresh re-verification | `/revalidate-story story_key=17-1` |
 | `/plan-execution` | Plan team work streams | `/plan-execution team_size=4` |
+| `/epic-retrospective` | Automated epic retrospective | `/epic-retrospective epic=1` |
 | `/story-closer` | Close nearly-done stories | `/story-closer epic=17` |
 | `/tech-debt-burndown` | Issues → stories | `/tech-debt-burndown` |
+| `/rally-sync` | Sync with external tracker | `/rally-sync epic=17` |
 | `/playbook-migration` | Upgrade legacy playbooks | `/playbook-migration dry_run=true` |
 
 ---
