@@ -1,6 +1,7 @@
 name: gap-analysis
 description: "Validate story tasks against actual codebase - audit completed stories or validate before development"
 author: "Jonah Schulte (leveraging BMAD Method)"
+maturity: beta
 
 # Critical variables from config
 config_source: "{project-root}/_bmad/pantheon/config.yaml"

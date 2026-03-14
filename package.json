@@ -1,5 +1,5 @@
 {
-  "name": "@jonahschulte/pantheon",
+  "name": "@jschulte/pantheon",
   "version": "1.2.0",
   "description": "Multi-agent story development engine for BMAD-METHOD with gap analysis, batch processing, playbook learning, and quality gates",
   "keywords": [
@@ -18,12 +18,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jonahschulte/pantheon.git"
+    "url": "git+https://github.com/jschulte/pantheon.git"
   },
   "bugs": {
-    "url": "https://github.com/jonahschulte/pantheon/issues"
+    "url": "https://github.com/jschulte/pantheon/issues"
   },
-  "homepage": "https://github.com/jonahschulte/pantheon#readme",
+  "homepage": "https://github.com/jschulte/pantheon#readme",
   "files": [
     "src/**/*",
     "README.md",

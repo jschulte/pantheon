@@ -1,6 +1,7 @@
 name: plan-execution
 description: "Team work distribution and parallelization planner - dependency DAG + optimal developer assignment"
 author: "Jonah Schulte (leveraging BMAD Method)"
+maturity: stable
 
 # ============================================================================
 # PLAN-EXECUTION: Team Execution Planning Workflow

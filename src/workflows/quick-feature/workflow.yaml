@@ -1,6 +1,7 @@
 name: quick-feature
 description: "Plan-to-implementation pipeline. Asks clarifying questions, then autonomously runs PRD → architecture → epics → sprint → stories → build."
 author: "Jonah Schulte (leveraging BMAD Method)"
+maturity: stable
 
 # ============================================================================
 # QUICK-FEATURE: Automated BMAD Planning Pipeline

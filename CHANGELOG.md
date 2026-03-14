@@ -16,6 +16,23 @@ Pantheon uses two-tier versioning:
 
 ## Module
 
+### Unreleased
+
+- Added **Platform Abstraction Layer** (`src/platform/`)
+  - 6 abstract primitives (`spawn`, `spawn_parallel`, `check`, `poll`, `ask`, `resume`)
+  - Platform mappings for Claude Code and Codex CLI
+  - Enables workflows to use platform-agnostic syntax
+- Added `maturity` field to all 17 workflow.yaml files (stable, beta, experimental, deprecated)
+- Added `SECURITY.md`, `CODEOWNERS`, `.nvmrc`
+- Added Known Limitations and Versioning sections to README
+- Added CI badges to README
+- Added agent timeout and context window recovery documentation to TROUBLESHOOTING.md
+- Fixed phase count: consistently documented as 9-phase pipeline throughout
+- Fixed GitHub username references (`jschulte` not `jonahschulte`)
+- Removed corporate GHE URL from README installation section
+- Removed stale `src/adapters/` references from `src/platform/README.md`
+- Fixed workflow count assertion in tests (18 → 17)
+
 ### v1.2.0 (2026-03-13)
 
 - Added **Epic Retrospective** workflow (`/epic-retrospective`)

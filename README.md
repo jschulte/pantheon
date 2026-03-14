@@ -3,10 +3,15 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="images/pantheon-logo-dark-mode.jpg">
   <source media="(prefers-color-scheme: light)" srcset="images/pantheon-logo.jpg">
-  <img src="images/pantheon-logo.jpg" alt="Pantheon" width="450" style="max-width: 100%;">
+  <img src="images/pantheon-logo.jpg" alt="Pantheon — multi-agent story development engine" width="450" style="max-width: 100%;">
 </picture>
 
 **Turn Claude Code into a self-improving engineering team.**
+
+[![CI](https://github.com/jschulte/pantheon/actions/workflows/ci.yml/badge.svg)](https://github.com/jschulte/pantheon/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](package.json)
+[![BMAD Module](https://img.shields.io/badge/BMAD-v1.2.0-purple)](src/module.yaml)
 
 </div>
 
@@ -19,7 +24,7 @@ Pantheon is a [BMAD Method](https://github.com/bmadcode/BMAD-METHOD) plugin that
 AI coding assistants generate code fast, but speed without structure leaves gaps — missing validations, shallow error handling, tests that don't exercise real behavior. BMAD workflows address this, but they're only as good as the story is thorough and require numerous commands and back-and-forth to get through a single story. When you have dozens of epics and hundreds of stories, orchestrating agents through the right steps, in the right sequence, for the right stories, with proper quality gates — it becomes tedious and time-consuming to manage by hand.
 
 <div align="center">
-<img src="images/the-problem.jpg" alt="Speed without structure" width="600">
+<img src="images/the-problem.jpg" alt="AI coding assistants generate code fast but without quality gates, leaving gaps in validation, error handling, and testing" width="600">
 </div>
 
 **Pantheon automates all of it** — gap analysis, multi-perspective review, test quality validation, security scanning, and learning from past mistakes — across entire epics in a single command.
@@ -28,7 +33,7 @@ AI coding assistants generate code fast, but speed without structure leaves gaps
 
 ## How It Works
 
-Every story runs through an 8-phase pipeline with named specialist agents — the Greek Pantheon:
+Every story runs through a 9-phase pipeline with named specialist agents — the Greek Pantheon:
 
 ```
 PREPARE  Load story, score and load relevant playbooks
@@ -52,7 +57,7 @@ REFLECT  Hermes extracts learnings, updates playbooks for next time
 ```
 
 <div align="center">
-<img src="images/pipeline-phases.jpg" alt="The 8-phase Pantheon pipeline" width="500">
+<img src="images/pipeline-phases.jpg" alt="The 9-phase Pantheon pipeline" width="500">
 </div>
 
 Each agent has a clear role boundary. Builders build. Testers test (separately). Reviewers review. The arbiter triages. No "do everything at once" chaos — the structure is what makes the output reliable.
@@ -63,7 +68,7 @@ Each agent has a clear role boundary. Builders build. Testers test (separately).
 
 ### It processes entire epics or even entire projects, not just single stories or prompts
 
-The `batch-stories` workflow analyzes dependencies between stories, organizes them into parallel waves, and spawns concurrent workers — each running the full 8-phase pipeline independently.
+The `batch-stories` workflow analyzes dependencies between stories, organizes them into parallel waves, and spawns concurrent workers — each running the full 9-phase pipeline independently.
 
 ```
 Wave 1: Stories 6-1, 6-3  (no dependencies — run in parallel)
@@ -137,7 +142,7 @@ All commands are invoked as slash commands. On **Claude Code**, type them direct
 
 #### `/story-pipeline` — Implement a single story
 
-Run the full 8-phase pipeline on one story. Builder selection is automatic — React stories get the frontend specialist, API stories get the TypeScript specialist, database work gets the Prisma specialist.
+Run the full 9-phase pipeline on one story. Builder selection is automatic — React stories get the frontend specialist, API stories get the TypeScript specialist, database work gets the Prisma specialist.
 
 ```bash
 # Implement a specific story
@@ -147,16 +152,16 @@ Run the full 8-phase pipeline on one story. Builder selection is automatic — R
 /story-pipeline story_key=17-1 builder=helios
 ```
 
-**What happens:**
+**What happens (9 phases):**
 1. **PREPARE** — Loads story, scores playbooks for relevance, loads top matches
 2. **FORGE** — Pygmalion analyzes the domain and forges specialist reviewers if needed
-3. **BUILD** — Routed builder implements (tests first via TDD, then production code)
+3. **BUILD** — Routed builder implements production code
 4. **TEST** — Aletheia writes adversarial tests independently (bug loop: max 3 rounds)
 5. **VERIFY** — Parallel reviewers (Argus, Nemesis, Cerberus, Hestia, + conditionals) examine the work
 6. **ASSESS** — Themis triages findings into MUST_FIX / SHOULD_FIX / STYLE
 7. **REFINE** — Builder fixes all MUST_FIX issues
 8. **COMMIT** — Charon handles git commit with scope selection
-9. **REFLECT** — Mnemosyne extracts learnings into playbooks
+9. **REFLECT** — Hermes extracts learnings into playbooks
 
 **Output artifacts** (in `_bmad-output/sprint-artifacts/completions/`):
 - `17-1-metis.json` — Builder completion report
@@ -591,7 +596,7 @@ One-time migration utility for repos with existing playbooks. Converts legacy fo
 
 1. Clone this repo somewhere on your machine:
    ```bash
-   git clone git@ghe.coxautoinc.com:DDC-AI/pantheon.git ~/git/pantheon
+   git clone git@github.com:jschulte/pantheon.git ~/git/pantheon
    ```
 
 2. In your target project, run the BMAD installer:
@@ -762,7 +767,7 @@ pantheon/
 │   ├── tools/
 │   │   └── scan-secrets.sh       # Deterministic secrets scanner (11 regex patterns)
 │   ├── workflows/
-│   │   ├── story-pipeline/       # Core 8-phase implementation
+│   │   ├── story-pipeline/       # Core 9-phase implementation
 │   │   │   └── data/security/    # Bundled security policies + playbooks
 │   │   ├── batch-stories/        # Epic-level batch orchestration
 │   │   ├── batch-review/         # Hardening workflow
@@ -796,7 +801,7 @@ pantheon/
 
 | Command | Purpose | Example |
 |---------|---------|---------|
-| `/story-pipeline` | Implement one story (8-phase) | `/story-pipeline story_key=17-1` |
+| `/story-pipeline` | Implement one story (9-phase) | `/story-pipeline story_key=17-1` |
 | `/batch-stories` | Implement entire epic(s) | `/batch-stories epic=17 mode=parallel` |
 | `/quick-feature` | Plan-to-build in one command | `/quick-feature "Add OAuth2 auth"` |
 | `/plan-to-story` | Add work to existing BMAD trail | `/plan-to-story plan=docs/plan.md` |
@@ -826,9 +831,32 @@ pantheon/
 
 ---
 
+## Versioning
+
+Pantheon uses two-tier versioning:
+
+- **Module version** (`package.json`): `1.2.0` — tracks npm releases and module packaging. This is the version to cite when reporting issues or checking compatibility.
+- **Workflow versions** (`workflow.yaml`): track feature evolution of individual workflows independently (e.g., story-pipeline `7.4.0`, batch-stories `4.0.0`). These are internal and change more frequently than the module version.
+
+See [CHANGELOG.md](CHANGELOG.md) for detailed release history.
+
+---
+
+## Known Limitations
+
+- **Claude Code is the primary platform.** OpenCode has partial support (sequential only), GitHub Copilot has simplified support, and Codex CLI support is experimental. Full multi-agent verification requires Claude Code.
+- **No programmatic enforcement of agent constraints.** Agent safety rules (e.g., "never force push") are Markdown instructions, not git hooks. LLMs may occasionally ignore instructions under context pressure.
+- **No integration tests.** The test suite validates structural integrity (cross-references, schemas, naming) but cannot verify that agents follow pipeline instructions correctly at runtime.
+- **Token cost is not tracked.** Pipeline runs do not report total tokens consumed. For rough estimates: a standard-complexity story consumes ~100-150K tokens; a critical-complexity story may consume ~300-500K tokens.
+- **Story file size matters.** Stories under 3KB typically lack sufficient context for quality implementation. Stories over 50KB may cause context window issues. The sweet spot is 6-20KB per story file.
+- **Playbook system requires multiple stories to show value.** The learning loop needs 3-5 stories before playbooks meaningfully reduce review findings.
+- **Concurrency control uses filesystem locks.** Swarm mode's `mkdir`-based locking works for local execution but is not suitable for multi-machine or CI/CD scenarios.
+
+---
+
 ## License
 
-MIT
+[MIT](LICENSE)
 
 ---
 

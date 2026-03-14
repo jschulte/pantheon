@@ -1,0 +1,15 @@
+# Default owner for everything in the repo
+* @jschulte
+
+# Workflow definitions
+src/workflows/ @jschulte
+
+# Agent definitions
+src/agents/ @jschulte
+
+# Schemas
+src/schemas/ @jschulte
+
+# Security-sensitive files
+scripts/sanitize-story.sh @jschulte
+SECURITY.md @jschulte

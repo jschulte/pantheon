@@ -1,6 +1,7 @@
 name: ux-audit
 description: "UX design audit — bootstrap design language reference or audit pages for consistency"
 author: "Jonah Schulte (leveraging BMAD Method)"
+maturity: beta
 
 # ============================================================================
 # UX-AUDIT: Design Consistency Workflow

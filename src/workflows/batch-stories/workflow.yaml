@@ -1,6 +1,7 @@
 name: batch-stories
 description: "Interactive batch selector for story-pipeline with complexity-based routing, smart wave ordering, and comprehensive session reporting."
 author: "Jonah Schulte (leveraging BMAD Method)"
+maturity: stable
 
 # Critical variables from config
 # Config lives at {project-root}/_bmad/pantheon/config.yaml (ships with defaults; user can override).

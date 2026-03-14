@@ -259,7 +259,7 @@ Read these two files NOW, then follow them exactly:
 1. **Your execution protocol:**
    {{project_root}}/_bmad/pantheon/workflows/batch-stories/agents/heracles.md
 
-2. **The 8-phase pipeline:**
+2. **The 9-phase pipeline:**
    {{project_root}}/_bmad/pantheon/workflows/story-pipeline/workflow.md
 
 ## Project Context

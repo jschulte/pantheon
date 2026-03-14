@@ -250,7 +250,7 @@ If native agents unavailable:
 ✓ **Quality gates** - Coverage thresholds, evidence requirements
 ✓ **Systematic triage** - Themis prevents bikeshedding
 ✓ **Continuous learning** - Playbook system captures patterns
-✓ **Workflow discipline** - 8-phase verification process
+✓ **Workflow discipline** - 9-phase verification process
 
 ### What Claude Code Adds to BMAD
 

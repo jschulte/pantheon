@@ -1,6 +1,6 @@
 ---
 name: Pantheon Story Pipeline
-description: Execute the 8-phase Pantheon pipeline to implement a user story with multi-agent verification. Invoke when a user asks to implement a story, mentions BMAD or Pantheon, or requests TDD with review.
+description: Execute the 9-phase Pantheon pipeline to implement a user story with multi-agent verification. Invoke when a user asks to implement a story, mentions BMAD or Pantheon, or requests TDD with review.
 allowed-tools:
   - Read
   - Grep
@@ -16,7 +16,7 @@ allowed-tools:
 > This file is a Copilot-adapted skill. For full phase details, refer to the canonical workflow.
 > When this file conflicts with the canonical source, the canonical source wins.
 
-You are orchestrating the **Pantheon** -- an 8-phase pipeline that implements user stories with multi-agent verification.
+You are orchestrating the **Pantheon** -- an 9-phase pipeline that implements user stories with multi-agent verification.
 
 ## Input Contract
 

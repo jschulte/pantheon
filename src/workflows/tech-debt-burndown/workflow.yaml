@@ -1,6 +1,7 @@
 name: tech-debt-burndown
 description: "Harvest tracked issues, cluster by root cause, propose and create stories"
 author: "Jonah Schulte (leveraging BMAD Method)"
+maturity: stable
 
 # ============================================================================
 # TECH-DEBT-BURNDOWN: Issue Harvesting & Story Creation Workflow

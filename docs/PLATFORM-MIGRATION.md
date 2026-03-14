@@ -26,7 +26,7 @@ Claude Code is the primary platform. All features work natively.
 - For swarm mode: `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`
 
 **Setup:**
-1. Install Pantheon via BMAD Method: `npx bmad install @jonahschulte/pantheon`
+1. Install Pantheon via BMAD Method: `npx bmad install @jschulte/pantheon`
 2. Run story pipeline: `/pantheon_story-pipeline`
 3. Run batch stories: `/pantheon_batch-stories`
 
@@ -120,7 +120,7 @@ Codex CLI now supports sub-agents, parallel execution, and the Agent Skills Stan
 
 | Feature | Claude Code | OpenCode | Copilot | Codex |
 |---------|------------|----------|---------|-------|
-| 8-phase pipeline | Automated | Manual | Per-skill | Per-skill |
+| 9-phase pipeline | Automated | Manual | Per-skill | Per-skill |
 | Parallel reviewers | 3-6 agents | Sequential | Yes | Yes (experimental) |
 | Blind review | Yes | Yes | Yes | Yes (separate threads) |
 | Pygmalion forging | Yes | Yes | Via skill | Via skill |

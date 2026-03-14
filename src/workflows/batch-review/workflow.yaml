@@ -1,6 +1,7 @@
 name: batch-review
 description: "Deep code review and hardening workflow - run repeatedly until bulletproof"
 author: "Jonah Schulte (leveraging BMAD Method)"
+maturity: stable
 
 # ============================================================================
 # BATCH-REVIEW: Hardening Sweep Workflow

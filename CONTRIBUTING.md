@@ -1,8 +1,8 @@
 # Contributing to Pantheon
 
-Pantheon is a BMAD Method plugin that provides a multi-agent story development engine. Agents are named after Greek mythology figures and operate in an 8-phase pipeline:
+Pantheon is a BMAD Method plugin that provides a multi-agent story development engine. Agents are named after Greek mythology figures and operate in an 9-phase pipeline:
 
-**PREPARE > FORGE > BUILD > VERIFY > ASSESS > REFINE > COMMIT + REFLECT**
+**PREPARE > FORGE > BUILD > TEST > VERIFY > ASSESS > REFINE > COMMIT > REFLECT**
 
 ---
 
@@ -11,7 +11,7 @@ Pantheon is a BMAD Method plugin that provides a multi-agent story development e
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/jonahschulte/pantheon.git
+   git clone https://github.com/jschulte/pantheon.git
    cd pantheon
    ```
 
@@ -45,7 +45,7 @@ src/
     validators/              # Validation agents (Argus, Nemesis)
     support/                 # Support agents (Themis, Mnemosyne, Hermes)
   workflows/
-    story-pipeline/          # Core 8-phase pipeline
+    story-pipeline/          # Core 9-phase pipeline
     batch-stories/           # Batch processing of multiple stories
     batch-review/            # Batch code review
     gap-analysis/            # Gap analysis between stories and code
@@ -191,4 +191,4 @@ Platform-specific launchers (Copilot skills, OpenCode agents, Codex instructions
 
 ## Questions
 
-Open an issue at [github.com/jonahschulte/pantheon/issues](https://github.com/jonahschulte/pantheon/issues).
+Open an issue at [github.com/jschulte/pantheon/issues](https://github.com/jschulte/pantheon/issues).

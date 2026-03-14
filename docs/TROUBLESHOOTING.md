@@ -76,6 +76,30 @@ Common issues and solutions for Pantheon workflows.
 
 ---
 
+## Agent Timeout Recovery
+
+### Agent times out mid-phase (BUILD, VERIFY, or REFINE)
+**Cause:** The agent exceeded its configured timeout (`agent_timeouts` in workflow.yaml). Common triggers: very large stories (20+ tasks), complex code generation, or model latency spikes.
+**What happens:**
+- The orchestrator detects the timeout and logs it in the pipeline state file.
+- **BUILD phase:** The Sisyphus Loop treats it as a stalled iteration. If retries remain (default: 3), a fresh builder is spawned with accumulated progress from `progress.json`. If all retries are exhausted, the pipeline halts and reports the incomplete state.
+- **VERIFY phase:** The timed-out reviewer's findings are excluded. Remaining reviewers' findings proceed to ASSESS. A warning is logged noting the missing perspective.
+- **REFINE phase:** Treated as a failed fix attempt. If iterations remain, a fresh builder is spawned with compact context. If exhausted, remaining MUST_FIX issues are logged as unresolved.
+**Fix:** Check `agent_timeouts` in workflow.yaml. Builder default is 1800s (30 min), reviewers default to 900s (15 min). Increase for complex stories, or split the story into smaller units.
+
+### Context window exceeded during pipeline execution
+**Cause:** The accumulated context (story file + playbooks + code + review findings) exceeds the model's context window. Most common in REFINE phase iteration 2+ when findings are large.
+**What happens:**
+- **Phase 5 (REFINE) iteration 1:** Agents are resumed with full prior context. If context is too large, the resume fails.
+- **Phase 5 iteration 2+:** Pantheon switches to fresh spawns with compact context (<20K tokens, sonnet model) specifically to avoid this. If even compact context overflows, the iteration is skipped.
+- **Any other phase:** The agent call fails. The orchestrator logs the failure and halts the pipeline with an error indicating context overflow.
+**Fix:**
+1. Ensure playbook token budget isn't too high (default: 7500 tokens in workflow.yaml).
+2. For large stories with many findings, the iteration-aware context strategy (v7.3) should handle this automatically. If it doesn't, reduce the story scope.
+3. Split overly large stories — stories with 15+ tasks and extensive code changes are most likely to hit this limit.
+
+---
+
 ## General Issues
 
 ### "SECURITY: Story file was modified mid-pipeline"
